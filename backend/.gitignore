@@ -1,0 +1,32 @@
+# Python bytecode files
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Virtual environment folder
+/venv/
+/env/
+
+# Flask environment variables
+.env
+.flaskenv
+
+# Logs
+*.log
+
+# IDE files (for editors like VS Code, PyCharm, etc.)
+.idea/
+.vscode/
+
+# macOS Finder files
+.DS_Store
+
+# Coverage reports
+coverage/
+
+# Local testing files
+*.cover
+*.tox
+*.nox
+*.coverage
