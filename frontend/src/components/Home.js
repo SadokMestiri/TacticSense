@@ -1,63 +1,108 @@
-import React, { useState } from 'react';
-
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
 
 const Home = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isActivityOpen, setIsActivityOpen] = useState(false);
-  const [profileMenuOpen, setProfileMenuOpen] = useState(false);
+  const [posts, setPosts] = useState([]); 
+  const user_id = 6;
+  const [text, setText] = useState('');
+  const [image, setImage] = useState(null);
+  const [video, setVideo] = useState(null);
+  const [user, setUser] = useState({});
+  const [users, setUsers] = useState([]);
+  const [error, setError] = useState(null);
 
-
-
-  const toggleActivity = () => {
-    setIsActivityOpen(!isActivityOpen);
-  };
-
-  const toggleMenu = () => {
-      setProfileMenuOpen(prevState => !prevState);
-  };
-
-  const posts = [
-    {
-        author: 'Bejamin Leo',
-        title: 'Founder and CEO at Giva | Angel Investor',
-        time: '2 hours ago',
-        content: 'The success of every website depends on Search engine optimisation and digital marketing strategy...',
-        image: 'assets/images/post-image-1.png',
-        likes: 89,
-        comments: 22,
-        shares: 40
-    },
-    {
-        author: 'Claire Smith',
-        title: 'SDE at Swiggy | Solopreneur',
-        time: '2 hours ago',
-        content: 'The success of every website depends on Search engine optimisation and digital marketing strategy...',
-        image: 'assets/images/post-image-2.png',
-        likes: 60,
-        comments: 12,
-        shares: 28
-    },
-    {
-        author: 'Rohit Kumar',
-        title: 'Senior Developer at Google | Tech Enthusiast',
-        time: '1 day ago',
-        content: 'Just finished reading an amazing article on React hooks! I highly recommend checking it out.',
-        image: 'assets/images/post-image-3.png',
-        likes: 120,
-        comments: 34,
-        shares: 56
-    },
-    {
-        author: 'Samantha Doe',
-        title: 'Marketing Lead at Meta | Content Strategist',
-        time: '5 days ago',
-        content: 'Digital marketing strategies are changing rapidly, here’s how you can adapt to the new trends...',
-        image: 'assets/images/post-image-4.png',
-        likes: 72,
-        comments: 18,
-        shares: 31
+  const fetchUsers = async (user_id) => {
+    try {
+        const response = await axios.get(`${process.env.REACT_APP_BASE_URL}/get_user/${user_id}`);
+        
+        setUsers(prevUsers => ({
+            ...prevUsers,
+            [user_id]: response.data.profile_image 
+        }));
+    } catch (error) {
+        setError(error.response?.data?.message || 'Error fetching user data');
     }
-];
+};
+const fetchUser = async () => {
+  try {
+      const response = await axios.get(`${process.env.REACT_APP_BASE_URL}/get_user/${user_id}`);
+
+      setUser(response.data);
+  } catch (error) {
+      setError(error.response?.data?.message || 'Error fetching user data');
+  }
+};
+  useEffect(() => {
+    fetchUser();
+}, [user_id]);
+
+  const handleTextChange = (e) => {
+    setText(e.target.value);
+  };
+
+  const handleImageChange = (e) => {
+    setImage(e.target.files[0]); 
+    console.log('Selected image:', e.target.files[0]);
+  };
+
+  const handleVideoChange = (e) => {
+    setVideo(e.target.files[0]);
+    console.log('Selected video:', e.target.files[0]);
+  };
+
+  const handleSubmitPost = async (e) => {
+    e.preventDefault();
+    console.log('Submitting post with text:', text);
+    
+    const formData = new FormData();
+    formData.append('user_id', user_id);
+    formData.append('text', text);
+    if (image) {
+      formData.append('image', image); 
+    }
+    if (video) {
+      formData.append('video', video);  
+    }
+
+    try {
+      const response = await axios.post(`${process.env.REACT_APP_BASE_URL}/create_post`, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+  
+      console.log('Post created successfully:', response.data);
+      alert('Post created successfully');
+      setImage(null);
+      setVideo(null); 
+      setText('');
+      fetchPosts();
+    } catch (error) {
+      console.error('Error creating post:', error);
+      alert('There was an error creating the post');
+    }
+  };
+  const fetchPosts = async () => {
+    try {
+        const response = await axios.get(`${process.env.REACT_APP_BASE_URL}/get_posts`);
+        const postsData = response.data;
+
+        for (let post of postsData) {
+            if (post.user_id) {
+                await fetchUsers(post.user_id);
+            }
+        }
+
+        setPosts(postsData);
+    } catch (error) {
+        console.error('Error fetching posts:', error);
+    }
+};
+  useEffect(() => {
+    fetchPosts();
+  }, []);
 
   return (
     <div>
@@ -80,7 +125,7 @@ const Home = () => {
         </div>
         <div className="navbar-right">
           <div className="online">
-            <img src="assets/images/user-1.jpg" className="nav-profile-img" onClick={toggleMenu} alt="profile" />
+            <img src={`${process.env.REACT_APP_BASE_URL}/${user.profile_image}`}  className="nav-profile-img"  alt="profile" />
           </div>
         </div>
 
@@ -89,7 +134,7 @@ const Home = () => {
           <div className="profile-menu-wrap">
             <div className="profile-menu">
               <div className="user-info">
-                <img src="assets/images/user-1.jpg" alt="user" />
+                <img src={`${process.env.REACT_APP_BASE_URL}/${user.profile_image}`}  alt="user" />
                 <div>
                   <h3>John Doe</h3>
                   <a href="#">See your profile</a>
@@ -131,7 +176,7 @@ const Home = () => {
           <div className="sidebar-profile-box">
             <img src="assets/images/cover-pic.jpg" alt="cover" width="100%" />
             <div className="sidebar-profile-info">
-              <img src="assets/images/user-1.jpg" alt="profile" />
+              <img  src={`${process.env.REACT_APP_BASE_URL}/${user.profile_image}`}   alt="profile" />
               <h1>Cristiano Ronaldo</h1>
               <h3>Professional footballer</h3>
               <ul>
@@ -173,24 +218,72 @@ const Home = () => {
             </div>
           </div>
 
-          <p id="showMoreLink" onClick={toggleActivity}>Show more <b>+</b></p>
+          <p id="showMoreLink" >Show more <b>+</b></p>
         </div>
 
-        {/* Main Content */}
         <div className="main-content">
           {/* Create Post Section */}
           <div className="create-post">
-            <div className="create-post-input">
-              <img src="assets/images/user-1.jpg" alt="profile" />
-              <textarea rows="2" placeholder="Write Something"></textarea>
-            </div>
-            <div className="create-post-links">
-              <li><img src="assets/images/photo.svg" alt="photo" />Photo</li>
-              <li><img src="assets/images/video.svg" alt="video" />Video</li>
-              <li><img src="assets/images/event.svg" alt="event" />Event</li>
-              <li>Post</li>
-            </div>
-          </div>
+  <div className="create-post-input">
+    <img src={`${process.env.REACT_APP_BASE_URL}/${user.profile_image}`}  alt="profile" />
+    <textarea rows="2" placeholder="Write Something"
+    value={text}
+    onChange={handleTextChange}
+    ></textarea>
+  </div>
+  <div className="create-post-links">
+  <li  onClick={() => document.getElementById('image-upload').click()} >
+  <img src="assets/images/photo.svg" alt="photo" /> Photo
+  <input 
+    type="file" 
+    id="image-upload" 
+    className="file-upload-input" 
+    onChange={handleImageChange} 
+    accept="image/*" 
+    multiple
+    style={{ display: 'none' }} 
+  />
+</li>
+
+    <li onClick={() => document.getElementById('video-upload').click()}>
+        <img src="assets/images/video.svg" alt="video" /> Video
+      <input 
+        type="file" 
+        id="video-upload" 
+        className="file-upload-input" 
+        onChange={handleVideoChange} 
+        accept="video/*" 
+        multiple
+        style={{ display: 'none' }} 
+      />
+    </li>
+    <li><img src="assets/images/event.svg" alt="event" /> Event</li>
+    <li onClick={handleSubmitPost}>Post</li>
+  </div>
+
+  {image&& (
+    <div className="uploaded-files-preview">
+     <img
+        src={URL.createObjectURL(image)}
+        alt="Uploaded"
+        style={{ maxWidth: '150px', marginTop: '10px' }} 
+      />
+    
+    </div>
+  )}
+
+  {video&& (
+    <div className="uploaded-files-preview">
+    <video
+        controls
+        src={URL.createObjectURL(video)}
+        style={{ maxWidth: '150px', marginTop: '10px' }}
+      />
+      
+    </div>
+  )}
+</div>
+
 
           {/* Sorting */}
           <div className="sort-by">
@@ -199,54 +292,67 @@ const Home = () => {
           </div>
 
           {/* Posts */}
-                {posts.map((post, index) => (
-                    <div key={index} className="post">
-                        <div className="post-author">
-                            <img src="assets/images/user-3.png" alt="user" />
-                            <div>
-                                <h1>{post.author}</h1>
-                                <small>{post.title}</small>
-                                <small>{post.time}</small>
-                            </div>
-                        </div>
-                        <p>{post.content}</p>
-                        <img src={post.image} width="100%" alt="post" />
-                        <div className="post-stats">
-                            <div>
-                                <img src="assets/images/thumbsup.png" alt="like" />
-                                <img src="assets/images/love.png" alt="love" />
-                                <img src="assets/images/clap.png" alt="clap" />
-                                <span className="liked-users">{`Adam Doe and ${post.likes} others`}</span>
-                            </div>
-                            <div>
-                                <span>{`${post.comments} comments &middot; ${post.shares} shares`}</span>
-                            </div>
-                        </div>
-                        <div className="post-activity">
-                            <div>
-                                <img src="assets/images/user-1.jpg" className="post-activity-user-icon" alt="user-icon" />
-                                <img src="assets/images/down-arrow.png" className="post-activity-arrow-icon" alt="arrow-icon" />
-                            </div>
-                            <div className="post-activity-link">
-                                <img src="assets/images/like.png" alt="like-icon" />
-                                <span>Like</span>
-                            </div>
-                            <div className="post-activity-link">
-                                <img src="assets/images/comment.png" alt="comment-icon" />
-                                <span>Comment</span>
-                            </div>
-                            <div className="post-activity-link">
-                                <img src="assets/images/share.png" alt="share-icon" />
-                                <span>Share</span>
-                            </div>
-                            <div className="post-activity-link">
-                                <img src="assets/images/send.png" alt="send-icon" />
-                                <span>Send</span>
-                            </div>
-                        </div>
-                    </div>
-                ))}
-</div>
+          {posts.map((post, index) => (
+            <div key={index} className="post">
+              <div className="post-author">
+                <img src={`${process.env.REACT_APP_BASE_URL}/${users[post.user_id]}`}  alt="user" />
+                <div>
+                  <h1>{post.user_name}</h1>
+                 {/* <small>{post.title}</small>*/}
+                  <small>{post.created_at}</small>
+                </div>
+              </div>
+              <p>{post.content}</p>
+              {post.image_url && (
+            <img 
+              src={`${process.env.REACT_APP_BASE_URL}${post.image_url}`} 
+              alt="post" 
+              style={{ width: '100%' }} 
+            />
+          )}
+          {post.video_url && (
+            <video controls style={{ width: '100%' }}>
+              <source src={`${process.env.REACT_APP_BASE_URL}${post.video_url}`} type="video/mp4" />
+              Your browser does not support the video tag.
+            </video>
+          )}
+              <div className="post-stats">
+                <div>
+                  <img src="assets/images/thumbsup.png" alt="like" />
+                  <img src="assets/images/love.png" alt="love" />
+                  <img src="assets/images/clap.png" alt="clap" />
+                  <span className="liked-users">{`Adam Doe and ${post.likes} others`}</span>
+                </div>
+                <div>
+                  <span>{`${post.comments} comments &middot; ${post.shares} shares`}</span>
+                </div>
+              </div>
+              <div className="post-activity">
+                <div>
+                  <img src={`${process.env.REACT_APP_BASE_URL}/${user.profile_image}`}  className="post-activity-user-icon" alt="user-icon" />
+                  <img src="assets/images/down-arrow.png" className="post-activity-arrow-icon" alt="arrow-icon" />
+                </div>
+                <div className="post-activity-link" onClick={() => console.log('Liked post')}>
+                  <img src="assets/images/like.png" alt="like-icon" />
+                  <span>Like</span>
+                </div>
+                <div className="post-activity-link" onClick={() => console.log('Commented on post')}>
+                  <img src="assets/images/comment.png" alt="comment-icon" />
+                  <span>Comment</span>
+                </div>
+                <div className="post-activity-link" onClick={() => console.log('Shared post')}>
+                  <img src="assets/images/share.png" alt="share-icon" />
+                  <span>Share</span>
+                </div>
+                <div className="post-activity-link" onClick={() => console.log('Sent post')}>
+                  <img src="assets/images/send.png" alt="send-icon" />
+                  <span>Send</span>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+
         {/* Right Sidebar */}
         <div className="right-sidebar">
           <div className="sidebar-news">
@@ -267,7 +373,7 @@ const Home = () => {
             <small>Ad &middot; &middot; &midd;</small>
             <p>Master Web Development</p>
             <div>
-              <img src="assets/images/user-1.jpg" alt="user" />
+              <img src={`${process.env.REACT_APP_BASE_URL}/${user.profile_image}`}  alt="user" />
               <img src="assets/images/mi-logo.png" alt="mi logo" />
             </div>
             <b>Brand and Demand in Xiaomi</b>

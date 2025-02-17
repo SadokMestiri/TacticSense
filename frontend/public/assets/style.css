@@ -653,3 +653,47 @@ a{
 
     
 }
+.media-preview img, .media-preview video {
+    max-width: 150px;
+    margin-top: 10px;
+  }
+  /* Style for the file upload area */
+.file-upload-area {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    padding: 20px;
+    border: 2px dashed #ccc; /* Dotted border for the upload area */
+    border-radius: 8px;
+    background-color: #211f1f93; /* Light background for the upload area */
+    cursor: pointer;
+    transition: all 0.3s ease;
+    width: 360px;
+}
+
+/* On hover, change background and border */
+.file-upload-area:hover {
+    border-color: #04c142;
+}
+
+/* Icon styling */
+.file-upload-area .fa-cloud-upload-alt {
+    font-size: 40px;
+    color: #434343;
+    margin-bottom: 10px;
+}
+.file-upload-area .fa-cloud-upload-alt:hover {
+    color: #04c142;
+}
+
+/* Text styling */
+.file-upload-area p {
+    font-size: 14px;
+    color: #656565;
+}
+
+/* Remove the default file input styles */
+.file-upload-input {
+    display: none;
+}

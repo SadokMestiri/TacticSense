@@ -19,7 +19,6 @@ const Login = () => {
                 password
             });
             if (response.status === 200) {
-                // Stocker le token et rediriger l'utilisateur
                 localStorage.setItem('token', response.data.token);
                 navigate('/');
             } else {
