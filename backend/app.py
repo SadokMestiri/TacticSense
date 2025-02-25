@@ -29,6 +29,8 @@ class User(db.Model):
     name = db.Column(db.String(80), nullable=False)
     profile_image = db.Column(db.String(255), nullable=True) 
 
+
+
 class Post(db.Model):
     post_id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False) 
@@ -75,10 +77,80 @@ class Share(db.Model):
     user_id = db.Column(db.Integer)
     created_at = db.Column(db.DateTime, default=db.func.current_timestamp())
 
+class Message(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    sender_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    receiver_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    message = db.Column(db.String(500), nullable=False)
+    timestamp = db.Column(db.DateTime, default=db.func.current_timestamp())
+
+class Conversation(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user1_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    user2_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    last_message_time = db.Column(db.DateTime, default=db.func.current_timestamp())
+
+
 @app.route('/')
 def hello():
     return 'Hey!'
 
+@app.route('/send_message', methods=['POST'])
+def send_message():
+    data = request.get_json()
+    
+    # Validate the sender and receiver
+    sender = User.query.get(data['sender_id'])
+    receiver = User.query.get(data['receiver_id'])
+    
+    if not sender or not receiver:
+        return jsonify({'message': 'Invalid sender or receiver'}), 400
+    
+    new_message = Message(
+        sender_id=data['sender_id'],
+        receiver_id=data['receiver_id'],
+        message=data['message']
+    )
+    
+    db.session.add(new_message)
+    db.session.commit()
+    
+    return jsonify({'message': 'Message sent successfully'}), 201
+@app.route('/get_messages/<int:user1_id>/<int:user2_id>', methods=['GET'])
+def get_messages(user1_id, user2_id):
+    messages = Message.query.filter(
+        (Message.sender_id == user1_id and Message.receiver_id == user2_id) |
+        (Message.sender_id == user2_id and Message.receiver_id == user1_id)
+    ).all()
+    
+    message_list = []
+    for msg in messages:
+        message_list.append({
+            'sender_id': msg.sender_id,
+            'receiver_id': msg.receiver_id,
+            'message': msg.message,
+            'timestamp': msg.timestamp
+        })
+    
+    return jsonify(message_list), 200
+@app.route('/create_conversation', methods=['POST'])
+def create_conversation():
+    data = request.get_json()
+    
+    conversation = Conversation.query.filter(
+        ((Conversation.user1_id == data['user1_id']) & (Conversation.user2_id == data['user2_id'])) |
+        ((Conversation.user1_id == data['user2_id']) & (Conversation.user2_id == data['user1_id']))
+    ).first()
+    
+    if not conversation:
+        new_conversation = Conversation(
+            user1_id=data['user1_id'],
+            user2_id=data['user2_id']
+        )
+        db.session.add(new_conversation)
+        db.session.commit()
+    
+    return jsonify({'message': 'Conversation created successfully'}), 201
 
 @app.route('/get_user/<int:user_id>', methods=['GET'])
 def get_user(user_id):
