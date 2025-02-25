@@ -12,6 +12,88 @@ const Home = () => {
   const [user, setUser] = useState({});
   const [users, setUsers] = useState([]);
   const [error, setError] = useState(null);
+  const [comments, setComments] = useState([]);
+  const [selectedPost, setSelectedPost] = useState(null); // For managing the selected post
+  const [isCommentsVisible, setIsCommentsVisible] = useState(false); // To control visibility of the comments popup
+
+  const [showReactions, setShowReactions] = useState(null);
+const reactions = [
+  { name: "like", icon: "assets/images/post-like.png" },
+  { name: "love", icon: "assets/images/love.png" },
+  { name: "laugh", icon: "assets/images/haha.png" },
+  { name: "wow", icon: "assets/images/wow.png" },
+  { name: "sad", icon: "assets/images/sad.png" },
+  { name: "angry", icon: "assets/images/angry.png" },
+];
+
+
+
+
+
+  const getTimeAgo = (createdAt) => {
+    const now = new Date();
+    const postDate = new Date(createdAt);
+    const timeDiff = now - postDate; // Difference in milliseconds
+  
+    const seconds = Math.floor(timeDiff / 1000);
+    const minutes = Math.floor(seconds / 60);
+    const hours = Math.floor(minutes / 60);
+    const days = Math.floor(hours / 24);
+    const weeks = Math.floor(days / 7);
+    const months = Math.floor(days / 30);
+    const years = Math.floor(days / 365);
+  
+    if (years > 0) {
+      return `${years} year${years > 1 ? 's' : ''} ago`;
+    } else if (months > 0) {
+      return `${months} month${months > 1 ? 's' : ''} ago`;
+    } else if (weeks > 0) {
+      return `${weeks} week${weeks > 1 ? 's' : ''} ago`;
+    } else if (days > 0) {
+      return `${days} day${days > 1 ? 's' : ''} ago`;
+    } else if (hours > 0) {
+      return `${hours} hour${hours > 1 ? 's' : ''} ago`;
+    } else if (minutes > 0) {
+      return `${minutes} minute${minutes > 1 ? 's' : ''} ago`;
+    } else {
+      return `${seconds} second${seconds > 1 ? 's' : ''} ago`;
+    }
+  };
+  
+  const [isCommenting, setIsCommenting] = useState(false);
+  const [comment, setComment] = useState(''); // Store comment text
+
+  // Handle comment input change
+  const handleCommentChange = (event) => {
+    setComment(event.target.value);
+  };
+
+  // Handle submitting the comment
+  const handleCommentSubmit = async (postId) => {
+    if (comment.trim() === '') return; // Don't submit empty comments
+  
+    try {
+      // Send the comment to the backend via the /add_comment API
+      const response = await axios.post(`${process.env.REACT_APP_BASE_URL}/add_comment`, {
+        post_id: postId,  // Send the post_id in the request body
+        user_id: user.id, // Pass the current user's ID
+        comment_text: comment, // The actual comment content
+        created_at: new Date().toISOString(), // Optional: Use the current timestamp
+      });
+  
+      // Check if the response is successful (status code 200)
+      if (response.status === 200) {
+        console.log('Comment added:', response.data.message); // Assuming response has a message
+        setComment(''); // Clear the input field
+        setIsCommenting(false); // Close the input field after submission
+      } else {
+        console.error('Error adding comment:', response.data.message || 'Unknown error');
+      }
+    } catch (error) {
+      console.error('Network error:', error);
+    }
+  };
+  
 
   const fetchUsers = async (user_id) => {
     try {
@@ -104,6 +186,39 @@ const fetchUser = async () => {
     fetchPosts();
   }, []);
 
+  const handleReaction = async (postId, reactionType) => {
+    try {
+      const response = await axios.post(`${process.env.REACT_APP_BASE_URL}/react_to_post`, {
+        user_id,
+        post_id: postId,
+        reaction_type: reactionType,
+      });
+  
+      console.log(`Reaction (${reactionType}) added:`, response.data);
+      fetchPosts(); // Refresh posts to update reactions count
+    } catch (error) {
+      console.error('Error adding reaction:', error);
+      alert('There was an error reacting to the post');
+    }
+  };
+
+  const fetchComments = async (postId) => {
+    try {
+      const response = await axios.get(`${process.env.REACT_APP_BASE_URL}/get_comments/${postId}`);
+      const commentsData = response.data;
+      for (let comment of commentsData) {
+        if (comment.user_id) {
+            await fetchUsers(comment.user_id);
+        }
+        setComments(commentsData);
+
+    }
+    } catch (error) {
+      console.error("Error fetching comments:", error);
+    }
+  };
+  
+
   return (
     <div>
       <nav className="navbar">
@@ -177,7 +292,7 @@ const fetchUser = async () => {
             <img src="assets/images/cover-pic.jpg" alt="cover" width="100%" />
             <div className="sidebar-profile-info">
               <img  src={`${process.env.REACT_APP_BASE_URL}/${user.profile_image}`}   alt="profile" />
-              <h1>Cristiano Ronaldo</h1>
+              <h1>Lionel Messi</h1>
               <h3>Professional footballer</h3>
               <ul>
                 <li>Your profile views <span>24K</span></li>
@@ -299,8 +414,8 @@ const fetchUser = async () => {
                 <div>
                   <h1>{post.user_name}</h1>
                  {/* <small>{post.title}</small>*/}
-                  <small>{post.created_at}</small>
-                </div>
+                 <small>{getTimeAgo(post.created_at)}</small>
+                 </div>
               </div>
               <p>{post.content}</p>
               {post.image_url && (
@@ -310,46 +425,164 @@ const fetchUser = async () => {
               style={{ width: '100%' }} 
             />
           )}
-          {post.video_url && (
-            <video controls style={{ width: '100%' }}>
-              <source src={`${process.env.REACT_APP_BASE_URL}${post.video_url}`} type="video/mp4" />
-              Your browser does not support the video tag.
-            </video>
-          )}
-              <div className="post-stats">
+        {post.video_url && (
+  <video autoPlay muted controls style={{ width: '100%' }}>
+    <source src={`${process.env.REACT_APP_BASE_URL}${post.video_url}`} type="video/mp4" />
+    Your browser does not support the video tag.
+  </video>
+)}
+
+<div className="post-stats">
+  <div className="post-reactions">
+    {Object.entries({
+      "post-like": post.likes,
+      love: post.loves,
+      clap: post.claps,
+      haha: post.laughs,
+      wow: post.wows,
+      angry: post.angrys,
+      sad: post.sads
+    })
+      .filter(([_, count]) => count > 0) // Show only reactions with a count > 0
+      .map(([reaction, count]) => (
+        <div key={reaction} className="reaction">
+          <img
+            src={`assets/images/${reaction}.png`}
+            alt={reaction}
+            className="post-reaction-icon" // Added CSS class for icons
+          />
+        </div>
+      ))}
+    <span className="total-reactions">
+      {Object.values({
+        "post-like": post.likes || 0,
+        love: post.loves || 0,
+        clap: post.claps || 0,
+        haha: post.laughs || 0,
+        wow: post.wows || 0,
+        angry: post.angrys || 0,
+        sad: post.sads || 0
+      }).reduce((acc, count) => acc + (count || 0), 0)} reactions
+    </span>
+</div>
+
                 <div>
-                  <img src="assets/images/thumbsup.png" alt="like" />
-                  <img src="assets/images/love.png" alt="love" />
-                  <img src="assets/images/clap.png" alt="clap" />
-                  <span className="liked-users">{`Adam Doe and ${post.likes} others`}</span>
+                  {/*${post.shares}*/}
+                  <span 
+  onClick={() => {
+    setSelectedPost(post); // Set the clicked post
+    setIsCommentsVisible(true); // Show the comments popup
+    fetchComments(post.id);  // Fetch comments
+  }}
+>
+  {`${post.comments.length} comments `}
+</span>
                 </div>
-                <div>
-                  <span>{`${post.comments} comments &middot; ${post.shares} shares`}</span>
-                </div>
+                {isCommentsVisible && selectedPost && (
+  <div className="comments-modal">
+    <div className="modal-content">
+      {/* Modal Header */}
+      <div className="modal-header">
+        <h3>Comments</h3>
+        <button className="modal-close" onClick={() => setIsCommentsVisible(false)}>✖</button>
+      </div>
+
+      {/* Modal Body - Comments List */}
+      <div className="modal-body">
+        {comments.length === 0 ? (
+          <p style={{ textAlign: "center", color: "#666" }}>No comments yet.</p>
+        ) : (
+          comments.map((comment) => (
+            <div key={comment.id} className="comment-item">
+              {/* User Avatar */}
+              <img
+                src={`${process.env.REACT_APP_BASE_URL}/${users[comment.user_id]}`}
+                alt="User"
+                className="comment-avatar"
+                onError={(e) => (e.target.src = "assets/images/user-5.png")}
+              />
+              {/* Comment Content */}
+              <div className="comment-content">
+                <strong>{comment.user_name}</strong>
+                <p>{comment.comment_text}</p>
+              </div>
+              <div className="comment-meta">{getTimeAgo(comment.created_at)}</div>
+            </div>
+          ))
+        )}
+      </div>
+    </div>
+  </div>
+)}
+
               </div>
               <div className="post-activity">
-                <div>
+              <div>
                   <img src={`${process.env.REACT_APP_BASE_URL}/${user.profile_image}`}  className="post-activity-user-icon" alt="user-icon" />
                   <img src="assets/images/down-arrow.png" className="post-activity-arrow-icon" alt="arrow-icon" />
                 </div>
-                <div className="post-activity-link" onClick={() => console.log('Liked post')}>
-                  <img src="assets/images/like.png" alt="like-icon" />
-                  <span>Like</span>
-                </div>
-                <div className="post-activity-link" onClick={() => console.log('Commented on post')}>
-                  <img src="assets/images/comment.png" alt="comment-icon" />
-                  <span>Comment</span>
-                </div>
-                <div className="post-activity-link" onClick={() => console.log('Shared post')}>
-                  <img src="assets/images/share.png" alt="share-icon" />
-                  <span>Share</span>
-                </div>
-                <div className="post-activity-link" onClick={() => console.log('Sent post')}>
+  <div 
+  className="reaction-container"
+  onMouseEnter={() => setShowReactions(post.id)}  
+  onMouseLeave={() => setShowReactions(null)}
+>
+  {/* Like Button */}
+  <div className="post-activity-link">
+    <img src="assets/images/like.png" alt="like-icon" />
+    <span>Like</span>
+  </div>
+
+  {/* Reactions Bar */}
+  {showReactions === post.id && (
+    <div className="reactions-bar">
+      {reactions.map((reaction) => (
+        <img 
+          key={reaction.name} 
+          src={reaction.icon} 
+          alt={reaction.name} 
+          className="reaction-icon" 
+          onClick={() => handleReaction(post.id, reaction.name)}
+        />
+      ))}
+    </div>
+  )}
+</div>
+
+
+<div className="post-activity-link" onClick={() => setIsCommenting(true)}>
+        <img src="assets/images/comment.png" alt="comment-icon" />
+        <span>Comment</span>
+      </div>
+
+  <div className="post-activity-link" onClick={() => console.log('Shared post')}>
+    <img src="assets/images/share.png" alt="share-icon" />
+    <span>Share</span>
+  </div>
+  <div className="post-activity-link" onClick={() => console.log('Sent post')}>
                   <img src="assets/images/send.png" alt="send-icon" />
                   <span>Send</span>
                 </div>
+                
+</div>
+
+<div className="post-stats">
+{isCommenting && (
+          <div className="comment-input-wrapper">
+            <textarea
+              value={comment}
+              onChange={handleCommentChange}
+              placeholder="Write a comment..."
+              rows="2"
+              className="comment-input"
+            />
+            <button onClick={() => handleCommentSubmit(post.id)} className="comment-send-btn">
+              <img src="assets/images/send-comment.png" alt="send" className="send-icon" />
+            </button>
+          </div>
+        )}
               </div>
-            </div>
+                
+        </div>
           ))}
         </div>
 

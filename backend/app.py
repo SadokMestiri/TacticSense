@@ -184,28 +184,98 @@ def create_post():
 
 @app.route('/get_posts', methods=['GET'])
 def get_posts():
-    try:
-        posts = db.session.query(Post, User.name).join(User, User.id == Post.user_id).all()
+    posts = Post.query.all()
+    posts_data = []
 
-        posts_list = []
-        for post, user_name in posts:
-            post_data = post.to_dict()  
-            post_data['user_name'] = user_name  
-            posts_list.append(post_data)
+    # Fetch all reactions in a single query to optimize performance
+    reactions_data = db.session.query(
+        Reaction.post_id,
+        Reaction.reaction_type,
+        db.func.count(Reaction.reaction_id)
+    ).group_by(Reaction.post_id, Reaction.reaction_type).all()
 
-        return jsonify(posts_list), 200  
+    # Organize reactions into a dictionary for quick lookup
+    reactions_dict = {}
+    for post_id, reaction_type, count in reactions_data:
+        if post_id not in reactions_dict:
+            reactions_dict[post_id] = {}
+        reactions_dict[post_id][reaction_type] = count
 
-    except Exception as e:
-        print(f"Error retrieving posts: {e}")
-        return jsonify({'error': 'Unable to retrieve posts'}), 500
+    for post in posts:
+        post_reactions = reactions_dict.get(post.post_id, {})
 
-@app.route('/add_reaction', methods=['POST'])
-def add_reaction():
-    data = request.json
-    new_reaction = Reaction(**data)
-    db.session.add(new_reaction)
+        # Fetch comments for the current post
+        comments = Comment.query.filter_by(post_id=post.post_id).all()
+        comments_data = [{
+            'user_id': comment.user_id,
+            'comment_text': comment.comment_text,
+            'created_at': comment.created_at
+        } for comment in comments]
+
+        posts_data.append({
+            'id': post.post_id,
+            'user_id': post.user_id,
+            'user_name': post.user.name,
+            'content': post.content,
+            'image_url': post.image_url,
+            'video_url': post.video_url,
+            'likes': post_reactions.get('like', 0),
+            'loves': post_reactions.get('love', 0),
+            'laughs': post_reactions.get('laugh', 0),
+            'wows': post_reactions.get('wow', 0),
+            'angrys': post_reactions.get('angry', 0),
+            'sads': post_reactions.get('sad', 0),
+            'created_at': post.created_at,
+            'comments': comments_data  # Add comments data
+        })
+
+    return jsonify(posts_data), 200
+
+@app.route('/get_comments/<int:post_id>', methods=['GET'])
+def get_comments(post_id):
+    comments = Comment.query.filter_by(post_id=post_id).all()
+    
+    comments_data = [
+        {
+            'id': comment.comment_id,
+            'post_id': comment.post_id,
+            'user_id': comment.user_id,
+            'comment_text': comment.comment_text,
+            'created_at': comment.created_at
+        }
+        for comment in comments
+    ]
+    
+    return jsonify(comments_data), 200
+
+
+@app.route('/react_to_post', methods=['POST'])
+def react_to_post():
+    data = request.get_json()
+    user_id = data.get('user_id')
+    post_id = data.get('post_id')
+    reaction_type = data.get('reaction_type')
+
+    if not user_id or not post_id or not reaction_type:
+        return jsonify({'error': 'Missing data'}), 400
+
+    reaction = Reaction.query.filter_by(user_id=user_id, post_id=post_id).first()
+
+    if reaction:
+        if reaction.reaction_type == reaction_type:
+            db.session.delete(reaction)  # Remove reaction if it's the same
+            message = "Reaction removed"
+        else:
+            reaction.reaction_type = reaction_type  # Update reaction type
+            message = "Reaction updated"
+    else:
+        new_reaction = Reaction(user_id=user_id, post_id=post_id, reaction_type=reaction_type)
+        db.session.add(new_reaction)
+        message = "Reaction added"
+
     db.session.commit()
-    return jsonify({'message': 'Reaction added'})
+    return jsonify({'message': message}), 200
+
 
 @app.route('/add_comment', methods=['POST'])
 def add_comment():
