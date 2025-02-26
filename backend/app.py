@@ -6,7 +6,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
 from datetime import datetime
 from sqlalchemy import Enum
-
+from flask_mail import Mail, Message 
 
 
 app = Flask(__name__,template_folder='templates')
@@ -20,6 +20,12 @@ app.config['MAX_CONTENT_LENGTH'] = 100 * 1024 * 1024
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in app.config['ALLOWED_EXTENSIONS']
 
+app.config['MAIL_SERVER'] = 'smtp.gmail.com'
+app.config['MAIL_PORT'] = 465
+app.config['MAIL_USE_SSL'] = True
+app.config['MAIL_USERNAME'] = 'nourhene.benhamida25@gmail.com'
+app.config['MAIL_PASSWORD'] = 'ioom bhbb kirq fafx'
+mail = Mail(app)
 
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -195,6 +201,17 @@ def register():
         db.session.add(new_user)
         db.session.commit()
 
+        # Send welcome email
+        msg = Message("Welcome to MetaScout!",
+                      sender=app.config['MAIL_USERNAME'],
+                      recipients=[email])
+        msg.html = f"""
+            <p>Hello {name},</p>
+            <p>Thank you for signing up on MetaScout. We’re excited to have you with us!</p>
+            <p>Best regards,<br>The MetaScout Team</p>
+        """
+        mail.send(msg)
+
         return jsonify({'message': 'User registered successfully'}), 201
     except Exception as e:
         print(f"Error: {e}")
@@ -208,7 +225,7 @@ def login():
 
     user = User.query.filter_by(username=username).first()
     if user and check_password_hash(user.password, password):
-        return jsonify({'message': 'Login successful'}), 200
+        return jsonify({'message': 'Login successful','user_id': user.id }), 200
     else:
         return jsonify({'message': 'Invalid username or password'}), 401
 

@@ -1,0 +1,125 @@
+.drop-menu {
+    position: absolute;
+    top: 55px; /* Adjust as needed */
+    right: -55px; /* Adjust as needed */
+    width: 250px;
+    background-color: #fff;
+    border: 1px solid #ccc;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    animation: slideDown 0.3s ease forwards;
+    z-index: 1000;
+    padding: 10px;
+  }
+  
+  @keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+  }
+  
+  .dropdown-header {
+    display: flex;
+    align-items: center;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #eee;
+    margin-bottom: 10px;
+  }
+  
+  .dropdown-avatar {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    margin-right: 10px;
+    margin-top:10px;
+  }
+  
+  .dropdown-info {
+    font-size: 14px;
+    color: #333;
+    margin-left:65px;
+    margin-top:-50px;
+    margin-bottom:30px;
+  }
+  
+  .dropdown-info .name {
+    font-weight: bold;
+    margin-bottom: 5px;
+  }
+  
+  .profile-btn, .logout-btn {
+    display: block;
+    text-decoration: none;
+    text-align: center;
+    padding: 8px;
+    border-radius: 4px;
+    margin-bottom: 8px;
+  }
+  
+  .profile-btn {
+    background-color: #0073b1;
+    color: #fff;
+  }
+  
+  .logout-btn {
+    background-color: #e60000;
+    color: #fff;
+  }
+  
+  /* Existing styles */
+  .navbar-right {
+    position: relative;
+  }
+  
+  .dropdown-info .name {
+    font-weight: bold;
+    margin-bottom: 5px;
+    text-transform: capitalize;
+  }
+  .profile-btn {
+    background-color: #fff;
+    border: 1px solid #0073b1;
+    color: #0073b1;
+    padding: 8px;
+    border-radius: 4px;
+    text-align: center;
+    display: block;
+    text-decoration: none;
+    margin-bottom: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    transition: background-color 0.3s, color 0.3s;
+  }
+  
+  .profile-btn:hover {
+    background-color: #0073b1;
+    color: #fff;
+  }
+  
+  .logout-btn {
+    background-color: transparent;
+    border: none;
+    color: #0073b1;
+    padding: 8px;
+    border-radius: 4px;
+    text-align: center;
+    display: block;
+    text-decoration: none;
+    margin-bottom: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    transition: background-color 0.3s;
+  }
+  
+  .logout-btn:hover {
+    background-color: rgba(0, 115, 177, 0.1);
+  }
+
+  #nav-right {
+    margin-right: 70px;
+    margin-top: -15px; /* Adjust the value as needed to move the image to the left */
+  }

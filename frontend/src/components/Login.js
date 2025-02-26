@@ -1,18 +1,20 @@
 import React, { useState } from 'react';
 import { useNavigate } from "react-router-dom";
 import axios from 'axios';
+import { FaEye, FaEyeSlash } from 'react-icons/fa';
 
 const Login = () => {
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState(null);
+    const [showPassword, setShowPassword] = useState(false);
 
     const navigate = useNavigate();
 
     const handleLogin = async (e) => {
         e.preventDefault();
         setError(null);
-        console.log(username,password)
+        console.log(username, password)
         try {
             const response = await axios.post(`${process.env.REACT_APP_BASE_URL}/login`, {
                 username,
@@ -20,9 +22,10 @@ const Login = () => {
             });
             if (response.status === 200) {
                 localStorage.setItem('token', response.data.token);
+                localStorage.setItem('user_id', response.data.user_id);
                 navigate('/');
             } else {
-                setError(response.data.message || 'Login failed');
+                setError(response.data.message || 'Wrong username or password');
             }
         } catch (error) {
             setError(error.response?.data?.message || 'An error occurred. Please try again.');
@@ -34,7 +37,7 @@ const Login = () => {
             <div id="page-container">
                 <div className="login login-with-news-feed">
                     <div className="news-feed">
-                        <div className="news-image" style={{backgroundImage: "url(assets/images/background.jpg)"}}></div>
+                        <div className="news-image" style={{ backgroundImage: "url(assets/images/background.jpg)" }}></div>
                         <div className="news-caption">
                             <h4 className="caption-title"><b>Meta</b>Scout</h4>
                         </div>
@@ -47,11 +50,10 @@ const Login = () => {
                                 <b>Meta</b>Scout
                                 <small>A smarter way to scout</small>
                             </div>
-                            <div className="icon">
-                                <i className="fa fa-sign-in"></i>
-                            </div>
+                            
                         </div>
                         <div className="login-content">
+                            {error && <p style={{ color: 'red' }}>{error}</p>}
                             <form onSubmit={handleLogin} className="margin-bottom-0">
                                 <div className="form-group m-b-15">
                                     <input
@@ -65,7 +67,7 @@ const Login = () => {
                                 </div>
                                 <div className="form-group m-b-15">
                                     <input
-                                        type="password"
+                                        type={showPassword ? "text" : "password"} 
                                         className="form-control form-control-lg"
                                         placeholder="Password"
                                         value={password}
@@ -73,6 +75,12 @@ const Login = () => {
                                         required
                                     />
                                 </div>
+                                <span
+                                    onClick={() => setShowPassword(!showPassword)}
+                                    style={{ position: 'absolute', right: '70px', top: '49.5%', transform: 'translateY(-50%)', cursor: 'pointer' }}
+                                >
+                                    {showPassword ? <FaEyeSlash /> : <FaEye />}
+                                </span>
                                 <div className="checkbox checkbox-css m-b-30">
                                     <input type="checkbox" id="remember_me_checkbox" value="" />
                                     <label htmlFor="remember_me_checkbox">
@@ -83,7 +91,7 @@ const Login = () => {
                                     <button type="submit" className="btn btn-primary btn-block btn-lg">Sign me in</button>
                                 </div>
                                 <div className="m-t-20 m-b-40 p-b-40">
-                                    Not a member yet? Click <a href="register_v3.html" style={{color:"black"}}>here</a> to register.
+                                    Not a member yet? Click <a href="/register" style={{ color: "black" }}>here</a> to register.
                                 </div>
                                 <hr />
                                 <p className="text-center">
