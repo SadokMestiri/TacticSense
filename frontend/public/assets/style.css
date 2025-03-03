@@ -705,7 +705,7 @@ a{
   .reactions-bar {
     display: flex;
     position: absolute;
-    bottom: calc(100% + 5px); /* Positions it right above the button */
+    bottom: calc(100% + 0px); /* Positions it right above the button */
     left: 50%;
     transform: translateX(-50%);
     background: white;

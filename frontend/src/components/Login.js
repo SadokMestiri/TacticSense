@@ -1,95 +1,100 @@
 import React, { useState } from 'react';
 import { useNavigate } from "react-router-dom";
 import axios from 'axios';
+import { FaEye, FaEyeSlash } from 'react-icons/fa';
+import Cookies from 'js-cookie';
+import jwt_decode from 'jwt-decode';
 
 const Login = () => {
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState(null);
-
+    const [showPassword, setShowPassword] = useState(false);
+    
     const navigate = useNavigate();
+    const baseUrl = process.env.REACT_APP_BASE_URL || "http://127.0.0.1:5000";
 
     const handleLogin = async (e) => {
         e.preventDefault();
         setError(null);
-        console.log(username,password)
+        
         try {
-            const response = await axios.post(`${process.env.REACT_APP_BASE_URL}/login`, {
-                username,
-                password
-            });
+            const response = await axios.post(
+                `${baseUrl}/login`, 
+                { username, password },
+                { headers: { "Content-Type": "application/json" } }
+            );
+        
             if (response.status === 200) {
-                localStorage.setItem('token', response.data.token);
+                const { token } = response.data;
+                const decodedToken = jwt_decode(token);
+                const userId = decodedToken?.public_id;
+                
+                // Fetch user details using the userId
+                const userResponse = await axios.get(`${baseUrl}/get_user/${userId}`);
+                const user = userResponse.data;
+    
+                // Store token and user data in cookies
+                Cookies.set('token', token, { expires: 1 });
+                Cookies.set('user', JSON.stringify(user), { expires: 1 });
+
                 navigate('/');
-            } else {
-                setError(response.data.message || 'Login failed');
             }
         } catch (error) {
-            setError(error.response?.data?.message || 'An error occurred. Please try again.');
+            setError(error.response?.data?.message || 'Invalid username or password');
         }
     };
-
+    
     return (
-        <div>
-            <div id="page-container">
-                <div className="login login-with-news-feed">
-                    <div className="news-feed">
-                        <div className="news-image" style={{backgroundImage: "url(assets/images/background.jpg)"}}></div>
-                        <div className="news-caption">
-                            <h4 className="caption-title"><b>Meta</b>Scout</h4>
+        <div id="page-container">
+            <div className="login login-with-news-feed">
+                <div className="news-feed">
+                    <div className="news-image" style={{ backgroundImage: "url(assets/images/background.jpg)" }}></div>
+                    <div className="news-caption">
+                        <h4 className="caption-title"><b>Meta</b>Scout</h4>
+                    </div>
+                </div>
+
+                <div className="right-content">
+                    <div className="login-header">
+                        <div className="brand">
+                            <b>Meta</b>Scout
+                            <small>A smarter way to scout</small>
                         </div>
                     </div>
-
-                    <div className="right-content">
-                        <div className="login-header">
-                            <div className="brand">
-                                <a href="index.html" className="meta-logo"><img src="assets/images/logo.png" alt="logo" /></a>
-                                <b>Meta</b>Scout
-                                <small>A smarter way to scout</small>
+                    <div className="login-content">
+                        {error && <p className="alert alert-danger">{error}</p>}
+                        <form onSubmit={handleLogin}>
+                            <div className="form-group">
+                                <input
+                                    type="text"
+                                    className="form-control form-control-lg"
+                                    placeholder="Username"
+                                    value={username}
+                                    onChange={(e) => setUsername(e.target.value)}
+                                    required
+                                />
                             </div>
-                            <div className="icon">
-                                <i className="fa fa-sign-in"></i>
+                            <div className="form-group">
+                                <input
+                                    type={showPassword ? "text" : "password"} 
+                                    className="form-control form-control-lg"
+                                    placeholder="Password"
+                                    value={password}
+                                    onChange={(e) => setPassword(e.target.value)}
+                                    required
+                                />
+                                <span
+                                    onClick={() => setShowPassword(!showPassword)}
+                                    style={{ position: 'absolute', right: '20px', top: '40%', cursor: 'pointer' }}
+                                >
+                                    {showPassword ? <FaEyeSlash /> : <FaEye />}
+                                </span>
                             </div>
-                        </div>
-                        <div className="login-content">
-                            <form onSubmit={handleLogin} className="margin-bottom-0">
-                                <div className="form-group m-b-15">
-                                    <input
-                                        type="text"
-                                        className="form-control form-control-lg"
-                                        placeholder="Username"
-                                        value={username}
-                                        onChange={(e) => setUsername(e.target.value)}
-                                        required
-                                    />
-                                </div>
-                                <div className="form-group m-b-15">
-                                    <input
-                                        type="password"
-                                        className="form-control form-control-lg"
-                                        placeholder="Password"
-                                        value={password}
-                                        onChange={(e) => setPassword(e.target.value)}
-                                        required
-                                    />
-                                </div>
-                                <div className="checkbox checkbox-css m-b-30">
-                                    <input type="checkbox" id="remember_me_checkbox" value="" />
-                                    <label htmlFor="remember_me_checkbox">
-                                        Remember Me
-                                    </label>
-                                </div>
-                                <div className="login-buttons">
-                                    <button type="submit" className="btn btn-primary btn-block btn-lg">Sign me in</button>
-                                </div>
-                                <div className="m-t-20 m-b-40 p-b-40">
-                                    Not a member yet? Click <a href="register_v3.html" style={{color:"black"}}>here</a> to register.
-                                </div>
-                                <hr />
-                                <p className="text-center">
-                                    &copy; MetaScout All Right Reserved 2025
-                                </p>
-                            </form>
+                            <button type="submit" className="btn btn-primary btn-block">Sign in</button>
+                        </form>
+                        <div className="m-t-20">
+                            <a href="/Reset">Forgot password?</a>
                         </div>
                     </div>
                 </div>

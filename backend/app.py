@@ -1,18 +1,30 @@
 import os
-from flask import Flask, request, jsonify, send_from_directory, url_for
+from flask import Flask, request, jsonify, send_from_directory, url_for, make_response
+from flask_mail import Message as MailMessage
 from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
-from datetime import datetime
 from sqlalchemy import Enum
-
+import jwt
+from functools import wraps
+from datetime import datetime, timedelta
+from flask_mail import Mail
+from flask_cors import CORS
 
 
 app = Flask(__name__,template_folder='templates')
+CORS(app, origins=["http://localhost:3000"])
+app.config['SECRET_KEY'] = '59c9d8576f920846140e2a8985911bec588c08aebf4c7799ba0d5ae388393703'  
 app.config['SQLALCHEMY_DATABASE_URI'] = "postgresql://postgres:0000@localhost/metascout"
 db = SQLAlchemy(app)
-CORS(app, supports_credentials=True)
+app.config['UPLOAD_FOLDER'] = 'uploads'
+app.config['MAIL_SERVER'] = 'smtp.gmail.com'
+app.config['MAIL_PORT'] = 465
+app.config['MAIL_USE_SSL'] = True
+app.config['MAIL_USERNAME'] = 'layouni.nourelhouda@gmail.com'
+app.config['MAIL_PASSWORD'] = 'kvni phac wprf smll'
+mail = Mail(app)
 app.config['UPLOAD_FOLDER'] = 'uploads'
 app.config['ALLOWED_EXTENSIONS'] = {'png', 'jpg', 'jpeg', 'gif', 'mp4', 'mov', 'avi'}
 app.config['MAX_CONTENT_LENGTH'] = 100 * 1024 * 1024  
@@ -83,12 +95,33 @@ class Message(db.Model):
     receiver_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     message = db.Column(db.String(500), nullable=False)
     timestamp = db.Column(db.DateTime, default=db.func.current_timestamp())
+    seen = db.Column(db.Boolean, default=False) 
+    conversation_id = db.Column(db.Integer, db.ForeignKey('conversation.id'), nullable=False)
+
 
 class Conversation(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user1_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     user2_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     last_message_time = db.Column(db.DateTime, default=db.func.current_timestamp())
+
+def token_required(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        token = request.headers.get('Authorization')
+
+        if not token:
+            return jsonify({'message': 'Token is missing!'}), 401
+
+        try:
+            decoded_token = jwt.decode(token.split(" ")[1], app.config['SECRET_KEY'], algorithms=['HS256'])
+            current_user = User.query.get(decoded_token['user_id'])
+        except:
+            return jsonify({'message': 'Token is invalid!'}), 401
+
+        return f(current_user, *args, **kwargs)
+    
+    return decorated
 
 
 @app.route('/')
@@ -106,52 +139,154 @@ def send_message():
     if not sender or not receiver:
         return jsonify({'message': 'Invalid sender or receiver'}), 400
     
+    # Create a new message
     new_message = Message(
         sender_id=data['sender_id'],
         receiver_id=data['receiver_id'],
-        message=data['message']
+        message=data['message'],
+        seen=False,
+        conversation_id=data['conversation_id']
     )
     
     db.session.add(new_message)
     db.session.commit()
     
-    return jsonify({'message': 'Message sent successfully'}), 201
+    # Return the new message
+    return jsonify({
+        'message': 'Message sent successfully',
+        'message_id': new_message.id,
+        'sender_id': new_message.sender_id,
+        'receiver_id': new_message.receiver_id,
+        'message': new_message.message,
+        'timestamp': new_message.timestamp.strftime('%Y-%m-%d %H:%M:%S')
+    }), 201
+
+@app.route('/mark_message_seen/<int:message_id>', methods=['POST'])
+def mark_message_seen(message_id):
+    message = Message.query.get(message_id)
+    
+    if message:
+        message.seen = True
+        db.session.commit()
+        return jsonify({'message': 'Message marked as seen'}), 200
+    else:
+        return jsonify({'message': 'Message not found'}), 404
+
 @app.route('/get_messages/<int:user1_id>/<int:user2_id>', methods=['GET'])
 def get_messages(user1_id, user2_id):
     messages = Message.query.filter(
         (Message.sender_id == user1_id and Message.receiver_id == user2_id) |
         (Message.sender_id == user2_id and Message.receiver_id == user1_id)
-    ).all()
+    ).order_by(Message.timestamp.asc()).all()  # Order by timestamp
     
+    # Fetch the user profiles (assuming there is a User model)
+    user1 = User.query.get(user1_id)
+    user2 = User.query.get(user2_id)
+
     message_list = []
     for msg in messages:
+        # Determine the sender and receiver's profile image
+        sender_image = user1.profile_image if msg.sender_id == user1_id else user2.profile_image
+        receiver_image = user1.profile_image if msg.receiver_id == user1_id else user2.profile_image
+        
         message_list.append({
+            'id': msg.id,
             'sender_id': msg.sender_id,
             'receiver_id': msg.receiver_id,
             'message': msg.message,
-            'timestamp': msg.timestamp
+            'timestamp': msg.timestamp.strftime('%Y-%m-%d %H:%M:%S'),
+            'sender_image': sender_image,
+            'receiver_image': receiver_image,
+            'seen': msg.seen
         })
     
     return jsonify(message_list), 200
+
 @app.route('/create_conversation', methods=['POST'])
 def create_conversation():
     data = request.get_json()
     
+    # Check if conversation already exists
     conversation = Conversation.query.filter(
         ((Conversation.user1_id == data['user1_id']) & (Conversation.user2_id == data['user2_id'])) |
         ((Conversation.user1_id == data['user2_id']) & (Conversation.user2_id == data['user1_id']))
     ).first()
     
     if not conversation:
+        # Create new conversation
         new_conversation = Conversation(
             user1_id=data['user1_id'],
             user2_id=data['user2_id']
         )
         db.session.add(new_conversation)
         db.session.commit()
+        return jsonify({'message': 'Conversation created successfully', 'conversation_id': new_conversation.id}), 201
     
-    return jsonify({'message': 'Conversation created successfully'}), 201
+    return jsonify({'message': 'Conversation already exists', 'conversation_id': conversation.id}), 200
 
+@app.route('/get_conversations/<int:user_id>', methods=['GET'])
+def get_conversations(user_id):
+    try:
+        # Get conversations for the user (either user1_id or user2_id)
+        conversations = db.session.query(Conversation).filter(
+            (Conversation.user1_id == user_id) | (Conversation.user2_id == user_id)
+        ).all()
+
+        # Prepare the conversation data
+        conversations_data = []
+        for conversation in conversations:
+            # Get the other user in the conversation
+            other_user_id = conversation.user1_id if conversation.user2_id == user_id else conversation.user2_id
+            other_user = db.session.query(User).filter_by(id=other_user_id).first()
+
+            # Get the last message in the conversation
+            last_message = db.session.query(Message).filter_by(conversation_id=conversation.id).order_by(Message.timestamp.desc()).first()
+            
+            last_message_text = last_message.message if last_message else "No messages yet"
+            last_time = last_message.timestamp if last_message else datetime.utcnow()
+
+            # Count the unread messages where the logged-in user is the receiver and the message is not seen
+            unread_count = db.session.query(Message).filter(
+                Message.conversation_id == conversation.id,
+                Message.receiver_id == user_id,  # Ensure the logged-in user is the receiver
+                Message.seen == False  # Only count unread messages
+            ).count()
+
+            conversations_data.append({
+                'id': other_user.id,
+                'name': other_user.name,
+                'profile_image': other_user.profile_image,
+                'last_message': last_message_text,
+                'last_time': last_time.strftime('%Y-%m-%d %H:%M:%S'),
+                'unread_count': unread_count,
+                'conversation_id': conversation.id
+            })
+
+        return jsonify(conversations_data), 200
+    except Exception as e:
+        return jsonify({"message": str(e)}), 500
+
+
+    except Exception as e:
+        print(f"Error fetching conversations: {e}")
+        return jsonify({"error": "An error occurred while fetching conversations."}), 500
+
+@app.route('/get_post_by_id/<int:post_id>', methods=['GET'])
+def get_post_by_id(post_id):
+    post = Post.query.get(post_id)
+    
+    if post:
+        return jsonify({
+            'id': post.post_id,
+            'user_id': post.user_id,
+            'content': post.content,
+            'image_url': post.image_url,
+            'video_url': post.video_url,
+            'created_at': post.created_at
+        })
+    else:
+        return jsonify({'message': 'Post not found'}), 404
+    
 @app.route('/get_user/<int:user_id>', methods=['GET'])
 def get_user(user_id):
     try:
@@ -200,6 +335,21 @@ def register():
         print(f"Error: {e}")
         return jsonify({'error': 'An error occurred. Please try again.'}), 500
 
+@app.route('/me', methods=['GET'])
+def get_userId():
+    token = request.cookies.get('token')
+    if not token:
+        return jsonify({'message': 'Token is missing!'}), 401
+
+    try:
+        decoded_token = jwt.decode(token, app.config['SECRET_KEY'], algorithms=['HS256'])
+        user_id = decoded_token['user_id']
+        return jsonify({'user_id': user_id})
+    except jwt.ExpiredSignatureError:
+        return jsonify({'message': 'Token has expired'}), 401
+    except jwt.InvalidTokenError:
+        return jsonify({'message': 'Invalid token'}), 401
+    
 @app.route('/login', methods=['POST'])
 def login():
     data = request.get_json()
@@ -207,10 +357,64 @@ def login():
     password = data.get('password')
 
     user = User.query.filter_by(username=username).first()
+    
+    # Check if user exists and password matches
     if user and check_password_hash(user.password, password):
-        return jsonify({'message': 'Login successful'}), 200
+        # Create JWT token with expiration of 24 hours
+        token = jwt.encode({
+            'public_id': user.id,
+            'exp': datetime.utcnow() + timedelta(hours=1)
+        }, app.config['SECRET_KEY'])
+        return jsonify({'token': str(token)}) ,200
     else:
         return jsonify({'message': 'Invalid username or password'}), 401
+    
+@app.route('/resetPassword', methods=['PUT'])
+def reset_password():
+    token = request.json['token']
+    newPassword = request.json['newPassword']
+    try:
+        payload = jwt.decode(token, app.config['SECRET_KEY'], algorithms=['HS256'])
+        user_id = payload['public_id']
+
+        user = User.query.filter_by(id=user_id).first()
+        if user:
+            user.password = generate_password_hash(newPassword, method='sha256')
+            db.session.commit()
+            return jsonify({'success': True}), 200
+        else:
+            return jsonify({'success': False, 'message': 'Utilisateur introuvable'}), 404
+    except jwt.ExpiredSignatureError:
+        return jsonify({'success': False, 'message': 'Session expirée'}), 401
+    except jwt.InvalidTokenError:
+        return jsonify({'success': False, 'message': 'Invalid token'}), 401
+
+def send_reset_email(email, user_id):
+    token = jwt.encode({'public_id': user_id, 'exp': datetime.utcnow() + timedelta(hours=24)}, app.config['SECRET_KEY'], algorithm='HS256')
+    subject = "Réinitialiser votre mot de passe"
+    reset_link = f"http://localhost:3000/ResetPassword?token={str(token)}"
+
+    msg = MailMessage(subject="Réinitialiser votre mot de passe",
+                      sender=app.config['MAIL_USERNAME'],
+                      recipients=[email])
+    msg.html = f"""
+            <p>Hello,</p>
+            <p>Click on the link to reset your password: {reset_link}</p>
+            <p>Best regards,<br>The MetaScout Team</p>
+        """
+    mail.send(msg)
+
+@app.route('/reset', methods=['POST'])
+def reset():
+    username = request.json['username']
+    email = request.json['email']
+    user = User.query.filter_by(username=username).first()
+    
+    if user: 
+                send_reset_email(email, user.id)
+                return jsonify({"message": "mail envoyé"}), 200
+    else:
+        return jsonify({"error": "email introuvable"}), 401
 
 @app.route('/uploads/<filename>')
 def uploaded_file(filename):

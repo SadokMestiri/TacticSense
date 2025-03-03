@@ -1,21 +1,22 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import Cookies from 'js-cookie';
+import jwt_decode from 'jwt-decode';
+import { useNavigate } from "react-router-dom";
 
-const Home = () => {
+const Home = ({ header }) => {
+  const navigate = useNavigate();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isActivityOpen, setIsActivityOpen] = useState(false);
   const [posts, setPosts] = useState([]); 
-  const user_id = 6;
   const [text, setText] = useState('');
   const [image, setImage] = useState(null);
   const [video, setVideo] = useState(null);
-  const [user, setUser] = useState({});
   const [users, setUsers] = useState([]);
   const [error, setError] = useState(null);
   const [comments, setComments] = useState([]);
   const [selectedPost, setSelectedPost] = useState(null); // For managing the selected post
   const [isCommentsVisible, setIsCommentsVisible] = useState(false); // To control visibility of the comments popup
-
   const [showReactions, setShowReactions] = useState(null);
 const reactions = [
   { name: "like", icon: "assets/images/post-like.png" },
@@ -25,9 +26,30 @@ const reactions = [
   { name: "sad", icon: "assets/images/sad.png" },
   { name: "angry", icon: "assets/images/angry.png" },
 ];
+const token = Cookies.get('token');
+let decodedToken = null;
+let exp = null;
 
+if (token) {
+  decodedToken = jwt_decode(token);
+  exp = decodedToken?.exp;
+}
 
-
+const date = exp ? new Date(exp * 1000) : null;
+const now = new Date();
+const [allowed, setAllowed] = useState(false);
+const user =  JSON.parse(Cookies.get('user'));
+// Token expiration check
+useEffect(() => {
+  if (!token || !decodedToken) {
+    navigate('/login');
+  } else if (date && date.getTime() < now.getTime()) {
+    Cookies.remove('token');
+    navigate('/login');
+  } else {
+    setAllowed(true);
+  }
+}, [token, decodedToken, navigate, date]);
 
 
   const getTimeAgo = (createdAt) => {
@@ -107,18 +129,8 @@ const reactions = [
         setError(error.response?.data?.message || 'Error fetching user data');
     }
 };
-const fetchUser = async () => {
-  try {
-      const response = await axios.get(`${process.env.REACT_APP_BASE_URL}/get_user/${user_id}`);
 
-      setUser(response.data);
-  } catch (error) {
-      setError(error.response?.data?.message || 'Error fetching user data');
-  }
-};
-  useEffect(() => {
-    fetchUser();
-}, [user_id]);
+
 
   const handleTextChange = (e) => {
     setText(e.target.value);
@@ -139,7 +151,7 @@ const fetchUser = async () => {
     console.log('Submitting post with text:', text);
     
     const formData = new FormData();
-    formData.append('user_id', user_id);
+    formData.append('user_id', user.id);
     formData.append('text', text);
     if (image) {
       formData.append('image', image); 
@@ -185,11 +197,11 @@ const fetchUser = async () => {
   useEffect(() => {
     fetchPosts();
   }, []);
-
+console.log(user)
   const handleReaction = async (postId, reactionType) => {
     try {
       const response = await axios.post(`${process.env.REACT_APP_BASE_URL}/react_to_post`, {
-        user_id,
+        user_id:user.id,
         post_id: postId,
         reaction_type: reactionType,
       });
@@ -221,78 +233,14 @@ const fetchUser = async () => {
 
   return (
     <div>
-      <nav className="navbar">
-        <div className="navbar-left">
-          <a href="index.html" className="meta-logo"><img src="assets/images/logo.png" alt="logo" /></a>
-          <div className="search-box">
-            <img src="assets/images/search.png" alt="search" />
-            <input type="text" placeholder="Search for anything" />
-          </div>
-        </div>
-        <div className="navbar-center">
-          <ul>
-            <li><a href="#" className="active-link"><img src="assets/images/home.png" alt="home" /> <span>Home</span></a></li>
-            <li><a href="#"><img src="assets/images/network.png" alt="network" /> <span>My Network</span></a></li>
-            <li><a href="#"><img src="assets/images/jobs.png" alt="jobs" /> <span>Jobs</span></a></li>
-            <li><a href="#"><img src="assets/images/message.png" alt="message" /> <span>Messaging</span></a></li>
-            <li><a href="#"><img src="assets/images/notification.png" alt="notification" /> <span>Notifications</span></a></li>
-          </ul>
-        </div>
-        <div className="navbar-right">
-          <div className="online">
-            <img src={`${process.env.REACT_APP_BASE_URL}/${user.profile_image}`}  className="nav-profile-img"  alt="profile" />
-          </div>
-        </div>
-
-        {/* Dropdown menu */}
-        {isMenuOpen && (
-          <div className="profile-menu-wrap">
-            <div className="profile-menu">
-              <div className="user-info">
-                <img src={`${process.env.REACT_APP_BASE_URL}/${user.profile_image}`}  alt="user" />
-                <div>
-                  <h3>John Doe</h3>
-                  <a href="#">See your profile</a>
-                </div>
-              </div>
-              <hr />
-              <a href="#" className="profile-menu-link">
-                <img src="assets/images/feedback.png" alt="feedback" />
-                <p>Give Feedback</p>
-                <span></span>
-              </a>
-              <a href="#" className="profile-menu-link">
-                <img src="assets/images/setting.png" alt="settings" />
-                <p>Settings & Privacy</p>
-                <span></span>
-              </a>
-              <a href="#" className="profile-menu-link">
-                <img src="assets/images/help.png" alt="help" />
-                <p>Help & Support</p>
-                <span></span>
-              </a>
-              <a href="#" className="profile-menu-link">
-                <img src="assets/images/display.png" alt="display" />
-                <p>Display & Accessibility</p>
-                <span></span>
-              </a>
-              <a href="#" className="profile-menu-link">
-                <img src="assets/images/logout.png" alt="logout" />
-                <p>Logout</p>
-                <span></span>
-              </a>
-            </div>
-          </div>
-        )}
-      </nav>
-
+ {header}
       <div className="container">
         <div className="left-sidebar">
           <div className="sidebar-profile-box">
             <img src="assets/images/cover-pic.jpg" alt="cover" width="100%" />
             <div className="sidebar-profile-info">
               <img  src={`${process.env.REACT_APP_BASE_URL}/${user.profile_image}`}   alt="profile" />
-              <h1>Lionel Messi</h1>
+              <h1>{user.name}</h1>
               <h3>Professional footballer</h3>
               <ul>
                 <li>Your profile views <span>24K</span></li>
