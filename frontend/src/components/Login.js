@@ -38,7 +38,7 @@ const Login = () => {
                 Cookies.set('token', token, { expires: 1 });
                 Cookies.set('user', JSON.stringify(user), { expires: 1 });
 
-                navigate('/');
+                navigate('/home');
             }
         } catch (error) {
             setError(error.response?.data?.message || 'Invalid username or password');
@@ -94,8 +94,13 @@ const Login = () => {
                             <button type="submit" className="btn btn-primary btn-block">Sign in</button>
                         </form>
                         <div className="m-t-20">
-                            <a href="/Reset">Forgot password?</a>
+                            <div className="mb-2">
+                                <a href="/Reset">Forgot password?</a>
+                            </div>
+                        <div>
+                            Don't have an account? <a href="/Register">Sign up</a>
                         </div>
+                    </div>
                     </div>
                 </div>
             </div>

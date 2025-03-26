@@ -16,7 +16,7 @@ from flask_cors import CORS
 app = Flask(__name__,template_folder='templates')
 CORS(app, origins=["http://localhost:3000"])
 app.config['SECRET_KEY'] = '59c9d8576f920846140e2a8985911bec588c08aebf4c7799ba0d5ae388393703'  
-app.config['SQLALCHEMY_DATABASE_URI'] = "postgresql://postgres:0000@localhost/metascout"
+app.config['SQLALCHEMY_DATABASE_URI'] = "postgresql://postgres:admin@localhost/metascout"
 db = SQLAlchemy(app)
 app.config['UPLOAD_FOLDER'] = 'uploads'
 app.config['MAIL_SERVER'] = 'smtp.gmail.com'
@@ -323,7 +323,7 @@ def register():
             profile_image_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
             profile_image.save(profile_image_path) 
 
-        hashed_password = generate_password_hash(password, method='sha256')
+        hashed_password = generate_password_hash(password, method='pbkdf2:sha256')
 
         new_user = User(username=username, email=email, password=hashed_password, name=name, profile_image=profile_image_path)
 
@@ -379,7 +379,7 @@ def reset_password():
 
         user = User.query.filter_by(id=user_id).first()
         if user:
-            user.password = generate_password_hash(newPassword, method='sha256')
+            user.password = generate_password_hash(newPassword, method='pbkdf2:sha256')
             db.session.commit()
             return jsonify({'success': True}), 200
         else:
