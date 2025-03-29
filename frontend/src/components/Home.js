@@ -4,6 +4,9 @@ import Cookies from 'js-cookie';
 import jwt_decode from 'jwt-decode';
 import { useNavigate } from "react-router-dom";
 
+import CustomVideoPlayer from './CustomVideoPlayer';
+
+
 const Home = ({ header }) => {
   const navigate = useNavigate();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -380,10 +383,10 @@ console.log(user)
             />
           )}
         {post.video_url && (
-  <video autoPlay muted controls style={{ width: '100%' }}>
-    <source src={`${process.env.REACT_APP_BASE_URL}${post.video_url}`} type="video/mp4" />
-    Your browser does not support the video tag.
-  </video>
+  <CustomVideoPlayer 
+    videoUrl={`${process.env.REACT_APP_BASE_URL}${post.video_url}`}
+    postId={post.id}
+  />
 )}
 
 <div className="post-stats">
