@@ -653,3 +653,297 @@ a{
 
     
 }
+.media-preview img, .media-preview video {
+    max-width: 150px;
+    margin-top: 10px;
+  }
+  /* Style for the file upload area */
+.file-upload-area {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    padding: 20px;
+    border: 2px dashed #ccc; /* Dotted border for the upload area */
+    border-radius: 8px;
+    background-color: #211f1f93; /* Light background for the upload area */
+    cursor: pointer;
+    transition: all 0.3s ease;
+    width: 360px;
+}
+
+/* On hover, change background and border */
+.file-upload-area:hover {
+    border-color: #04c142;
+}
+
+/* Icon styling */
+.file-upload-area .fa-cloud-upload-alt {
+    font-size: 40px;
+    color: #434343;
+    margin-bottom: 10px;
+}
+.file-upload-area .fa-cloud-upload-alt:hover {
+    color: #04c142;
+}
+
+/* Text styling */
+.file-upload-area p {
+    font-size: 14px;
+    color: #656565;
+}
+
+/* Remove the default file input styles */
+.file-upload-input {
+    display: none;
+}
+.reaction-container {
+    position: relative;
+    display: inline-block;
+  }
+  
+  .reactions-bar {
+    display: flex;
+    position: absolute;
+    bottom: calc(100% + 0px); /* Positions it right above the button */
+    left: 50%;
+    transform: translateX(-50%);
+    background: white;
+    padding: 8px;
+    border-radius: 20px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    gap: 10px;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.2s ease-in-out, transform 0.2s ease-in-out;
+  }
+  
+  .reaction-icon {
+    width: 30px;
+    height: 30px;
+    transition: transform 0.2s ease-in-out;
+    cursor: pointer;
+  }
+  
+  .reaction-icon:hover {
+    transform: scale(1.5);
+  }
+  
+  .reaction-container:hover .reactions-bar {
+    opacity: 1;
+    visibility: visible;
+  }
+  .post-reactions {
+    display: flex;
+    align-items: center;
+    gap: 1px; /* Small gap between icons */
+}
+
+.post-reaction-icon {
+    width: 18px; /* Adjust size to match design */
+    height: 18px;
+    margin-top: 5px;
+    margin-bottom: 5px;
+
+  }
+.total-reactions {
+    font-size: 14px;
+    font-weight: 500;
+    margin-left: 10px; /* Space between icons and count */
+    margin-top: 2px;
+}
+
+  /* Wrapper for the comment input inside post-stats */
+.comment-input-wrapper {
+    display: flex;
+    align-items: center;
+    width: 100%; /* Full width, same as post activity section */
+    margin-top: 10px; /* Space between activity links and comment input */
+    padding-top: 5px;
+    padding-bottom: 5px;
+    background-color: #f5f5f5; /* Light background to separate from post content */
+    border-radius: 10px;
+    padding-left: 10px;
+    padding-right: 10px;
+  }
+  
+  /* Textarea for comment input */
+  .comment-input {
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+    border-radius: 25px;
+    font-size: 14px;
+    line-height: 18px;
+    resize: none;
+    background-color: #fff;
+    margin-right: 10px;
+    box-sizing: border-box;
+  }
+  
+  /* Send button styling */
+  .comment-send-btn {
+    background: none;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    padding: 8px;
+    background-color: #fff;
+    border-radius: 50%;
+    transition: background-color 0.3s;
+  }
+  
+  .comment-send-btn:hover {
+    background-color: #136d15;
+  }
+  
+  .comment-send-btn:focus {
+    outline: none;
+  }
+  
+  /* Send icon styling inside button */
+  .send-icon {
+    width: 18px;
+    height: 18px;
+  }
+  
+  /* If you want to focus effect on textarea */
+  .comment-input:focus {
+    border-color: #136d15;
+    outline: none;
+  }.comments-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+  }
+  
+  .modal-content {
+    background-color: #fff;
+    padding: 20px;
+    width: 100%;
+    max-width: 500px;
+    border-radius: 12px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+    display: flex;
+    flex-direction: column;
+    position: relative; /* Important for positioning the close button */
+  }
+  
+  .modal-header {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+    padding-bottom: 10px;
+    border-bottom: 2px solid #eee;
+  }
+  
+  .modal-header h3 {
+    margin: 0;
+    font-size: 18px;
+    color: #333;
+    flex-grow: 1;
+    text-align: center;
+  }
+  
+  /* Close button positioned in the top-right corner */
+  .modal-close {
+margin-left: 100px;
+    background: none;
+    border: none;
+    font-size: 22px;
+    cursor: pointer;
+    color: #888;
+  }
+  
+  .modal-close:hover {
+    color: #555;
+  }
+  
+  .modal-body {
+    max-height: 350px;
+    overflow-y: auto;
+    padding-right: 5px;
+    display: flex;
+    flex-direction: column; /* Ensures comments stack vertically */
+    width: 100%;
+  }
+  
+  /* Custom scrollbar */
+  .modal-body::-webkit-scrollbar {
+    width: 6px;
+  }
+  
+  .modal-body::-webkit-scrollbar-thumb {
+    background-color: #bbb;
+    border-radius: 10px;
+  }
+  
+  .modal-body::-webkit-scrollbar-track {
+    background: #f1f1f1;
+  }
+  
+  /* Comment item - Now stacks under each other */
+  .comment-item {
+    display: flex;
+    flex-direction: column; /* Ensures comments go under each other */
+    gap: 5px;
+    padding: 12px;
+    border-bottom: 1px solid #eee;
+  }
+  
+  .comment-item:last-child {
+    border-bottom: none;
+    
+  }
+  
+  /* User avatar */
+  .comment-avatar {
+    width: 40px !important;
+    border-radius: 50%;
+    object-fit: cover;
+  }
+  
+  /* Comment content */
+  .comment-content {
+    background: #f9f9f9;
+    padding: 10px;
+    border-radius: 8px;
+    font-size: 14px;
+    color: #333;
+    line-height: 1.4;
+    word-wrap: break-word; /* Ensures long words don’t overflow */
+    width: 200px!important;
+
+  }
+  
+  .comment-meta {
+    font-size: 12px;
+    color: #777;
+    margin-top: 5px;
+  }
+  #chat3 .form-control {
+    border-color: transparent;
+  }
+  
+  #chat3 .form-control:focus {
+    border-color: transparent;
+    box-shadow: inset 0px 0px 0px 1px transparent;
+  }
+  
+  .badge-dot {
+    border-radius: 50%;
+    height: 10px;
+    width: 10px;
+    margin-left: 2.9rem;
+    margin-top: -0.75rem;
+  }

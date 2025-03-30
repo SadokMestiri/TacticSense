@@ -3,7 +3,7 @@ __pycache__/
 *.pyc
 *.pyo
 *.pyd
-
+uploads/
 # Virtual environment folder
 /venv/
 /env/
