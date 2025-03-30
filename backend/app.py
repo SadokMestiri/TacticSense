@@ -1003,3 +1003,47 @@ def check_caption_exists():
     except Exception as e:
         print(f"Error checking caption existence: {str(e)}")
         return jsonify({'error': str(e)}), 500
+    
+
+@app.route('/api/get-caption', methods=['GET'])
+def get_caption():
+    """Get caption text for a specific post"""
+    try:
+        post_id = request.args.get('postId')
+        if not post_id:
+            return jsonify({'error': 'No post ID provided'}), 400
+            
+        # Get the video filename from post
+        post = Post.query.get(post_id)
+        if not post or not post.video_url:
+            return jsonify({'error': 'Post not found or no video'}), 404
+            
+        video_filename = os.path.basename(post.video_url)
+        base_filename = os.path.splitext(video_filename)[0]
+        
+        # List all SRT files that might match
+        srt_files = [f for f in os.listdir(PROCESSED_FOLDER) if f.endswith('.srt')]
+        
+        # Try to find a matching SRT file
+        matching_file = None
+        for srt_file in srt_files:
+            if srt_file.startswith(base_filename) or base_filename in srt_file:
+                matching_file = srt_file
+                break
+                
+        if not matching_file:
+            return jsonify({'error': 'No caption file found'}), 404
+            
+        # Read the SRT file
+        srt_path = os.path.join(PROCESSED_FOLDER, matching_file)
+        with open(srt_path, 'r', encoding='utf-8') as f:
+            srt_text = f.read()
+            
+        return jsonify({
+            'srt_text': srt_text,
+            'srt_url': f"/processed_videos/{matching_file}"
+        })
+        
+    except Exception as e:
+        print(f"Error getting caption: {str(e)}")
+        return jsonify({'error': str(e)}), 500

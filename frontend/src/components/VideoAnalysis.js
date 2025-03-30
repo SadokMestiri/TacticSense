@@ -2,6 +2,9 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import Cookies from 'js-cookie';
 import { useParams, useNavigate } from 'react-router-dom';
+import CustomVideoPlayer from './CustomVideoPlayer';
+import TranscriptDisplay from './TranscriptDisplay';
+import './VideoAnalysis.css';
 
 const VideoAnalysis = () => {
   const { postId } = useParams();
@@ -14,6 +17,12 @@ const VideoAnalysis = () => {
   const [audioPlaying, setAudioPlaying] = useState(false);
   const [audioUrl, setAudioUrl] = useState(null);
   const [debugMode, setDebugMode] = useState(true); // Set to true for testing
+  const [captionsFromPlayer, setCaptionsFromPlayer] = useState(null);
+
+
+  // states for transcript functionality
+  const [currentTime, setCurrentTime] = useState(0);
+  const [captionsData, setCaptionsData] = useState(null);
 
 
   // Fetch post video if postId is provided
@@ -32,6 +41,13 @@ const VideoAnalysis = () => {
     }
   }, [postId]);
 
+  // Parse SRT data when result.srt_url changes
+  useEffect(() => {
+    if (result?.srt_url) {
+      fetchAndParseSRT(result.srt_url);
+    }
+  }, [result?.srt_url]);
+
   const fetchPostVideo = async (id) => {
     try {
       setLoading(true);
@@ -47,10 +63,14 @@ const VideoAnalysis = () => {
         
         // Auto-generate analysis if in debug mode
         if (debugMode) {
+          const vidFilename = response.data.video_url.split('/').pop().split('.')[0];
           setResult({
             transcript: "This is a sample transcript for debugging purposes.\n\nThe analysis feature can identify key moments in sports videos and provide insights into player movements, tactical patterns, and game statistics.",
-            srt_url: `/processed_videos/${response.data.video_url.split('/').pop().split('.')[0]}.srt`
+            srt_url: `/processed_videos/${vidFilename}.srt`
           });
+        } else {
+          // If not in debug mode, analyze the video
+          analyzePostVideo(response.data.video_url);
         }
       } else {
         setError('No video found in this post');
@@ -62,6 +82,107 @@ const VideoAnalysis = () => {
       setLoading(false);
     }
   };
+
+  // Function to fetch and parse SRT file
+  const fetchAndParseSRT = async (srtUrl) => {
+    try {
+      console.log("Fetching SRT with modified path");
+      
+      // Extract filename from video URL
+      let filename = videoUrl;
+      if (filename.includes('/uploads/')) {
+        filename = filename.split('/uploads/')[1];
+      } else {
+        filename = filename.split('/').pop();
+      }
+      
+      // Get base filename WITHOUT using split('.')[0] which truncates at first period
+      // Instead use regex to only remove the file extension
+      const base_filename = filename.replace(/\.[^/.]+$/, '');
+      console.log("Full base_filename:", base_filename);
+      
+      const srtUrl = `/processed_videos/${base_filename}.srt`;
+      console.log("Trying SRT URL:", srtUrl);
+      
+      // Fetch SRT content directly with fetch API
+      const srtResponse = await fetch(`${process.env.REACT_APP_BASE_URL}${srtUrl}`);
+      
+      if (srtResponse.ok) {
+        console.log("SRT found successfully!");
+        const srtText = await srtResponse.text();
+        const parsedCaptions = parseSRT(srtText);
+        setCaptionsData(parsedCaptions);
+      } else {
+        console.error("SRT file not found at:", srtUrl);
+      }
+    } catch (err) {
+      console.error("Error fetching SRT:", err);
+    }
+  };
+
+  // SRT parsing function
+  const parseSRT = (srtText) => {
+    const captions = [];
+    
+    try {
+      // Normalize line endings
+      const normalizedText = srtText.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+      
+      // Extract caption blocks with regex
+      const regex = /(\d+)\n(\d{2}:\d{2}:\d{2},\d{3}) --> (\d{2}:\d{2}:\d{2},\d{3})\n([\s\S]*?)(?=\n\n\d+\n|$)/g;
+      
+      let match;
+      while ((match = regex.exec(normalizedText + "\n\n")) !== null) {
+        const index = parseInt(match[1]);
+        const startTime = timeToSeconds(match[2]);
+        const endTime = timeToSeconds(match[3]);
+        const text = match[4].trim();
+        
+        if (!isNaN(startTime) && !isNaN(endTime)) {
+          captions.push({
+            index,
+            start: startTime,
+            end: endTime,
+            text
+          });
+        }
+      }
+      
+      console.log(`Successfully parsed ${captions.length} captions`);
+      return captions;
+    } catch (error) {
+      console.error("Error parsing SRT:", error);
+      return [];
+    }
+  };
+
+  // Helper function to convert timestamp to seconds
+  const timeToSeconds = (timeStr) => {
+    try {
+      const parts = timeStr.split(':');
+      const [hours, minutes, secPart] = parts;
+      const [seconds, milliseconds] = secPart.split(',');
+      
+      return parseInt(hours) * 3600 + 
+             parseInt(minutes) * 60 + 
+             parseInt(seconds) + 
+             parseInt(milliseconds) / 1000;
+    } catch (error) {
+      console.error(`Error parsing time: ${timeStr}`, error);
+      return NaN;
+    }
+  };
+
+  // Handle time updates from the video player
+  const handleTimeUpdate = (time) => {
+    setCurrentTime(time);
+  };
+
+  // function to receive captions from player
+const handleCaptionsLoaded = (captions) => {
+  console.log("Received captions from player:", captions?.length || 0);
+  setCaptionsData(captions);
+};
 
   const analyzePostVideo = async (videoPath) => {
     setLoading(true);
@@ -157,79 +278,65 @@ const handleUpload = async () => {
   };
   
   return (
-    <div className="video-analysis-container" style={{padding: '20px', maxWidth: '800px', margin: '0 auto'}}>
-      <h2>Video Analysis</h2>
+    <div className="video-analysis-container">
+      <div className="video-analysis-header">
+        <h2>Video Analysis</h2>
+      </div>
       
-      {error && (
-        <div style={{background: '#f8d7da', padding: '10px', borderRadius: '4px', marginBottom: '15px'}}>
-          {error}
-        </div>
-      )}
-      
-      {videoUrl && (
-        <div style={{marginBottom: '20px'}}>
-          <video controls width="100%" src={videoUrl} />
-        </div>
-      )}
-      
-      {result && (
-        <div>
-          <h3>Transcript</h3>
-          <div style={{
-            border: '1px solid #ddd', 
-            padding: '15px', 
-            borderRadius: '4px',
-            background: '#f8f9fa',
-            whiteSpace: 'pre-line' // Preserves line breaks
-          }}>
-            {result.transcript}
-          </div>
-          
-          <div style={{marginTop: '20px'}}>
-            <button 
-              onClick={handleTTS}
-              disabled={loading}
-              style={{
-                padding: '8px 16px',
-                background: '#4CAF50',
-                color: 'white',
-                border: 'none',
-                borderRadius: '4px',
-                cursor: 'pointer'
-              }}
-            >
-              {loading ? 'Processing...' : 'Read Aloud'}
-            </button>
-          </div>
-        </div>
-      )}
-      
-      {!result && !loading && !error && (
-        <div style={{textAlign: 'center', margin: '40px 0'}}>
-          <p>Select a video to analyze or upload one below.</p>
-          <input 
-            type="file" 
-            accept="video/*" 
-            onChange={(e) => setFile(e.target.files[0])}
-            style={{display: 'block', margin: '20px auto'}}
-          />
-          {file && (
-            <button 
-              onClick={handleUpload}
-              style={{
-                padding: '8px 16px',
-                background: '#007bff',
-                color: 'white',
-                border: 'none',
-                borderRadius: '4px',
-                cursor: 'pointer'
-              }}
-            >
-              Analyze Video
-            </button>
+      <div className="video-analysis-content">
+        {/* Left side - Video */}
+        <div className="video-section">
+          {videoUrl ? (
+            <CustomVideoPlayer 
+              videoUrl={videoUrl} 
+              postId={postId}
+              onTimeUpdate={handleTimeUpdate}
+              onCaptionsLoaded={handleCaptionsLoaded}
+            />
+          ) : (
+            <div className="video-container-loader">
+              {loading ? (
+                <div className="loading-indicator">Loading video...</div>
+              ) : (
+                <div className="error-message">{error || 'No video available'}</div>
+              )}
+            </div>
           )}
         </div>
-      )}
+        
+        {/* Right side - Transcript */}
+        <div className="analysis-section">
+          {captionsData && (
+            <div className="transcript-section">
+              <h3>Live Transcript</h3>
+              <TranscriptDisplay 
+                captionsData={captionsData}
+                currentTime={currentTime}
+                showTranscript={true}
+              />
+            </div>
+          )}
+          
+          {result?.transcript && (
+            <div className="full-transcript">
+              <h3>Full Transcript</h3>
+              <div className="transcript-text">
+                {result.transcript}
+              </div>
+              
+              <div className="transcript-actions">
+                <button 
+                  onClick={handleTTS}
+                  disabled={loading}
+                  className="tts-button"
+                >
+                  {loading ? 'Processing...' : 'Read Aloud'}
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   );
 };

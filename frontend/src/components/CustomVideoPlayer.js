@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import './CustomVideoPlayer.css';
 import Cookies from 'js-cookie';
 
-const CustomVideoPlayer = ({ videoUrl, postId }) => {
+const CustomVideoPlayer = ({ videoUrl, postId, onTimeUpdate, onCaptionsLoaded, isInAnalysisPage = false }) => {
   const [playing, setPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
@@ -53,6 +53,11 @@ const CustomVideoPlayer = ({ videoUrl, postId }) => {
       const currentTime = video.currentTime;
       // Keep updating currentTime state from your existing code
       setCurrentTime(currentTime);
+
+      // Call the callback if provided
+      if (onTimeUpdate) {
+        onTimeUpdate(currentTime);
+      }
       
       // Find the caption that matches the current time
       const currentCap = captionsData.find(
@@ -74,7 +79,7 @@ const CustomVideoPlayer = ({ videoUrl, postId }) => {
       video.removeEventListener('loadedmetadata', onLoadedMetadata);
       video.removeEventListener('timeupdate', handleTimeUpdate);
     };
-  }, [captionsData]);
+  }, [onTimeUpdate, captionsData]);
   
   const handlePlayPause = () => {
     const video = videoRef.current;
@@ -110,8 +115,8 @@ const CustomVideoPlayer = ({ videoUrl, postId }) => {
         }
         
         // Try to load directly from the expected location
-      const base_filename = filename.replace(/\.[^/.]+$/, '');
-      const srtUrl = `/processed_videos/${base_filename}.srt`;
+        const base_filename = filename.replace(/\.[^/.]+$/, '');
+        const srtUrl = `/processed_videos/${base_filename}.srt`;
       
       try {
         // Try to fetch the SRT directly
@@ -122,6 +127,12 @@ const CustomVideoPlayer = ({ videoUrl, postId }) => {
           const srtText = await srtResponse.text();
           const parsedCaptions = parseSRT(srtText);
           setCaptionsData(parsedCaptions);
+
+          // Now we can safely pass the parsed captions to the parent
+          if (onCaptionsLoaded) {
+            onCaptionsLoaded(parsedCaptions);
+          }
+
           setLoadingCaptions(false);
           return;
         }
@@ -161,6 +172,11 @@ const CustomVideoPlayer = ({ videoUrl, postId }) => {
                 const parsedCaptions = parseSRT(srtText);
                 console.log("FINAL PARSED CAPTIONS:", parsedCaptions);
                 setCaptionsData(parsedCaptions);
+
+                // Now we can safely pass the parsed captions to the parent
+                if (onCaptionsLoaded) {
+                  onCaptionsLoaded(parsedCaptions);
+                }
               } else {
                 throw new Error(`Failed to fetch SRT file: ${srtResponse.status}`);
               }
@@ -180,8 +196,19 @@ const CustomVideoPlayer = ({ videoUrl, postId }) => {
           } finally {
             setLoadingCaptions(false);
           }
+        } else if (captionsData && onCaptionsLoaded) {
+          // If we already have captions, share them
+          onCaptionsLoaded(captionsData);
         }
+        
       };
+
+      // Add a useEffect to share captions when they're initially loaded
+      useEffect(() => {
+        if (captionsData && onCaptionsLoaded) {
+          onCaptionsLoaded(captionsData);
+        }
+      }, [captionsData, onCaptionsLoaded]);
   
     const handleAnalyze = () => {
         navigate(`/video-analysis/${postId}`);
