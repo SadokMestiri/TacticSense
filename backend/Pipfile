@@ -52,6 +52,7 @@ openai-whisper = "*"
 torch = "*"
 numpy = "*"
 ffmpeg-python = "*"
+nltk = "*"
 
 [dev-packages]
 

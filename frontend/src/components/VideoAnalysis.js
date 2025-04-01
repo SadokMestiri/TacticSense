@@ -5,6 +5,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import CustomVideoPlayer from './CustomVideoPlayer';
 import TranscriptDisplay from './TranscriptDisplay';
 import './VideoAnalysis.css';
+import MatchSummary from './MatchSummary';
 
 const VideoAnalysis = () => {
   const { postId } = useParams();
@@ -18,7 +19,11 @@ const VideoAnalysis = () => {
   const [audioUrl, setAudioUrl] = useState(null);
   const [debugMode, setDebugMode] = useState(true); // Set to true for testing
   const [captionsFromPlayer, setCaptionsFromPlayer] = useState(null);
-
+  const [showTranscript, setShowTranscript] = useState(false);
+  const [showSummary, setShowSummary] = useState(false);
+  const [summaryData, setSummaryData] = useState(null);
+  const [analyzingTranscript, setAnalyzingTranscript] = useState(false);
+  
 
   // states for transcript functionality
   const [currentTime, setCurrentTime] = useState(0);
@@ -179,10 +184,15 @@ const VideoAnalysis = () => {
   };
 
   // function to receive captions from player
-const handleCaptionsLoaded = (captions) => {
-  console.log("Received captions from player:", captions?.length || 0);
-  setCaptionsData(captions);
-};
+  const handleCaptionsLoaded = (captions, toggleRequest = false) => {
+    console.log("Received captions from player:", captions?.length || 0);
+    setCaptionsData(captions);
+    
+    // If this is a toggle request from the CC button
+    if (toggleRequest) {
+      setShowTranscript(prev => !prev);
+    }
+  };
 
   const analyzePostVideo = async (videoPath) => {
     setLoading(true);
@@ -209,7 +219,7 @@ const handleCaptionsLoaded = (captions) => {
     }
   };
   
-  const handleFileChange = (e) => {
+  const handleFileChange = (e) => { // deprecated
     setFile(e.target.files[0]);
     // Create a preview URL for the selected file
     if (e.target.files[0]) {
@@ -218,7 +228,7 @@ const handleCaptionsLoaded = (captions) => {
   };
   
 
-const handleUpload = async () => {
+const handleUpload = async () => { // depreacted
     if (!file) return;
     
     setLoading(true);
@@ -248,6 +258,28 @@ const handleUpload = async () => {
       setError(err.response?.data?.error || 'An error occurred');
     } finally {
       setLoading(false);
+    }
+  };
+
+
+  const analyzeTranscript = async () => {
+    if (!result?.transcript || analyzingTranscript) return;
+    
+    setAnalyzingTranscript(true);
+    try {
+      const response = await axios.post(
+        `${process.env.REACT_APP_BASE_URL}/api/analyze-transcript`,
+        { transcript: result.transcript }
+      );
+      
+      setSummaryData(response.data);
+      // Auto-expand the summary when it's ready
+      setShowSummary(true);
+    } catch (err) {
+      console.error("Error analyzing transcript:", err);
+      setError("Failed to analyze the transcript");
+    } finally {
+      setAnalyzingTranscript(false);
     }
   };
 
@@ -288,11 +320,12 @@ const handleUpload = async () => {
         <div className="video-section">
           {videoUrl ? (
             <CustomVideoPlayer 
-              videoUrl={videoUrl} 
-              postId={postId}
-              onTimeUpdate={handleTimeUpdate}
-              onCaptionsLoaded={handleCaptionsLoaded}
-            />
+            videoUrl={videoUrl} 
+            postId={postId}
+            onTimeUpdate={handleTimeUpdate}
+            onCaptionsLoaded={handleCaptionsLoaded}
+            isInAnalysisPage={true} // Let player know it's in analysis page
+          />
           ) : (
             <div className="video-container-loader">
               {loading ? (
@@ -306,34 +339,53 @@ const handleUpload = async () => {
         
         {/* Right side - Transcript */}
         <div className="analysis-section">
-          {captionsData && (
-            <div className="transcript-section">
-              <h3>Live Transcript</h3>
-              <TranscriptDisplay 
-                captionsData={captionsData}
-                currentTime={currentTime}
-                showTranscript={true}
-              />
-            </div>
-          )}
+  {/* Always render the transcript section, but with a class indicating if it's expanded */}
+  <div className={`transcript-section ${showTranscript ? 'expanded' : 'collapsed'}`}>
+    <h3 onClick={() => setShowTranscript(prev => !prev)} className="transcript-header">
+      Live Transcript
+      <span className="toggle-icon">{showTranscript ? '▼' : '▶'}</span>
+    </h3>
+    
+    {/* Only render the content when expanded */}
+    {captionsData && showTranscript && (
+      <div className="transcript-content">
+        <TranscriptDisplay 
+          captionsData={captionsData}
+          currentTime={currentTime}
+          showTranscript={true}
+        />
+      </div>
+    )}
+  </div>
           
-          {result?.transcript && (
-            <div className="full-transcript">
-              <h3>Full Transcript</h3>
-              <div className="transcript-text">
-                {result.transcript}
-              </div>
-              
-              <div className="transcript-actions">
-                <button 
-                  onClick={handleTTS}
-                  disabled={loading}
-                  className="tts-button"
-                >
-                  {loading ? 'Processing...' : 'Read Aloud'}
-                </button>
-              </div>
-            </div>
+  {result?.transcript && (
+  <div className={`summary-section ${showSummary ? 'expanded' : 'collapsed'}`}>
+    <h3 onClick={() => setShowSummary(prev => !prev)} className="transcript-header">
+      Match Summary
+      <span className="toggle-icon">{showSummary ? '▼' : '▶'}</span>
+    </h3>
+    
+    {showSummary && (
+      <div className="summary-content">
+        {!summaryData && !analyzingTranscript && (
+          <div className="summary-actions">
+            <button 
+              onClick={analyzeTranscript}
+              className="analyze-button"
+            >
+              Generate Summary
+            </button>
+          </div>
+        )}
+        
+        <MatchSummary 
+          summary={summaryData?.summary}
+          keyMoments={summaryData?.key_moments}
+          loading={analyzingTranscript}
+        />
+      </div>
+    )}
+          </div>
           )}
         </div>
       </div>

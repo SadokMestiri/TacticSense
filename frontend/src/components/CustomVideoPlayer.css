@@ -97,6 +97,43 @@
     margin: 0 10px;
   }
 
+
+  .analysis-mode .caption-button {
+    background-color: #e3f2fd; /* Light blue background */
+    color: #1976d2; /* Blue text */
+    border: 1px solid #bbdefb; /* Subtle border */
+    margin-right: 10px !important; /* Force margin application */
+    transition: all 0.2s ease; /* Smooth transition */
+    font-weight: bold;
+  }
+
+  .custom-video-player.analysis-mode button.caption-button {
+    margin-right: 10px !important;
+    margin-left: 0 !important;
+  }
+
+
+  .analysis-mode .controls {
+    display: flex !important;
+    align-items: center !important;
+    gap: 10px !important;
+  }
+  
+  .analysis-mode .caption-button {
+    padding: 8px 12px !important;
+    min-width: 40px !important;
+  }
+
+  .analysis-mode .caption-button:hover {
+    background-color: #bbdefb; /* Slightly darker on hover */
+  }
+  
+  .analysis-mode .caption-button.active {
+    background-color: #2196f3; /* Darker blue when active */
+    color: white;
+    border-color: #1976d2; /* Darker border when active */
+  }
+
   .caption-loading {
     position: absolute;
     top: 20px;

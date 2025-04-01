@@ -1047,3 +1047,121 @@ def get_caption():
     except Exception as e:
         print(f"Error getting caption: {str(e)}")
         return jsonify({'error': str(e)}), 500
+    
+
+@app.route('/api/analyze-transcript', methods=['POST'])
+def analyze_transcript():
+    """Analyze a transcript to generate summary and sentiment analysis without OpenAI"""
+    try:
+        data = request.json
+        if not data or 'transcript' not in data:
+            return jsonify({'error': 'No transcript provided'}), 400
+            
+        transcript = data['transcript']
+        
+        # Import necessary libraries
+        import re
+        import nltk
+        from nltk.tokenize import sent_tokenize
+        from nltk.corpus import stopwords
+        from nltk.probability import FreqDist
+        from ml.speech.caption import CaptionEnhancer
+        
+        # Download NLTK resources if not available
+        try:
+            nltk.data.find('tokenizers/punkt')
+            nltk.data.find('corpora/stopwords')
+        except LookupError:
+            nltk.download('punkt')
+            nltk.download('stopwords')
+        
+        # 1. Clean filler words using existing CaptionEnhancer
+        enhancer = CaptionEnhancer()
+        cleaned_transcript = enhancer.clean_transcript(transcript)
+        
+        # 2. Generate summary using extractive summarization (NLTK)
+        # Tokenize the text into sentences
+        sentences = sent_tokenize(cleaned_transcript)
+        
+        # Tokenize words and remove stopwords
+        stop_words = set(stopwords.words('english'))
+        words = [word.lower() for sentence in sentences for word in nltk.word_tokenize(sentence) 
+                if word.isalnum() and word.lower() not in stop_words]
+        
+        # Find most frequent words
+        freq_dist = FreqDist(words)
+        most_freq = [word for word, freq in freq_dist.most_common(20)]
+        
+        # Score sentences based on word frequency and position
+        scored_sentences = []
+        for i, sentence in enumerate(sentences):
+            score = 0
+            # Position score - first and last sentences are often important
+            if i == 0 or i == len(sentences) - 1:
+                score += 0.5
+                
+            # Word frequency score
+            for word in nltk.word_tokenize(sentence.lower()):
+                if word in most_freq:
+                    score += 0.1
+                    
+            # Length score - favor medium length sentences
+            words_count = len(nltk.word_tokenize(sentence))
+            if 5 <= words_count <= 20:
+                score += 0.5
+                
+            scored_sentences.append((sentence, score))
+        
+        # Sort sentences by score and select top ones for summary
+        summary_sentences = sorted(scored_sentences, key=lambda x: x[1], reverse=True)[:5]
+        # Sort back by original position for readability
+        summary_sentences = sorted(summary_sentences, 
+                                   key=lambda x: sentences.index(x[0]))
+        
+        # Join sentences into summary
+        summary = ' '.join([sentence for sentence, score in summary_sentences])
+        
+        # 3. Find key moments with excitement detection (keep this part as is)
+        key_moments = []
+        
+        # Simple excitement detection regex patterns
+        excitement_patterns = [
+            r'\b(goal|score|scores|scored|shot|shots|save|saves|saved)\b',
+            r'\b(amazing|incredible|fantastic|brilliant|excellent|extraordinary)\b',
+            r'\b(wow|unbelievable|spectacular|stunning|remarkable)\b',
+            r'!{2,}',  # Multiple exclamation marks
+        ]
+        
+        for i, sentence in enumerate(sentences):
+            # Calculate excitement score
+            excitement_score = 0
+            for pattern in excitement_patterns:
+                matches = re.findall(pattern, sentence, re.IGNORECASE)
+                excitement_score += len(matches) * 0.5
+                
+            # Add timing context if available
+            timing_match = re.search(r'\b(\d{1,2}:\d{2}|\d{1,2}\'|\d{1,2} minutes?)\b', sentence)
+            match_time = timing_match.group(1) if timing_match else None
+            
+            # If this is an exciting sentence
+            if excitement_score >= 1.0:
+                key_moments.append({
+                    'text': sentence,
+                    'excitement': min(excitement_score, 5),  # Cap at 5
+                    'time': match_time
+                })
+        
+        # Sort by excitement level
+        key_moments.sort(key=lambda x: x['excitement'], reverse=True)
+        
+        # Take top 5 key moments
+        key_moments = key_moments[:5]
+        
+        return jsonify({
+            'summary': summary,
+            'key_moments': key_moments
+        })
+        
+    except Exception as e:
+        print(f"Error analyzing transcript: {str(e)}")
+        return jsonify({'error': str(e)}), 500

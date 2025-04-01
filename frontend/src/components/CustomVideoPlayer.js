@@ -99,11 +99,8 @@ const CustomVideoPlayer = ({ videoUrl, postId, onTimeUpdate, onCaptionsLoaded, i
   };
   
   const handleCaptions = async () => {
-    // Toggle captions visibility
-    setShowCaptions(!showCaptions);
-    
-    // If we're turning on captions but don't have caption data yet, fetch them
-    if (!showCaptions && !captionsData) {
+    // Always load captions if needed, regardless of context
+    if (!captionsData) {
       setLoadingCaptions(true);
       try {
         // Extract filename as you're already doing
@@ -134,6 +131,12 @@ const CustomVideoPlayer = ({ videoUrl, postId, onTimeUpdate, onCaptionsLoaded, i
           }
 
           setLoadingCaptions(false);
+
+          // Only toggle visibility if NOT in analysis page
+          if (!isInAnalysisPage) {
+            setShowCaptions(!showCaptions);
+          }
+
           return;
         }
       } catch (error) {
@@ -196,12 +199,21 @@ const CustomVideoPlayer = ({ videoUrl, postId, onTimeUpdate, onCaptionsLoaded, i
           } finally {
             setLoadingCaptions(false);
           }
-        } else if (captionsData && onCaptionsLoaded) {
-          // If we already have captions, share them
-          onCaptionsLoaded(captionsData);
+        } else {
+      // Captions already loaded
+      
+      // If we're in the analysis page, just toggle parent's state
+      if (isInAnalysisPage) {
+        // Just notify parent to toggle transcript visibility
+        if (onCaptionsLoaded) {
+          onCaptionsLoaded(captionsData, true); // Pass true to indicate toggle request
         }
-        
-      };
+      } else {
+        // Normal behavior - toggle overlay
+        setShowCaptions(!showCaptions);
+      }
+    }
+  };
 
       // Add a useEffect to share captions when they're initially loaded
       useEffect(() => {
@@ -292,15 +304,14 @@ const CustomVideoPlayer = ({ videoUrl, postId, onTimeUpdate, onCaptionsLoaded, i
   };
   
   return (
-    <div className="custom-video-player">
+    <div className={`custom-video-player ${isInAnalysisPage ? 'analysis-mode' : ''}`}>
       <div className="video-container">
-        <video
-          ref={videoRef}
-          src={videoUrl}
-          onClick={handlePlayPause}
-        />
+      <video ref={videoRef} src={videoUrl} onClick={handlePlayPause}>
+          Your browser does not support the video tag.
+        </video>
         
-        {showCaptions && currentCaption && (
+        {/* Only show overlay captions if not in analysis page */}
+        {showCaptions && !isInAnalysisPage && (
           <div className="captions-overlay">
             {currentCaption}
           </div>
@@ -332,10 +343,11 @@ const CustomVideoPlayer = ({ videoUrl, postId, onTimeUpdate, onCaptionsLoaded, i
         />
         
         <button 
-          className={`caption-button ${showCaptions ? 'active' : ''}`}
+          className={`control-btn caption-btn ${showCaptions ? 'active' : ''}`}
           onClick={handleCaptions}
+          disabled={loadingCaptions}
         >
-          CC
+          {loadingCaptions ? '...' : 'CC'}
         </button>
         
         <button 

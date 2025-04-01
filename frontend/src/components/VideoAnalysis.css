@@ -94,10 +94,61 @@
 }
 
 .transcript-section {
-  padding: 15px;
-  background: #fff;
+    padding: 0;
+    background: #fff;
+    transition: all 0.3s ease;
+    border-bottom: 1px solid #e9ecef;
 }
   
+.transcript-header {
+    padding: 15px;
+    margin: 0;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    user-select: none;
+  }
+  
+  .toggle-icon {
+    font-size: 14px;
+    color: #666;
+    margin-left: 8px;
+  }
+
+  /* Collapsed state */
+.transcript-section.collapsed {
+    max-height: 50px;
+    overflow: hidden;
+  }
+  
+  /* Expanded state */
+  .transcript-section.expanded {
+    max-height: 350px;
+  }
+  
+  .transcript-content {
+    padding: 0 15px 15px 15px;
+  }
+
+  .transcript-section h3 {
+    margin-top: 0;
+    margin-bottom: 0;
+    padding-bottom: 0;
+    border-bottom: none;
+  }
+  
+  .transcript-section.expanded h3 {
+    border-bottom: 1px solid #eee;
+    margin-bottom: 12px;
+    padding-bottom: 10px;
+  }
+  
+  /* Hover effect for header */
+  .transcript-header:hover {
+    background-color: #f8f9fa;
+  }
+
 .full-transcript {
     padding: 15px;
 }
@@ -110,6 +161,56 @@
   .transcript-actions {
     display: flex;
     gap: 10px;
+  }
+
+
+
+
+.summary-section {
+    padding: 0;
+    background: #fff;
+    transition: all 0.3s ease;
+    border-bottom: 1px solid #e9ecef;
+  }
+  
+  /* Collapsed state */
+  .summary-section.collapsed {
+    max-height: 50px;
+    overflow: hidden;
+  }
+  
+  /* Expanded state */
+  .summary-section.expanded {
+    max-height: 800px; /* Taller than transcript to accommodate content */
+  }
+  
+  .summary-content {
+    padding: 0 15px 15px 15px;
+  }
+  
+  .summary-actions {
+    margin-bottom: 15px;
+    display: flex;
+    justify-content: flex-start;
+  }
+  
+  .analyze-button {
+    padding: 8px 16px;
+    background: #2196f3;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+  
+  .analyze-button:hover {
+    background: #1976d2;
+  }
+  
+  .analyze-button:disabled {
+    background: #bbdefb;
+    cursor: not-allowed;
   }
   
   .tts-button {
