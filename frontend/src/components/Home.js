@@ -38,7 +38,8 @@ if (token) {
 const date = exp ? new Date(exp * 1000) : null;
 const now = new Date();
 const [allowed, setAllowed] = useState(false);
-const user =  JSON.parse(Cookies.get('user'));
+const userCookie = Cookies.get('user');
+const user = userCookie ? JSON.parse(userCookie) : null;
 // Token expiration check
 useEffect(() => {
   if (!token || !decodedToken) {
@@ -119,16 +120,21 @@ useEffect(() => {
 
   const fetchUsers = async (user_id) => {
     try {
-        const response = await axios.get(`${process.env.REACT_APP_BASE_URL}/get_user/${user_id}`);
-        
-        setUsers(prevUsers => ({
-            ...prevUsers,
-            [user_id]: response.data.profile_image 
-        }));
+      const response = await axios.get(`${process.env.REACT_APP_BASE_URL}/get_user/${user_id}`);
+      
+      setUsers(prevUsers => ({
+        ...prevUsers,
+        [user_id]: response.data?.profile_image || '/default-avatar.png' 
+      }));
     } catch (error) {
-        setError(error.response?.data?.message || 'Error fetching user data');
+      setError(error.response?.data?.message || 'Error fetching user data');
+      // Set a default image on error
+      setUsers(prevUsers => ({
+        ...prevUsers,
+        [user_id]: 'assets/images/default-avatar.png'
+      }));
     }
-};
+  };
 
 
 

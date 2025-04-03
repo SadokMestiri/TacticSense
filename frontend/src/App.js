@@ -19,18 +19,18 @@ export default function App() {
 
   return (
 
-      <div>
-        <Routes>
-        <Route path="/" element={<Login/>} />
-        <Route path="/Home" element={<Home header={header} />} />
-          <Route path="/Chat" element={<Chat header={header}/>} />
-          <Route path="/Register" element={<Register/>} />
-          <Route path="/header" element={<Header />} />
-          <Route path="/Reset" element={<Reset/>}/>
-          <Route path="/ResetPassword" element={<ResetPassword/>}/>
-          <Route path="/post" element={<SinglePost header={header} />} />
-        </Routes>
-      </div>
+    <div>
+    <Routes>
+      <Route path="/" element={<Login />} />
+      <Route path="/Home" element={<Home header={header} />} />
+      <Route path="/Chat" element={<Chat header={header}/>} />
+      <Route path="/Register" element={<Register/>} />
+      <Route path="/header" element={<Header />} />
+      <Route path="/Reset" element={<Reset/>}/>
+      <Route path="/ResetPassword" element={<ResetPassword/>}/>
+      <Route path="/post" element={<SinglePost header={header} />} />
+    </Routes>
+  </div>
     
   );
 }
