@@ -21,8 +21,8 @@ export default function App() {
 
       <div>
         <Routes>
-        <Route path="/" element={<Home header={header} />} />
-        <Route path="/Login" element={<Login />} />
+        <Route path="/" element={<Login/>} />
+        <Route path="/Home" element={<Home header={header} />} />
           <Route path="/Chat" element={<Chat header={header}/>} />
           <Route path="/Register" element={<Register/>} />
           <Route path="/header" element={<Header />} />

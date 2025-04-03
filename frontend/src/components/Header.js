@@ -26,10 +26,10 @@ const Header = () => {
   // Token expiration check
   useEffect(() => {
     if (!token || !decodedToken) {
-      navigate('/login');
+      navigate('/');
     } else if (date && date.getTime() < now.getTime()) {
       Cookies.remove('token');
-      navigate('/login');
+      navigate('/');
     } else {
       setAllowed(true);
     }
@@ -46,7 +46,7 @@ const Header = () => {
   const handleLogout = () => {
     Cookies.remove('token'); // Remove token cookie
     Cookies.remove('user');  // Remove user cookie
-    navigate('/login'); // Redirect to login page
+    navigate('/'); // Redirect to login page
   };
 
   // Conditionally render based on user data availability

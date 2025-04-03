@@ -37,7 +37,7 @@ const Register = () => {
 
             if (response.status === 201) {
                 setSuccess('User registered successfully. Redirecting to login...');
-                setTimeout(() => navigate('/login'), 2000);
+                setTimeout(() => navigate('/'), 2000);
             }
         } catch (error) {
             setError(error.response?.data?.message || 'An error occurred. Please try again.');
@@ -136,7 +136,7 @@ const Register = () => {
                                 <button type="submit" className="btn btn-success btn-block btn-lg">Register</button>
                             </div>
                             <div className="m-t-20">
-                                Already have an account? Click <a href="/login">here</a> to login.
+                                Already have an account? Click <a href="/">here</a> to login.
                             </div>
                         </form>
                     </div>

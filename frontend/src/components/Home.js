@@ -42,10 +42,10 @@ const user =  JSON.parse(Cookies.get('user'));
 // Token expiration check
 useEffect(() => {
   if (!token || !decodedToken) {
-    navigate('/login');
+    navigate('/');
   } else if (date && date.getTime() < now.getTime()) {
     Cookies.remove('token');
-    navigate('/login');
+    navigate('/');
   } else {
     setAllowed(true);
   }

@@ -105,6 +105,50 @@ class Conversation(db.Model):
     user2_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     last_message_time = db.Column(db.DateTime, default=db.func.current_timestamp())
 
+
+# Group conversation model, which holds multiple users
+class GroupConversation(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), nullable=True)  # Optional name for the group chat
+    users = db.relationship('User', secondary='group_conversation_user', backref='group_conversations')
+
+# Intermediate table to link users and group conversations
+class GroupConversationUser(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    group_conversation_id = db.Column(db.Integer, db.ForeignKey('group_conversation.id'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+
+# Group message model for storing messages in group chats
+class GroupMessage(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    sender_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    message = db.Column(db.String(500), nullable=False)
+    timestamp = db.Column(db.DateTime, default=db.func.current_timestamp())
+    seen = db.Column(db.Boolean, default=False)
+    group_conversation_id = db.Column(db.Integer, db.ForeignKey('group_conversation.id'), nullable=False)
+
+class GroupMessageSeen(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    group_message_id = db.Column(db.Integer, db.ForeignKey('group_message.id'), nullable=False)
+    seen = db.Column(db.Boolean, default=False)
+
+    user = db.relationship('User', backref=db.backref('seen_messages', lazy=True))
+    group_message = db.relationship('GroupMessage', backref=db.backref('seen_by', lazy=True))
+
+class MessageReaction(db.Model):
+    message_id = db.Column(db.Integer, db.ForeignKey('message.id'), primary_key=True)
+    conversation_id = db.Column(db.Integer, db.ForeignKey('conversation.id'), primary_key=True)
+    reaction_name = db.Column(db.String(50), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), primary_key=True)
+    is_group = db.Column(db.Boolean, nullable=False)  # To differentiate if group or one-to-one message
+
+    # Relationships
+    message = db.relationship('Message', backref=db.backref('reactions', lazy=True))
+    user = db.relationship('User', backref=db.backref('reactions', lazy=True))
+    conversation = db.relationship('Conversation', backref=db.backref('message_reactions', lazy=True))
+
+
 def token_required(f):
     @wraps(f)
     def decorated(*args, **kwargs):
@@ -128,7 +172,7 @@ def token_required(f):
 def hello():
     return 'Hey!'
 
-@app.route('/send_message', methods=['POST'])
+""" @app.route('/send_message', methods=['POST'])
 def send_message():
     data = request.get_json()
     
@@ -159,7 +203,85 @@ def send_message():
         'receiver_id': new_message.receiver_id,
         'message': new_message.message,
         'timestamp': new_message.timestamp.strftime('%Y-%m-%d %H:%M:%S')
-    }), 201
+    }), 201 """
+
+@app.route('/send_message', methods=['POST'])
+def send_message():
+    data = request.get_json()
+
+    # Validate the sender
+    sender = User.query.get(data['sender_id'])
+    if not sender:
+        return jsonify({'message': 'Invalid sender'}), 400
+
+    # Check if it's a group conversation or a one-to-one conversation
+    is_group_conversation = data.get('is_group_conversation', False)
+
+    if is_group_conversation:
+        # It's a group conversation
+        group_conversation_id = data['conversation_id']
+        group_conversation = GroupConversation.query.get(group_conversation_id)
+        if not group_conversation:
+            return jsonify({'message': 'Group conversation not found'}), 400
+
+        # Create a new group message
+        new_message = GroupMessage(
+            sender_id=data['sender_id'],
+            message=data['message'],
+            group_conversation_id=group_conversation_id,
+            seen=False  # Initially, mark it as not seen by any user
+        )
+        db.session.add(new_message)
+        db.session.commit()
+
+        # Optionally: Here you can broadcast the message to all users in the group (if needed)
+        # For example, a WebSocket could notify all users in the group about the new message
+
+    else:
+        # It's a one-to-one conversation
+        conversation_id = data['conversation_id']
+        conversation = Conversation.query.get(conversation_id)
+        if not conversation:
+            return jsonify({'message': 'Conversation not found'}), 400
+
+        # Ensure the receiver exists (only for one-to-one conversations)
+        receiver_id = data.get('receiver_id')
+        if not receiver_id:
+            return jsonify({'message': 'Receiver ID is required for one-to-one conversations'}), 400
+
+        receiver = User.query.get(receiver_id)
+        if not receiver:
+            return jsonify({'message': 'Invalid receiver'}), 400
+
+        # Create a new message for one-to-one conversation
+        new_message = Message(
+            sender_id=data['sender_id'],
+            receiver_id=receiver_id,
+            message=data['message'],
+            conversation_id=conversation_id,
+            seen=False
+        )
+        db.session.add(new_message)
+
+    # Commit the transaction
+    db.session.commit()
+
+    # Return the new message details
+    response_data = {
+        'message': 'Message sent successfully',
+        'message_id': new_message.id,
+        'sender_id': new_message.sender_id,
+        'message': new_message.message,
+        'timestamp': new_message.timestamp.strftime('%Y-%m-%d %H:%M:%S')
+    }
+
+    # Include additional data in the response if it's a group message
+    if is_group_conversation:
+        response_data['group_conversation_id'] = new_message.group_conversation_id
+    else:
+        response_data['receiver_id'] = new_message.receiver_id
+
+    return jsonify(response_data), 201
 
 @app.route('/mark_message_seen/<int:message_id>', methods=['POST'])
 def mark_message_seen(message_id):
@@ -172,7 +294,34 @@ def mark_message_seen(message_id):
     else:
         return jsonify({'message': 'Message not found'}), 404
 
-@app.route('/get_messages/<int:user1_id>/<int:user2_id>', methods=['GET'])
+@app.route('/mark_group_message_seen/<int:group_message_id>', methods=['POST'])
+def mark_group_message_seen(group_message_id):
+    group_message = GroupMessage.query.get(group_message_id)
+    
+    if group_message:
+        user_id = request.json.get('user_id')
+        user = User.query.get(user_id)
+        
+        if not user:
+            return jsonify({'message': 'User not found'}), 404
+        
+        # Check if the user has already seen the message
+        seen_entry = GroupMessageSeen.query.filter_by(user_id=user_id, group_message_id=group_message_id).first()
+        
+        if not seen_entry:
+            # If the user hasn't seen the message, add them to the "seen_by" relationship
+            seen_entry = GroupMessageSeen(user_id=user_id, group_message_id=group_message_id, seen=True)
+            db.session.add(seen_entry)
+            db.session.commit()
+
+            return jsonify({'message': 'Group message marked as seen by the user'}), 200
+        else:
+            return jsonify({'message': 'User has already seen this message'}), 200
+    else:
+        return jsonify({'message': 'Group message not found'}), 404
+
+""" @app.route('/get_messages/<int:user1_
+id>/<int:user2_id>', methods=['GET'])
 def get_messages(user1_id, user2_id):
     messages = Message.query.filter(
         (Message.sender_id == user1_id and Message.receiver_id == user2_id) |
@@ -200,7 +349,94 @@ def get_messages(user1_id, user2_id):
             'seen': msg.seen
         })
     
-    return jsonify(message_list), 200
+    return jsonify(message_list), 200 """
+
+@app.route('/get_messages/<int:user_id>/<int:conversation_id>', methods=['GET'])
+def get_messages(user_id, conversation_id):
+    # Get the is_group_conversation flag from the query parameters
+    is_group_conversation = request.args.get('is_group_conversation', 'false').lower() == 'true'
+
+    if is_group_conversation:
+        # It's a group conversation
+        group_conversation = GroupConversation.query.get(conversation_id)
+        if not group_conversation:
+            return jsonify({'message': 'Group conversation not found'}), 400
+
+        # Fetch group messages
+        group_messages = GroupMessage.query.filter_by(group_conversation_id=conversation_id).order_by(GroupMessage.timestamp.asc()).all()
+
+        # Prepare the message data
+        message_list = []
+        for msg in group_messages:
+            sender = User.query.get(msg.sender_id)
+            if not sender:
+                return jsonify({'message': f'User with ID {msg.sender_id} not found'}), 404
+            sender_image = sender.profile_image
+
+               # Fetch the users who have seen the message
+            seen_users = [seen.user.name for seen in msg.seen_by if seen.seen]
+
+            message_list.append({
+                'id': msg.id,
+                'sender_id': msg.sender_id,
+                'message': msg.message,
+                'timestamp': msg.timestamp.strftime('%Y-%m-%d %H:%M:%S'),
+                'sender_image': sender_image,
+                'seen_by': seen_users,  # List of users who have seen the message
+                'seen_count': len(seen_users),  # Total count of users who have seen the message
+            })
+        
+        return jsonify(message_list), 200
+
+    else:
+        # It's a one-to-one conversation
+        # Assuming your conversation model has user1_id and user2_id
+        conversation = Conversation.query.get(conversation_id)
+        if not conversation:
+            return jsonify({'message': 'Conversation not found'}), 400
+
+        user1_id = conversation.user1_id
+        user2_id = conversation.user2_id
+
+        # Fetch the messages between the two users
+        messages = Message.query.filter(
+            ((Message.sender_id == user1_id) & (Message.receiver_id == user2_id)) |
+            ((Message.sender_id == user2_id) & (Message.receiver_id == user1_id))
+        ).order_by(Message.timestamp.asc()).all()
+
+        # Fetch the user profiles
+        user1 = User.query.get(user1_id)
+        user2 = User.query.get(user2_id)
+
+        if not user1:
+            return jsonify({'message': f'User with ID {user1_id} not found'}), 404
+        if not user2:
+            return jsonify({'message': f'User with ID {user2_id} not found'}), 404
+
+        message_list = []
+        for msg in messages:
+            sender_image = user1.profile_image if msg.sender_id == user1_id else user2.profile_image
+            receiver_image = user1.profile_image if msg.receiver_id == user1_id else user2.profile_image
+
+            seen_users = []
+            if msg.seen:
+                # Only one user (either the sender or receiver) will have seen the message
+                seen_users = [user1.name if msg.sender_id == user2_id else user2.name]
+
+            message_list.append({
+                'id': msg.id,
+                'sender_id': msg.sender_id,
+                'receiver_id': msg.receiver_id,
+                'message': msg.message,
+                'timestamp': msg.timestamp.strftime('%Y-%m-%d %H:%M:%S'),
+                'sender_image': sender_image,
+                'receiver_image': receiver_image,
+                'seen_by': seen_users,  # Only the user who has seen the message
+                'seen_count': len(seen_users),  # 1 user in a one-to-one conversation
+            })
+        
+        return jsonify(message_list), 200
+
 
 @app.route('/create_conversation', methods=['POST'])
 def create_conversation():
@@ -224,7 +460,7 @@ def create_conversation():
     
     return jsonify({'message': 'Conversation already exists', 'conversation_id': conversation.id}), 200
 
-@app.route('/get_conversations/<int:user_id>', methods=['GET'])
+""" @app.route('/get_conversations/<int:user_id>', methods=['GET'])
 def get_conversations(user_id):
     try:
         # Get conversations for the user (either user1_id or user2_id)
@@ -270,7 +506,7 @@ def get_conversations(user_id):
     except Exception as e:
         print(f"Error fetching conversations: {e}")
         return jsonify({"error": "An error occurred while fetching conversations."}), 500
-
+ """
 @app.route('/get_post_by_id/<int:post_id>', methods=['GET'])
 def get_post_by_id(post_id):
     post = Post.query.get(post_id)
@@ -286,6 +522,36 @@ def get_post_by_id(post_id):
         })
     else:
         return jsonify({'message': 'Post not found'}), 404
+    
+@app.route('/get_users', methods=['GET'])
+def get_users():
+    try:
+        # Fetch all users from the database
+        users = User.query.all()
+        
+        # Check if there are users
+        if not users:
+            return jsonify({'message': 'No users found'}), 404
+        
+        # Create a list to store user data
+        users_data = []
+        
+        for user in users:
+            profile_image = user.profile_image.replace("\\", "/")  # Correct the file path format
+            users_data.append({
+                'id': user.id,
+                'username': user.username,
+                'email': user.email,
+                'name': user.name,
+                'profile_image': profile_image
+            })
+        
+        # Return the list of users
+        return jsonify(users_data), 200
+
+    except Exception as e:
+        print(f"Error fetching user data: {e}")
+        return jsonify({'message': 'Error fetching users'}), 500
     
 @app.route('/get_user/<int:user_id>', methods=['GET'])
 def get_user(user_id):
@@ -560,6 +826,240 @@ def add_comment():
     db.session.add(new_comment)
     db.session.commit()
     return jsonify({'message': 'Comment added'})
+
+@app.route('/create_group', methods=['POST'])
+def create_group():
+    try:
+        # Get the data from the request
+        data = request.get_json()
+
+        # Ensure group_name and user_ids are provided
+        group_name = data.get('name')
+        user_ids = data.get('user_ids', [])
+
+        if not group_name or not user_ids:
+            return jsonify({'message': 'Group name and user IDs are required'}), 400
+
+        # Create a new group conversation
+        new_group_conversation = GroupConversation(name=group_name)
+
+        db.session.add(new_group_conversation)
+        db.session.commit()
+
+        # Add users to the group conversation
+        for user_id in user_ids:
+            group_conversation_user = GroupConversationUser(
+                group_conversation_id=new_group_conversation.id, 
+                user_id=user_id
+            )
+            db.session.add(group_conversation_user)
+
+        db.session.commit()
+
+        # Return the response
+        return jsonify({
+            'message': 'Group chat created successfully',
+            'group_conversation_id': new_group_conversation.id
+        }), 201
+
+    except Exception as e:
+        print(f"Error creating group: {e}")
+        return jsonify({'message': 'An error occurred while creating the group'}), 500
+
+""" @app.route('/get_group_conversations/<int:user_id>', methods=['GET'])
+def get_group_conversations(user_id):
+    try:
+        # Get all group conversations for a user
+        group_conversations = db.session.query(GroupConversation).join(GroupConversationUser).filter(GroupConversationUser.user_id == user_id).all()
+
+        group_conversations_data = []
+        for group_conversation in group_conversations:
+            # Get the last message in the group conversation
+            last_group_message = db.session.query(GroupMessage).filter_by(group_conversation_id=group_conversation.id).order_by(GroupMessage.timestamp.desc()).first()
+            last_message_text = last_group_message.message if last_group_message else "No messages yet"
+            last_time = last_group_message.timestamp if last_group_message else datetime.utcnow()
+
+            # Count unread messages where the logged-in user is the receiver and the message is not seen
+            unread_count = db.session.query(GroupMessage).filter(
+                GroupMessage.group_conversation_id == group_conversation.id,
+                GroupMessage.seen == False
+            ).count()
+
+            group_conversations_data.append({
+                'id': group_conversation.id,
+                'name': group_conversation.name,
+                'last_message': last_message_text,
+                'last_time': last_time.strftime('%Y-%m-%d %H:%M:%S'),
+                'unread_count': unread_count
+            })
+
+        return jsonify(group_conversations_data), 200
+    except Exception as e:
+        return jsonify({"message": str(e)}), 500
+ """
+
+@app.route('/get_conversations/<int:user_id>', methods=['GET'])
+def get_conversations(user_id):
+    try:
+        all_conversations = []
+
+        # Get one-to-one conversations for a user
+        one_to_one_conversations = db.session.query(Conversation).filter(
+            (Conversation.user1_id == user_id) | (Conversation.user2_id == user_id)
+        ).all()
+
+        # Add one-to-one conversations to the list
+        for conv in one_to_one_conversations:
+            other_user_id = conv.user1_id if conv.user2_id == user_id else conv.user2_id
+            other_user = db.session.query(User).filter_by(id=other_user_id).first()
+
+            # Get the last message in the one-to-one conversation
+            last_message = db.session.query(Message).filter_by(conversation_id=conv.id).order_by(Message.timestamp.desc()).first()
+            last_message_text = last_message.message if last_message else "No messages yet"
+            last_time = last_message.timestamp if last_message else datetime.utcnow()
+
+            unread_count = db.session.query(Message).filter(
+                Message.conversation_id == conv.id,
+                Message.receiver_id == user_id,
+                Message.seen == False
+            ).count()
+
+            all_conversations.append({
+                'id': conv.id,
+                'name': other_user.name,
+                'profile_image': other_user.profile_image,
+                'last_message': last_message_text,
+                'last_time': last_time.strftime('%Y-%m-%d %H:%M:%S'),
+                'unread_count': unread_count,
+                'type': 'one-to-one',
+            })
+            # Get group conversations for a user
+            group_conversations = db.session.query(GroupConversation).join(GroupConversationUser).filter(GroupConversationUser.user_id == user_id).all()
+
+            # Add group conversations to the list
+            for group_conv in group_conversations:
+                # Fetch users in the group
+                group_users = db.session.query(User).join(GroupConversationUser).filter(GroupConversationUser.group_conversation_id == group_conv.id).all()
+
+                # Get the last group message
+                last_group_message = db.session.query(GroupMessage).filter_by(group_conversation_id=group_conv.id).order_by(GroupMessage.timestamp.desc()).first()
+                last_message_text = last_group_message.message if last_group_message else "No messages yet"
+                last_time = last_group_message.timestamp if last_group_message else datetime.utcnow()
+
+                # Calculate unread count for group messages
+                unread_count = db.session.query(GroupMessage).filter(
+                    GroupMessage.group_conversation_id == group_conv.id
+                ).filter(
+                    GroupMessage.id.notin_(
+                        db.session.query(GroupMessageSeen.group_message_id).filter(
+                            GroupMessageSeen.user_id == user_id,
+                            GroupMessageSeen.seen == True
+                        )
+                    )
+                ).count()
+
+                # Prepare the group conversation response
+                all_conversations.append({
+                    'id': group_conv.id,
+                    'name': group_conv.name,
+                    'last_message': last_message_text,
+                    'last_time': last_time.strftime('%Y-%m-%d %H:%M:%S'),
+                    'unread_count': unread_count,
+                    'type': 'group',
+                    'users': [{'id': user.id, 'name': user.name, 'profile_image': user.profile_image} for user in group_users]  # Include user info
+                })
+
+            return jsonify(all_conversations), 200
+
+    except Exception as e:
+            return jsonify({"message": str(e)}), 500
+
+@app.route('/add_message_reaction', methods=['POST'])
+def add_message_reaction():
+    try:
+        data = request.get_json()
+        message_id = data.get('message_id')
+        conversation_id = data.get('conversation_id')
+        reaction_name = data.get('reaction_name')
+        user_id = data.get('user_id')
+        is_group = data.get('is_group')  # Whether it's a group message or not
+        
+        # Check if the user already reacted to this message in the context of this conversation
+        existing_reaction = MessageReaction.query.filter_by(
+            message_id=message_id,
+            conversation_id=conversation_id,
+            user_id=user_id
+        ).first()
+
+        if existing_reaction:
+            # Update existing reaction
+            existing_reaction.reaction_name = reaction_name
+        else:
+            # Add new reaction if not present
+            new_reaction = MessageReaction(
+                message_id=message_id,
+                conversation_id=conversation_id,
+                reaction_name=reaction_name,
+                user_id=user_id,
+                is_group=is_group
+            )
+            db.session.add(new_reaction)
+
+        db.session.commit()
+
+        # Fetch updated reactions based on message_id and conversation_id
+        reactions = MessageReaction.query.filter_by(
+            message_id=message_id, conversation_id=conversation_id
+        ).all()
+
+        updated_reactions = {reaction.reaction_name: len([r for r in reactions if r.reaction_name == reaction.reaction_name]) for reaction in reactions}
+
+        return jsonify({
+            'status': 'success',
+            'message_id': message_id,
+            'reactions': updated_reactions
+        })
+
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'status': 'error', 'message': str(e)}), 500
+
+
+@app.route('/get_message_reactions', methods=['GET'])
+def get_message_reactions():
+    try:
+        message_id = request.args.get('message_id', type=int)  # Message ID in the query parameters
+        conversation_id = request.args.get('conversation_id', type=int)  # Conversation ID in the query parameters
+
+        # Ensure both message_id and conversation_id are provided
+        if not message_id or not conversation_id:
+            return jsonify({'status': 'error', 'message': 'Message ID and Conversation ID are required'}), 400
+
+        # Fetch all reactions for the specified message and conversation
+        reactions = MessageReaction.query.filter_by(
+            message_id=message_id, conversation_id=conversation_id
+        ).all()
+
+        # Aggregate reactions by reaction_name
+        reaction_counts = {}
+        for reaction in reactions:
+            if reaction.reaction_name in reaction_counts:
+                reaction_counts[reaction.reaction_name] += 1
+            else:
+                reaction_counts[reaction.reaction_name] = 1
+
+        return jsonify({
+            'status': 'success',
+            'message_id': message_id,
+            'conversation_id': conversation_id,
+            'reactions': reaction_counts , # Dictionary of reaction_name and its count
+            'is_group':reaction.is_group
+        })
+
+    except Exception as e:
+        return jsonify({'status': 'error', 'message': str(e)}), 500
+
+
 app.app_context().push()
 if __name__ == '__main__':
     app.run(debug=True)

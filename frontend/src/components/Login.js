@@ -38,7 +38,7 @@ const Login = () => {
                 Cookies.set('token', token, { expires: 1 });
                 Cookies.set('user', JSON.stringify(user), { expires: 1 });
 
-                navigate('/');
+                navigate('/Home');
             }
         } catch (error) {
             setError(error.response?.data?.message || 'Invalid username or password');

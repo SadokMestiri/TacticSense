@@ -24,7 +24,7 @@ function Reset() {
             console.log(response);
 
             if (response.status === 200) {
-                navigate('/Login'); // Redirect on success
+                navigate('/'); // Redirect on success
             } else {
                 setError(response.data.error); // Set error message from response
             }
@@ -84,7 +84,7 @@ function Reset() {
                                 <button type="submit" className="btn btn-success btn-block btn-lg">Submit</button>
                             </div>
                             <div className="m-t-20">
-                                Remember your password? Click <a href="/Login">here</a> to login.
+                                Remember your password? Click <a href="/">here</a> to login.
                             </div>
                             {error && 
                                 <div className="alert alert-danger fade show">{error}</div>

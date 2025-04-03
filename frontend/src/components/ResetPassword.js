@@ -33,7 +33,7 @@ function ResetPassword() {
                     console.log(response);
                     setNewPassword("");
                     setConfirmNewPassword("");
-                    navigate('/Login');
+                    navigate('/');
                 })
                 .catch((error) => {
                     setError(error.response?.data?.error || 'An unknown error occurred');

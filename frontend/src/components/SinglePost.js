@@ -78,7 +78,7 @@ const SinglePost = ({ header }) => {
   useEffect(() => {
     if (!token || !decodedToken || (date && date.getTime() < now.getTime())) {
       Cookies.remove('token');
-      navigate('/login');
+      navigate('/');
     } else {
       fetchPostData();
       fetchComments(postId);
