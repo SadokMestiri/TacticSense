@@ -2,9 +2,9 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import Cookies from 'js-cookie';
 import jwt_decode from 'jwt-decode';
-import { useNavigate } from "react-router-dom";
+import { useNavigate,Link } from "react-router-dom";
 
-const Home = ({ header }) => {
+const Home = ({ header , footer}) => {
   const navigate = useNavigate();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isActivityOpen, setIsActivityOpen] = useState(false);
@@ -115,6 +115,28 @@ useEffect(() => {
     } catch (error) {
       console.error('Network error:', error);
     }
+  };
+  
+  const renderContent = (content) => {
+    return content.split(/(\s+)/).map((part, i) => {
+      // Check if the part starts with a hashtag
+      if (part.startsWith("#")) {
+        const tag = part.slice(1);
+        return (
+          <Link
+            key={i}
+            to="/hashtag"
+            state={{ hashtag: tag }} // Pass the hashtag as state
+            style={{ color: "#0073b1" }}
+          >
+            {part}
+          </Link>
+        );
+      } else {
+        // For regular text, simply return the part
+        return part;
+      }
+    });
   };
   
 
@@ -371,7 +393,8 @@ console.log(user)
                  <small>{getTimeAgo(post.created_at)}</small>
                  </div>
               </div>
-              <p>{post.content}</p>
+              <p>{renderContent(post.content)}</p>
+
               {post.image_url && (
             <img 
               src={`${process.env.REACT_APP_BASE_URL}${post.image_url}`} 
@@ -575,13 +598,11 @@ console.log(user)
             <a href="#">Advertising</a>
             <a href="#">Get the App</a>
             <a href="#">More</a>
-            <div className="copyright-msg">
-              <img src="assets/images/logo.png" alt="logo" />
-              <p>MetaScout &#169; 2025. All Rights Reserved</p>
-            </div>
+            
           </div>
         </div>
       </div>
+      {footer}
     </div>
   );
 };

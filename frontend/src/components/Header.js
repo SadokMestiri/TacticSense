@@ -69,28 +69,28 @@ const Header = () => {
         <div className="navbar-center">
           <ul>
             <li>
-              <a href="#" className="active-link">
-                <img src="assets/images/home.png" alt="home" /> <span>Home</span>
+              <a href="/home" className="active-link">
+                <img src="assets/images/home.png" alt="home" /> <span style={{color:"#000"}}>Home</span>
               </a>
             </li>
             <li>
               <a href="#">
-                <img src="assets/images/network.png" alt="network" /> <span>My Network</span>
+                <img src="assets/images/network.png" alt="network" /> <span style={{color:"#000"}}>My Network</span>
               </a>
             </li>
             <li>
-              <a href="#">
-                <img src="assets/images/jobs.png" alt="jobs" /> <span>Jobs</span>
+              <a href="/jobs">
+                <img src="assets/images/jobs.png" alt="jobs" /> <span style={{color:"#000"}}>Jobs</span>
               </a>
             </li>
             <li>
               <a href="/Chat">
-                <img src="assets/images/message.png" alt="message" /> <span>Messaging</span>
+                <img src="assets/images/message.png" alt="message" /> <span style={{color:"#000"}}>Messaging</span>
               </a>
             </li>
             <li>
               <a href="#">
-                <img src="assets/images/notification.png" alt="notification" /> <span>Notifications</span>
+                <img src="assets/images/notification.png" alt="notification" /> <span style={{color:"#000"}}>Notifications</span>
               </a>
             </li>
           </ul>

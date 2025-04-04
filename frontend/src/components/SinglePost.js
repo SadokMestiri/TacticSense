@@ -2,11 +2,10 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import Cookies from 'js-cookie';
 import jwt_decode from 'jwt-decode';
-import { useNavigate } from "react-router-dom";
+import { useNavigate ,Link} from "react-router-dom";
 
-const SinglePost = ({ header }) => {
+const SinglePost = ({ header,postId }) => {
   const navigate = useNavigate();
-  const  postId  = 4; // Get post ID from URL
   const [post, setPost] = useState(null);
   const [comments, setComments] = useState([]);
   const [user, setUser] = useState(null);
@@ -61,6 +60,29 @@ const SinglePost = ({ header }) => {
   const date = exp ? new Date(exp * 1000) : null;
   const now = new Date();
 
+  const renderContent = (content) => {
+    return content.split(/(\s+)/).map((part, i) => {
+      // Check if the part starts with a hashtag
+      if (part.startsWith("#")) {
+        const tag = part.slice(1);
+        return (
+          <Link
+            key={i}
+            to="/hashtag"
+            state={{ hashtag: tag }} // Pass the hashtag as state
+            style={{ color: "#0073b1" }}
+          >
+            {part}
+          </Link>
+        );
+      } else {
+        // For regular text, simply return the part
+        return part;
+      }
+    });
+  };
+  
+  
   const fetchPostData = async () => {
     try {
       const response = await axios.get(`${process.env.REACT_APP_BASE_URL}/get_post_by_id/${postId}`);
@@ -89,6 +111,7 @@ const SinglePost = ({ header }) => {
     try {
       const response = await axios.get(`${process.env.REACT_APP_BASE_URL}/get_comments/${postId}`);
       setComments(response.data);
+      console.log(response.data)
     } catch (error) {
       console.error("Error fetching comments:", error);
     }
@@ -147,7 +170,6 @@ const SinglePost = ({ header }) => {
   ];
   return (
     <div>
- {header}
       <div className="container">
     <div className="main-content">
     <div className="post">
@@ -159,7 +181,7 @@ const SinglePost = ({ header }) => {
        <small>{getTimeAgo(post.created_at)}</small>
        </div>
     </div>
-    <p>{post.content}</p>
+    <p>{renderContent(post.content)}</p>
     {post.image_url && (
   <img 
     src={`${process.env.REACT_APP_BASE_URL}${post.image_url}`} 
@@ -176,36 +198,36 @@ Your browser does not support the video tag.
 
 <div className="post-stats">
 <div className="post-reactions">
-{Object.entries({
-"post-like": post.likes,
-love: post.loves,
-clap: post.claps,
-haha: post.laughs,
-wow: post.wows,
-angry: post.angrys,
-sad: post.sads
-})
-.filter(([_, count]) => count > 0) // Show only reactions with a count > 0
-.map(([reaction, count]) => (
-<div key={reaction} className="reaction">
-<img
-  src={`assets/images/${reaction}.png`}
-  alt={reaction}
-  className="post-reaction-icon" // Added CSS class for icons
-/>
-</div>
-))}
-<span className="total-reactions">
-{Object.values({
-"post-like": post.likes || 0,
-love: post.loves || 0,
-clap: post.claps || 0,
-haha: post.laughs || 0,
-wow: post.wows || 0,
-angry: post.angrys || 0,
-sad: post.sads || 0
-}).reduce((acc, count) => acc + (count || 0), 0)} reactions
-</span>
+    {Object.entries({
+      "post-like": post.likes,
+      love: post.loves,
+      clap: post.claps,
+      haha: post.laughs,
+      wow: post.wows,
+      angry: post.angrys,
+      sad: post.sads
+    })
+      .filter(([_, count]) => count > 0) // Show only reactions with a count > 0
+      .map(([reaction, count]) => (
+        <div key={reaction} className="reaction">
+          <img
+            src={`assets/images/${reaction}.png`}
+            alt={reaction}
+            className="post-reaction-icon" // Added CSS class for icons
+          />
+        </div>
+      ))}
+    <span className="total-reactions">
+      {Object.values({
+        "post-like": post.likes || 0,
+        love: post.loves || 0,
+        clap: post.claps || 0,
+        haha: post.laughs || 0,
+        wow: post.wows || 0,
+        angry: post.angrys || 0,
+        sad: post.sads || 0
+      }).reduce((acc, count) => acc + (count || 0), 0)} reactions
+    </span>
 </div>
 
       <div>
@@ -217,7 +239,7 @@ setIsCommentsVisible(true); // Show the comments popup
 fetchComments(post.id);  // Fetch comments
 }}
 >
-{`${post.comments} comments `}
+{`${comments.length} comments `}
 </span>
       </div>
       {isCommentsVisible && selectedPost && (
@@ -327,6 +349,24 @@ onClick={() => handleReaction(post.id, reaction.name)}
 </div>
 </div>
 </div>
+<style>{`
+    .container {
+      display: flex;
+      justify-content: center;  /* Center horizontally */
+      align-items: center;      /* Center vertically */
+      min-height: 100vh;        /* Ensure it takes the full viewport height */
+      padding: 20px;            /* Optional: add padding around the content */
+    }
+
+    .main-content {
+      background-color: white;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Optional: for styling */
+      border-radius: 8px;        /* Optional: for rounded corners */
+      width: 100%;
+      max-width: 800px;          /* Optional: limit the maximum width */
+      padding: 20px;             /* Add padding inside the content box */
+    }
+  `}</style>
 </div>
   );
 };

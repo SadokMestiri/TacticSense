@@ -10,6 +10,7 @@ import jwt
 from functools import wraps
 from datetime import datetime, timedelta
 from flask_mail import Mail
+import re
 from flask_cors import CORS
 
 
@@ -32,7 +33,6 @@ app.config['MAX_CONTENT_LENGTH'] = 100 * 1024 * 1024
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in app.config['ALLOWED_EXTENSIONS']
 
-
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(80), unique=True, nullable=False)
@@ -42,15 +42,30 @@ class User(db.Model):
     profile_image = db.Column(db.String(255), nullable=True) 
 
 
+class PostHashtag(db.Model):
+    __tablename__ = 'post_hashtag'
+    id = db.Column(db.Integer, primary_key=True)
+    post_id = db.Column(db.Integer, db.ForeignKey('post.post_id'), nullable=False)
+    hashtag_id = db.Column(db.Integer, db.ForeignKey('hashtags.id'), nullable=False)
+
+class Hashtag(db.Model):
+    __tablename__ = 'hashtags'
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), unique=True, nullable=False)
 
 class Post(db.Model):
-    post_id = db.Column(db.Integer, primary_key=True)
+    post_id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False) 
     content = db.Column(db.Text)
     image_url = db.Column(db.String(255), nullable=True)
     video_url = db.Column(db.String(255), nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     user = db.relationship('User', backref='posts', lazy=True)
+    hashtags = db.relationship(
+        'Hashtag',
+        secondary='post_hashtag',
+        backref=db.backref('posts', lazy='dynamic')
+    )    
     def to_dict(self):
         return {
             'post_id': self.post_id,
@@ -148,6 +163,32 @@ class MessageReaction(db.Model):
     user = db.relationship('User', backref=db.backref('reactions', lazy=True))
     conversation = db.relationship('Conversation', backref=db.backref('message_reactions', lazy=True))
 
+class Job(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String(120), nullable=False)
+    description = db.Column(db.Text, nullable=False)
+    location = db.Column(db.String(100), nullable=True)
+    salary = db.Column(db.String(50), nullable=True)
+    job_type = db.Column(db.String(50), nullable=False)  # Full-time, Part-time, etc.
+    experience = db.Column(db.String(50), nullable=False)  # 1-2 years, 2-3 years, etc.
+    category = db.Column(db.String(50), nullable=True)  # Category of job
+
+class JobPost(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    job_id = db.Column(db.Integer, db.ForeignKey('job.id'), nullable=False)
+    date_posted = db.Column(db.DateTime, default=datetime.utcnow)
+    job = db.relationship('Job', backref='jobposts', lazy=True)
+    user = db.relationship('User', backref='jobposts', lazy=True)
+
+class JobApplication(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    job_id = db.Column(db.Integer, db.ForeignKey('job.id'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    application_date = db.Column(db.DateTime, default=datetime.utcnow)
+    job = db.relationship('Job', backref='applications', lazy=True)
+    user = db.relationship('User', backref='applications', lazy=True)
+
 
 def token_required(f):
     @wraps(f)
@@ -167,6 +208,22 @@ def token_required(f):
     
     return decorated
 
+
+def extract_hashtags(content):
+    return set(re.findall(r"#(\w+)", content))
+
+def handle_hashtags(post, content):
+    tags = extract_hashtags(content)
+
+    post.hashtags.clear()
+
+    for tag in tags:
+        hashtag = Hashtag.query.filter_by(name=tag).first()
+        if not hashtag:
+            hashtag = Hashtag(name=tag)
+            db.session.add(hashtag)
+
+        post.hashtags.append(hashtag)
 
 @app.route('/')
 def hello():
@@ -715,7 +772,12 @@ def create_post():
 
     post = Post(user_id=user_id, content=post_content, image_url=uploaded_image, video_url=uploaded_video)
     db.session.add(post)
+
+    handle_hashtags(post, post_content)
+
+
     db.session.commit()
+
 
     return jsonify({
         'message': 'Post created successfully',
@@ -723,6 +785,24 @@ def create_post():
         'image_url': uploaded_image,
         'video_url': uploaded_video
     })
+
+@app.route('/hashtag/<string:hashtag>')
+def get_posts_by_hashtag(hashtag):
+    hashtag_obj = Hashtag.query.filter_by(name=hashtag).first()
+    if not hashtag_obj:
+        return jsonify([]) 
+
+    posts = [
+        {
+            "id": post.post_id,
+            "content": post.content,
+            "user_name": post.user.name,
+            "created_at": post.created_at.strftime('%Y-%m-%d %H:%M:%S')
+        }
+        for post in hashtag_obj.posts
+    ]
+    return jsonify(posts) 
+
 
 @app.route('/get_posts', methods=['GET'])
 def get_posts():
@@ -1058,6 +1138,182 @@ def get_message_reactions():
 
     except Exception as e:
         return jsonify({'status': 'error', 'message': str(e)}), 500
+
+@app.route('/jobs', methods=['GET'])
+def get_jobs():
+    jobs = Job.query.all()
+    
+    # Get all job details along with the user who posted the job
+    job_list = []
+    for job in jobs:
+        job_data = {
+            'id': job.id,
+            'title': job.title,
+            'description': job.description,
+            'location': job.location,
+            'salary': job.salary,
+            'job_type': job.job_type,
+            'experience': job.experience,
+            'category': job.category,
+            'posted_by': {
+                'user_id': job.jobposts[0].user.id if job.jobposts else None,  # Get user who posted the job
+                'username': job.jobposts[0].user.username if job.jobposts else None,  # Get the username
+                'name': job.jobposts[0].user.name if job.jobposts else None,  # Get the user's full name
+                'profile_image':job.jobposts[0].user.profile_image if job.jobposts else None,
+            },
+            'date_posted': job.jobposts[0].date_posted.isoformat() if job.jobposts else None
+        }
+        job_list.append(job_data)
+    
+    return jsonify(job_list)
+
+
+@app.route('/apply/<int:job_id>', methods=['POST'])
+def apply_for_job(job_id):
+    data = request.get_json()  # Get the data sent in the POST request body
+    current_user_id = data.get('current_user')  # Assuming the frontend sends 'current_user' in the request body
+
+    if not current_user_id:
+        return jsonify({"error": "User ID not provided"}), 400  # Bad request if user ID is missing
+
+    # Fetch the job to ensure it exists
+    job = Job.query.get(job_id)
+    if not job:
+        return jsonify({"error": "Job not found"}), 404
+
+    # Create the application
+    application = JobApplication(
+        job_id=job_id, 
+        user_id=current_user_id,  # Use the provided user_id from the request
+        application_date=datetime.utcnow()
+    )
+
+    # Add the application to the database
+    db.session.add(application)
+    db.session.commit()
+
+    return jsonify({'message': 'Application submitted successfully'}), 200
+
+    
+@app.route('/applications/<int:job_id>', methods=['GET'])
+def get_applications_for_job(job_id):
+    # Fetch the job by job_id to ensure it exists
+    job = Job.query.get(job_id)
+    
+    if not job:
+        return jsonify({"error": "Job not found"}), 404
+
+    # Query all applications for the given job_id
+    applications = JobApplication.query.filter_by(job_id=job_id).all()
+
+    if not applications:
+        return jsonify({"message": "No applications found for this job"}), 404
+
+    # Format the response to include application details
+    application_details = []
+    for application in applications:
+        application_details.append({
+            'application_id': application.id,
+            'user_id': application.user_id,
+            'application_date': application.application_date,
+            'user_name': application.user.name,  # Assuming 'name' is a field in your User model
+            'job_title': application.job.title,  # Assuming 'title' is a field in your Job model
+        })
+
+    return jsonify({
+        "job_id": job_id,
+        "applications": application_details
+    }), 200
+
+
+@app.route('/post-job', methods=['POST'])
+def post_job():
+    if not request.is_json:
+        return jsonify({'message': 'Request must be JSON'}), 400
+        
+    data = request.get_json()
+
+    # Ensure the necessary data is provided in the request
+    required_fields = ['title', 'description', 'location', 'salary', 'job_type', 'experience', 'user_id']
+    for field in required_fields:
+        if field not in data:
+            return jsonify({'message': f'Missing required field: {field}'}), 400
+    
+    try:
+        # Extract the user_id from the data
+        user_id = data['user_id']
+
+        # Fetch the user from the database using the user_id
+        current_user = User.query.get(user_id)
+
+        if not current_user:
+            return jsonify({'message': 'User not found'}), 404
+
+        # Create a new Job
+        new_job = Job(
+            title=data['title'],
+            description=data['description'],
+            location=data['location'],
+            salary=data['salary'],
+            job_type=data['job_type'],
+            experience=data['experience'],
+            category=data.get('category', None)  # optional field
+        )
+
+        db.session.add(new_job)
+        db.session.commit()
+
+        # Create a new JobPost to associate the Job with the User
+        new_job_post = JobPost(
+            user_id=current_user.id,
+            job_id=new_job.id,
+            date_posted=datetime.utcnow()
+        )
+
+        db.session.add(new_job_post)
+        db.session.commit()
+
+        return jsonify({'message': 'Job posted successfully'}), 201
+    
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'message': str(e)}), 500
+
+@app.route('/job/<int:job_id>', methods=['GET'])
+def get_single_job(job_id):
+    try:
+        # Fetch the job along with the user who posted it
+        job = Job.query.get_or_404(job_id)  # This will raise a 404 error if the job doesn't exist
+        job_post = JobPost.query.filter_by(job_id=job_id).first()  # Fetch the JobPost entry for this job
+        
+        if not job_post:
+            return jsonify({'message': 'Job post details not found'}), 404
+        
+        # Retrieve the user who posted the job
+        user = job_post.user
+        
+        # Construct response with job and posting details
+        job_details = {
+            'id': job.id,
+            'title': job.title,
+            'description': job.description,
+            'location': job.location,
+            'salary': job.salary,
+            'job_type': job.job_type,
+            'experience': job.experience,
+            'category': job.category,
+            'date_posted': job_post.date_posted,
+            'posted_by': {
+                'user_id': user.id,
+                'username': user.username,  # Adjust based on the actual user model field
+                'email': user.email,  # Adjust based on your user model
+                'profile_image': user.profile_image,  # Adjust based on your user model
+            }
+        }
+        
+        return jsonify(job_details), 200
+    except Exception as e:
+        return jsonify({'message': str(e)}), 500
 
 
 app.app_context().push()

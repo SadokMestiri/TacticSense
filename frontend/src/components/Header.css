@@ -10,7 +10,7 @@
     z-index: 1000;
     padding: 10px;
   }
-  
+
   @keyframes slideDown {
     from {
         opacity: 0;
