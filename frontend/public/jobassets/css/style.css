@@ -40,4 +40,104 @@
   padding-left: 30px;
   padding-right: 30px;
 }
+.job-post-wrapper {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
 
+.job-post-content {
+  flex-grow: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+}
+
+.job-post-inner {
+  max-width: 600px;
+  width: 100%;
+  background-color: #fff;
+  padding: 30px;
+  border-radius: 10px;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.05);
+}
+
+.job-post-form input,
+.job-post-form textarea {
+  width: 100%;
+  margin-bottom: 15px;
+  padding: 12px 15px;
+  font-size: 16px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  outline: none;
+  transition: border-color 0.2s ease;
+}
+
+.job-post-form textarea {
+  resize: vertical;
+  min-height: 120px;
+}
+
+.job-post-form input:focus,
+.job-post-form textarea:focus {
+  border-color: #28a745;
+}
+
+.job-post-form .btn {
+  background-color: #28a745; /* green button */
+  color: white;
+  padding: 12px 20px;
+  font-size: 16px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  margin-top: 10px;
+}
+
+.job-post-form .btn:hover {
+  background-color: #218838;
+}
+
+.job-card-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding-left: 100px;
+  padding-right: 100px;
+
+}
+/* Center the title */
+.hashtag-page h3 {
+  text-align: center; /* Center the title */
+  font-size: 24px; /* Adjust font size */
+  font-weight: 600; /* Make the title bold */
+  margin: 20px 0; /* Add some spacing around the title */
+}
+
+/* Post section container */
+.posts-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center; /* Center the content horizontally */
+  justify-content: flex-start; /* Align content at the top */
+  width: 100%;
+  padding: 0; /* Remove any unnecessary padding */
+}
+
+/* Each post item (SinglePost) */
+.posts-section .single-post-item {
+  margin: 10px 0; /* Reduce vertical margin between posts */
+  width: 100%; /* Ensure posts take full width of the container */
+  max-width: 800px; /* Optional: set a max-width for posts */
+}
+
+/* Optional: Adjust the message that no posts were found */
+.posts-section p {
+  text-align: center; /* Center the "No posts found" message */
+  font-size: 16px;
+  color: #888;
+  margin-top: 20px; /* Add spacing above the message */
+}

@@ -69,7 +69,7 @@ const SinglePost = ({ header,postId }) => {
           <Link
             key={i}
             to="/hashtag"
-            state={{ hashtag: tag }} // Pass the hashtag as state
+            state={{ hashtag: tag,type:"post" }} // Pass the hashtag as state
             style={{ color: "#0073b1" }}
           >
             {part}
@@ -354,7 +354,6 @@ onClick={() => handleReaction(post.id, reaction.name)}
       display: flex;
       justify-content: center;  /* Center horizontally */
       align-items: center;      /* Center vertically */
-      min-height: 100vh;        /* Ensure it takes the full viewport height */
       padding: 20px;            /* Optional: add padding around the content */
     }
 

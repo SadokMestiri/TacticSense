@@ -126,7 +126,7 @@ useEffect(() => {
           <Link
             key={i}
             to="/hashtag"
-            state={{ hashtag: tag }} // Pass the hashtag as state
+            state={{ hashtag: tag,type:"post" }} // Pass the hashtag as state
             style={{ color: "#0073b1" }}
           >
             {part}

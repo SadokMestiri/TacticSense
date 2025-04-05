@@ -3,7 +3,7 @@ import './Header.css';
 import axios from 'axios';
 import Cookies from 'js-cookie';
 import jwt_decode from 'jwt-decode';
-import { useNavigate } from "react-router-dom";
+import { useNavigate, NavLink } from "react-router-dom";
 
 const Header = () => {
   const navigate = useNavigate();
@@ -35,8 +35,6 @@ const Header = () => {
     }
   }, [token, decodedToken, navigate, date]);
 
-
-
   // Handle dropdown toggle for user profile
   const toggleDropdown = () => {
     setDropdownOpen(!isDropdownOpen);
@@ -58,9 +56,9 @@ const Header = () => {
     <div>
       <nav className="navbar">
         <div className="navbar-left">
-          <a href="/" className="meta-logo">
+          <NavLink to="/" className="meta-logo">
             <img src="assets/images/logo.png" alt="logo" />
-          </a>
+          </NavLink>
           <div className="search-box">
             <img src="assets/images/search.png" alt="search" />
             <input type="text" placeholder="Search for anything" />
@@ -69,29 +67,44 @@ const Header = () => {
         <div className="navbar-center">
           <ul>
             <li>
-              <a href="/home" className="active-link">
+              <NavLink 
+                to="/home" 
+                className={({ isActive }) => isActive ? 'active-link' : ''}
+              >
                 <img src="assets/images/home.png" alt="home" /> <span style={{color:"#000"}}>Home</span>
-              </a>
+              </NavLink>
             </li>
             <li>
-              <a href="#">
+              <NavLink 
+                to="/network"
+                className={({ isActive }) => isActive ? 'active-link' : ''}
+              >
                 <img src="assets/images/network.png" alt="network" /> <span style={{color:"#000"}}>My Network</span>
-              </a>
+              </NavLink>
             </li>
             <li>
-              <a href="/jobs">
+              <NavLink 
+                to="/jobs" 
+                className={({ isActive }) => isActive ? 'active-link' : ''}
+              >
                 <img src="assets/images/jobs.png" alt="jobs" /> <span style={{color:"#000"}}>Jobs</span>
-              </a>
+              </NavLink>
             </li>
             <li>
-              <a href="/Chat">
+              <NavLink 
+                to="/Chat" 
+                className={({ isActive }) => isActive ? 'active-link' : ''}
+              >
                 <img src="assets/images/message.png" alt="message" /> <span style={{color:"#000"}}>Messaging</span>
-              </a>
+              </NavLink>
             </li>
             <li>
-              <a href="#">
+              <NavLink 
+                to="/notifications"
+                className={({ isActive }) => isActive ? 'active-link' : ''}
+              >
                 <img src="assets/images/notification.png" alt="notification" /> <span style={{color:"#000"}}>Notifications</span>
-              </a>
+              </NavLink>
             </li>
           </ul>
         </div>
@@ -118,8 +131,8 @@ const Header = () => {
                   <div className="desc">{"Professional footballer"}</div>
                 </div>
               </div>
-              <a href="#" className="profile-btn">See your profile</a>
-              <a href="#" className="logout-btn" onClick={handleLogout}>Logout</a>
+              <NavLink to="#" className="profile-btn">See your profile</NavLink>
+              <button className="logout-btn" onClick={handleLogout}>Logout</button>
             </div>
           )}
         </div>

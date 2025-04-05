@@ -14,6 +14,7 @@ import JobDetails from "./components/JobDetails";
 import Footer from "./components/Footer";
 import JobApplications from "./components/JobApplications";
 import HashtagPage from "./components/HashtagPage";
+import PostJob from "./components/PostJob";
 
 
 
@@ -33,11 +34,13 @@ export default function App() {
       <Route path="/header" element={<Header />} />
       <Route path="/Reset" element={<Reset/>}/>
       <Route path="/ResetPassword" element={<ResetPassword/>}/>
-      <Route path="/post" element={<SinglePost header={header} footer={footer} />} />
+      <Route path="/post" element={<SinglePost header={header} footer={footer} postId={4} />} />
       <Route path="/jobs" element={<Jobs header={header} footer={footer} />} />
       <Route path="/jobDetails" element={<JobDetails header={header} footer={footer} />} />
       <Route path="/jobApplications" element={<JobApplications header={header} footer={footer} />} />
       <Route path="/hashtag" element={<HashtagPage header={header} footer={footer} />} />
+      <Route path="/postJob" element={<PostJob header={header} footer={footer} />} />
+
     </Routes>
   </div>
     

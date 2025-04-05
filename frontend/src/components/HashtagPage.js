@@ -1,26 +1,36 @@
 import React, { useEffect, useState } from "react";
-import { useLocation} from "react-router-dom";
+import { useLocation } from "react-router-dom";
 import axios from "axios";
 import SinglePost from "./SinglePost"; // Import SinglePost component
+import JobCard from "./JobCard"; // Import JobCard component (for job listings)
 
 const HashtagPage = ({ header, footer }) => {
-    const location = useLocation();
-  const { hashtag } = location.state || {}; // Get hashtag from state
+  const location = useLocation();
+  const { hashtag,type } = location.state || {}; // Get the hashtag from the state
 
   const [posts, setPosts] = useState([]);
+  const [jobs, setJobs] = useState([]);
   const [loading, setLoading] = useState(true);
-
   useEffect(() => {
-    fetchPosts();
+    fetchContent();
   }, [hashtag]);
 
-  const fetchPosts = async () => {
+  // Fetch posts and jobs based on the hashtag
+  const fetchContent = async () => {
     try {
-      const response = await axios.get(`${process.env.REACT_APP_BASE_URL}/hashtag/${hashtag}`);
-      const postsData = response.data;
-      setPosts(postsData);
+      // Fetch posts with hashtag
+      if (type==="post"){
+      const postResponse = await axios.get(`${process.env.REACT_APP_BASE_URL}/hashtag/${hashtag}`);
+      console.log(postResponse.data)
+      setPosts(postResponse.data);
+      }else if (type==="job"){
+      // Fetch jobs with hashtag
+      const jobResponse = await axios.get(`${process.env.REACT_APP_BASE_URL}/hashtag/jobs/${hashtag}`);
+      console.log(jobResponse.data)
+      setJobs(jobResponse.data);
+      }
     } catch (error) {
-      console.error("Error fetching posts:", error);
+      console.error("Error fetching content:", error);
     } finally {
       setLoading(false);
     }
@@ -30,13 +40,30 @@ const HashtagPage = ({ header, footer }) => {
     <div>
       {header}
       <div className="hashtag-page">
-        <h2>Posts with #{hashtag}</h2>
         {loading ? (
           <p>Loading...</p>
         ) : (
-          posts.map((post) => (
-            <SinglePost key={post.id} postId={post.id} header={header} /> // Use SinglePost for each post
-          ))
+          <>
+          {type === "post" && (
+            <div className="posts-section">
+              <h3>Posts with #{hashtag}</h3>
+              {posts.length === 0 && <p>No posts found for this hashtag.</p>}
+              {posts.map((post) => (
+                <SinglePost key={post.id} postId={post.id} />
+              ))}
+            </div>
+            )}
+                        {type === "job" && (
+
+            <div className="jobs-section">
+              <h3>Jobs with #{hashtag}</h3>
+              {jobs.length === 0 && <p>No jobs found for this hashtag.</p>}
+              {jobs.map((job) => (
+                <JobCard key={job.id} job={job} />
+              ))}
+            </div>
+                        )}
+          </>
         )}
       </div>
       {footer}

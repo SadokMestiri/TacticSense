@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import Cookies from 'js-cookie';
 import jwt_decode from 'jwt-decode';
-import { useNavigate } from "react-router-dom";
+import { useNavigate,Link } from "react-router-dom";
 import { useLocation } from 'react-router-dom';
 
 const JobDetails = ({ header }) => {
@@ -97,8 +97,30 @@ console.log(job)
     }
   };
   const viewApplications = () => {
+    console.log(jobId)
     navigate('/jobApplications', { state: { jobId: jobId } });
   };
+    const renderContent = (content) => {
+      return content.split(/(\s+)/).map((part, i) => {
+        // Check if the part starts with a hashtag
+        if (part.startsWith("#")) {
+          const tag = part.slice(1);
+          return (
+            <Link
+              key={i}
+              to="/hashtag"
+              state={{ hashtag: tag ,type:"job"}} // Pass the hashtag as state
+              style={{ color: "#0073b1" }}
+            >
+              {part}
+            </Link>
+          );
+        } else {
+          // For regular text, simply return the part
+          return part;
+        }
+      });
+    };
   return (
     <div >
  {header}
@@ -151,14 +173,14 @@ console.log(job)
                                 <div className="small-section-tittle">
                                     <h4>Job Description</h4>
                                 </div>
-                                <p>{job.description}</p>
+                                <p>{renderContent(job.description)}</p>
                             </div>
                             <div className="post-details2  mb-50">
                                 <div className="small-section-tittle">
                                     <h4>Required Experience and job type</h4>
                                 </div>
                                <ul>
-                                   <li>{job.experience}</li>
+                                   <li>{job.experience} Years</li>
                                    <li>{job.job_type}</li>
                                    <li>Research and code , libraries, APIs and frameworks</li>
                                    <li>Strong knowledge on software development life cycle</li>

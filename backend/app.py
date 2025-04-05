@@ -48,10 +48,21 @@ class PostHashtag(db.Model):
     post_id = db.Column(db.Integer, db.ForeignKey('post.post_id'), nullable=False)
     hashtag_id = db.Column(db.Integer, db.ForeignKey('hashtags.id'), nullable=False)
 
+class JobHashtag(db.Model):
+    __tablename__ = 'job_hashtag'
+    id = db.Column(db.Integer, primary_key=True)
+    job_id = db.Column(db.Integer, db.ForeignKey('job.id'), nullable=False)
+    hashtag_id = db.Column(db.Integer, db.ForeignKey('hashtags.id'), nullable=False)
+
+    job = db.relationship('Job', backref='job_hashtags', lazy=True)
+    hashtag = db.relationship('Hashtag', backref='job_hashtags', lazy=True)
+
+
 class Hashtag(db.Model):
     __tablename__ = 'hashtags'
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), unique=True, nullable=False)
+
 
 class Post(db.Model):
     post_id = db.Column(db.Integer, primary_key=True, autoincrement=True)
@@ -172,6 +183,11 @@ class Job(db.Model):
     job_type = db.Column(db.String(50), nullable=False)  # Full-time, Part-time, etc.
     experience = db.Column(db.String(50), nullable=False)  # 1-2 years, 2-3 years, etc.
     category = db.Column(db.String(50), nullable=True)  # Category of job
+    hashtags = db.relationship(
+        'Hashtag',
+        secondary='job_hashtag',
+        backref=db.backref('jobs', lazy='dynamic')
+    ) 
 
 class JobPost(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -211,19 +227,54 @@ def token_required(f):
 
 def extract_hashtags(content):
     return set(re.findall(r"#(\w+)", content))
+def handle_hashtags(post, job, content):
+    hashtags = extract_hashtags(content)
+    
+    if not hashtags:
+        return  # No hashtags to process, exit early
+    
+    try:
+        # Process hashtags for posts
+        if post:
+            for hashtag in hashtags:
+                # Check if the hashtag already exists in the database
+                hashtag_obj = Hashtag.query.filter_by(name=hashtag).first()
+                
+                # If it doesn't exist, create and add it
+                if not hashtag_obj:
+                    hashtag_obj = Hashtag(name=hashtag)
+                    db.session.add(hashtag_obj)
+                    db.session.commit()  # Ensure the hashtag is committed to the database before referencing it
+                
+                # Create the association in the post_hashtag table
+                post_hashtag = PostHashtag(post_id=post.post_id, hashtag_id=hashtag_obj.id)
+                db.session.add(post_hashtag)
+        
+        # Process hashtags for jobs
+        if job:
+            for hashtag in hashtags:
+                hashtag_obj = Hashtag.query.filter_by(name=hashtag).first()
+                
+                if not hashtag_obj:
+                    hashtag_obj = Hashtag(name=hashtag)
+                    db.session.add(hashtag_obj)
+                    db.session.commit()  # Ensure the hashtag is committed to the database before referencing it
+                
+                # Check if the hashtag was created successfully and has a valid id
+                if not hashtag_obj.id:
+                    raise Exception(f"Hashtag {hashtag} was not properly created.")
+                
+                # Create the association in the job_hashtag table
+                job_hashtag = JobHashtag(job_id=job.id, hashtag_id=hashtag_obj.id)
+                db.session.add(job_hashtag)
 
-def handle_hashtags(post, content):
-    tags = extract_hashtags(content)
+        # Commit all changes to the database
+        db.session.commit()
 
-    post.hashtags.clear()
-
-    for tag in tags:
-        hashtag = Hashtag.query.filter_by(name=tag).first()
-        if not hashtag:
-            hashtag = Hashtag(name=tag)
-            db.session.add(hashtag)
-
-        post.hashtags.append(hashtag)
+    except Exception as e:
+        db.session.rollback()
+        print(f"Error handling hashtags: {str(e)}")  # Log the error for debugging
+        raise e  # Reraise exception to let the caller handle it
 
 @app.route('/')
 def hello():
@@ -773,11 +824,17 @@ def create_post():
     post = Post(user_id=user_id, content=post_content, image_url=uploaded_image, video_url=uploaded_video)
     db.session.add(post)
 
-    handle_hashtags(post, post_content)
+    # Debugging: Print the arguments before passing them
+    print(f"Post Content: {post_content}")
+    print(f"Post Object: {post}")
 
-
+    try:
+        # Call handle_hashtags and ensure all arguments are passed correctly
+        handle_hashtags(post=post, job=None,content=post_content)
+    except Exception as e:
+        print(f"Error while handling hashtags: {str(e)}")
+        return jsonify({'error': 'Error processing hashtags'}), 500
     db.session.commit()
-
 
     return jsonify({
         'message': 'Post created successfully',
@@ -786,12 +843,16 @@ def create_post():
         'video_url': uploaded_video
     })
 
+
 @app.route('/hashtag/<string:hashtag>')
 def get_posts_by_hashtag(hashtag):
     hashtag_obj = Hashtag.query.filter_by(name=hashtag).first()
     if not hashtag_obj:
-        return jsonify([]) 
-
+        return jsonify([])  # No posts found for the hashtag
+    
+    # Fetch posts associated with the hashtag through the PostHashtag association table
+    post_hashtags = PostHashtag.query.filter_by(hashtag_id=hashtag_obj.id).all()
+    
     posts = [
         {
             "id": post.post_id,
@@ -799,9 +860,47 @@ def get_posts_by_hashtag(hashtag):
             "user_name": post.user.name,
             "created_at": post.created_at.strftime('%Y-%m-%d %H:%M:%S')
         }
-        for post in hashtag_obj.posts
+        for post_hashtag in post_hashtags
+        for post in [Post.query.get(post_hashtag.post_id)]
     ]
-    return jsonify(posts) 
+    
+    return jsonify(posts)
+
+
+@app.route('/hashtag/jobs/<string:hashtag>')
+def get_jobs_by_hashtag(hashtag):
+    hashtag_obj = Hashtag.query.filter_by(name=hashtag).first()
+    if not hashtag_obj:
+        return jsonify([])  # No jobs found for the hashtag
+    
+    # Fetch jobs associated with the hashtag through the JobHashtag association table
+    job_hashtags = JobHashtag.query.filter_by(hashtag_id=hashtag_obj.id).all()
+    
+    jobs = []
+    for job_hashtag in job_hashtags:
+        job = Job.query.get(job_hashtag.job_id)
+        if job:
+            # Get job post associated with the job
+            job_post = JobPost.query.filter_by(job_id=job.id).first()
+            if job_post:
+                # Get user info from job_post
+                user = User.query.get(job_post.user_id)
+                if user:
+                    jobs.append({
+                        "job_id": job.id,
+                        "title": job.title,
+                        "description": job.description,
+                        "type":job.job_type,
+                        "location": job.location,
+                        "salary": job.salary,
+                        "user_id": job_post.user_id,
+                        "user_name": user.name,
+                        "user_email": user.email,
+                        "profile_image":user.profile_image,
+                        "posted_at": job_post.date_posted
+                    })
+    
+    return jsonify(jobs)
 
 
 @app.route('/get_posts', methods=['GET'])
@@ -1260,8 +1359,19 @@ def post_job():
             category=data.get('category', None)  # optional field
         )
 
+        # Debugging: print the job details before adding to the session
+        print(f"Creating Job: {new_job.title}, {new_job.location}, {new_job.salary}")
+
         db.session.add(new_job)
+
+        # Handle hashtags for the job
+        handle_hashtags(post=None, job=new_job, content=new_job.description)
+
+        # Commit to the database
         db.session.commit()
+
+        # Debugging: ensure job is saved
+        print(f"Job created successfully with ID: {new_job.id}")
 
         # Create a new JobPost to associate the Job with the User
         new_job_post = JobPost(
@@ -1270,14 +1380,24 @@ def post_job():
             date_posted=datetime.utcnow()
         )
 
+        # Debugging: print the new job post details before committing
+        print(f"Creating JobPost: {new_job_post.user_id}, {new_job_post.job_id}")
+
         db.session.add(new_job_post)
         db.session.commit()
+
+        # Debugging: Ensure the JobPost is saved
+        print(f"JobPost created with ID: {new_job_post.id}")
 
         return jsonify({'message': 'Job posted successfully'}), 201
     
     except Exception as e:
+        # Rollback the session in case of error
         db.session.rollback()
+        # Debugging: print the error
+        print(f"Error occurred: {str(e)}")
         return jsonify({'message': str(e)}), 500
+
 
 @app.route('/job/<int:job_id>', methods=['GET'])
 def get_single_job(job_id):

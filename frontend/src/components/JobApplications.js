@@ -31,7 +31,7 @@ const JobApplications = ({ header, footer }) => {
       navigate('/'); // This will navigate to the login page
     }
   }, [token, decodedToken, date, now, navigate]);
-
+console.log(jobId)
   // Fetch job applications for the given jobId
   useEffect(() => {
     if (jobId) {
