@@ -10,7 +10,6 @@ import jwt
 from functools import wraps
 from datetime import datetime, timedelta
 from flask_mail import Mail
-from flask_cors import CORS
 
 # BO 6
 from ml.speech.stt import WhisperTranscriber
@@ -19,6 +18,11 @@ from ml.speech.tts import ElevenLabsTTS
 from ml.speech.caption import CaptionEnhancer
 from ml.video.overlay import overlay_subtitles
 from ml.utils.srt import SRTFormatter
+from ml.summarizer.gemma_summarizer import GemmaSummarizerService
+import re
+import nltk
+import shutil
+import traceback
 
 
 # Set up upload folder for processed videos
@@ -1164,4 +1168,57 @@ def analyze_transcript():
         
     except Exception as e:
         print(f"Error analyzing transcript: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+    
+
+# Initialize the summarizer (lazy loading will occur on first use)
+gemma_summarizer = GemmaSummarizerService(use_8bit=True)
+
+@app.route('/api/summarize-transcript', methods=['POST', 'OPTIONS'])
+def summarize_transcript():
+    """Endpoint to generate a summary of a soccer match transcript"""
+    if request.method == 'OPTIONS':
+        return '', 200
+        
+    try:
+        data = request.json
+        print(f"Received data: {data}")
+        
+        if not data or 'video_id' not in data:
+            return jsonify({'error': 'No video ID provided'}), 400
+        
+        video_id = data['video_id']
+        print(f"Looking for SRT file with video_id: {video_id}")
+        
+        # Find the corresponding SRT file
+        srt_filename = f"{video_id}.srt"
+        srt_path = os.path.join(PROCESSED_FOLDER, srt_filename)
+        print(f"Full SRT path: {srt_path}")
+        
+        if not os.path.exists(srt_path):
+            print(f"SRT file not found at: {srt_path}")
+            # Try to find by matching pattern in processed_videos directory
+            print(f"Trying to find match for: {video_id}")
+            matching_files = [f for f in os.listdir(PROCESSED_FOLDER) 
+                             if f.endswith('.srt') and video_id in f]
+            
+            if matching_files:
+                print(f"Found matching file: {matching_files[0]}")
+                srt_path = os.path.join(PROCESSED_FOLDER, matching_files[0])
+            else:
+                return jsonify({'error': f'Transcript file not found: {srt_path}'}), 404
+            
+        # Generate summary using the gemma_summarizer
+        print(f"Generating summary from: {srt_path}")
+        summary = gemma_summarizer.summarize_from_file(srt_path)
+        
+        return jsonify({
+            'summary': summary,
+            'video_id': video_id
+        })
+        
+    except Exception as e:
+        print(f"Error generating summary: {str(e)}")
+        import traceback
+        traceback.print_exc()
         return jsonify({'error': str(e)}), 500

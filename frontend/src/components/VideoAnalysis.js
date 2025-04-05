@@ -6,6 +6,9 @@ import CustomVideoPlayer from './CustomVideoPlayer';
 import TranscriptDisplay from './TranscriptDisplay';
 import './VideoAnalysis.css';
 import MatchSummary from './MatchSummary';
+import { Button, CircularProgress, Paper, Typography } from '@mui/material';
+import SummarizeIcon from '@mui/icons-material/Summarize';
+
 
 const VideoAnalysis = () => {
   const { postId } = useParams();
@@ -28,6 +31,11 @@ const VideoAnalysis = () => {
   // states for transcript functionality
   const [currentTime, setCurrentTime] = useState(0);
   const [captionsData, setCaptionsData] = useState(null);
+  
+  // states for video data
+  const [videoData, setVideoData] = useState(null);
+  const [generatingSummary, setGeneratingSummary] = useState(false);
+  
 
 
   // Fetch post video if postId is provided
@@ -61,8 +69,15 @@ const VideoAnalysis = () => {
       const response = await axios.get(
         `${process.env.REACT_APP_BASE_URL}/get_post_by_id/${id}`
       );
+
+      if (response.data) {
+        // Set video data
+        setVideoData({
+          video_id: response.data._id || id, // Use post ID if no specific video ID exists
+          title: response.data.title,
+        });
       
-      if (response.data && response.data.video_url) {
+      if (response.data.video_url) {
         // Set video URL
         setVideoUrl(`${process.env.REACT_APP_BASE_URL}${response.data.video_url}`);
         
@@ -77,6 +92,7 @@ const VideoAnalysis = () => {
           // If not in debug mode, analyze the video
           analyzePostVideo(response.data.video_url);
         }
+      }
       } else {
         setError('No video found in this post');
       }
@@ -282,6 +298,44 @@ const handleUpload = async () => { // depreacted
       setAnalyzingTranscript(false);
     }
   };
+  
+  const handleGenerateSummary = async () => {
+    if (!videoData || !videoData.video_id) {
+      setError("No video selected for summary generation");
+      return;
+    }
+    
+    try {
+      setGeneratingSummary(true);
+      
+      const response = await axios.post(
+        `${process.env.REACT_APP_BASE_URL}/api/summarize-transcript`,
+        { video_id: videoData.video_id }
+      );
+      
+      if (response.data && response.data.summary) {
+        setSummaryData({
+          summary: response.data.summary,
+          video_id: response.data.video_id
+        });
+        
+        // Auto-expand the summary when it's ready
+        setShowSummary(true);
+      }
+    } catch (err) {
+      console.error("Error generating summary:", err);
+      setError("Failed to generate match summary");
+    } finally {
+      setGeneratingSummary(false);
+    }
+
+        console.log("Sending request with video_id:", videoData.video_id);
+    const response = await axios.post(
+      `${process.env.REACT_APP_BASE_URL}/api/summarize-transcript`,
+      { video_id: videoData.video_id }
+    );
+  };
+
 
   const handleTTS = async () => {
     try {
@@ -336,7 +390,6 @@ const handleUpload = async () => { // depreacted
             </div>
           )}
         </div>
-        
         {/* Right side - Transcript */}
         <div className="analysis-section">
   {/* Always render the transcript section, but with a class indicating if it's expanded */}
@@ -357,8 +410,7 @@ const handleUpload = async () => { // depreacted
       </div>
     )}
   </div>
-          
-  {result?.transcript && (
+
   <div className={`summary-section ${showSummary ? 'expanded' : 'collapsed'}`}>
     <h3 onClick={() => setShowSummary(prev => !prev)} className="transcript-header">
       Match Summary
@@ -367,27 +419,34 @@ const handleUpload = async () => { // depreacted
     
     {showSummary && (
       <div className="summary-content">
-        {!summaryData && !analyzingTranscript && (
+        {!summaryData && !generatingSummary && (
           <div className="summary-actions">
-            <button 
-              onClick={analyzeTranscript}
-              className="analyze-button"
+            <Button 
+              onClick={handleGenerateSummary}
+              disabled={!videoData || generatingSummary}
+              startIcon={generatingSummary ? <CircularProgress size={20} /> : <SummarizeIcon />}
+              variant="contained"
+              color="primary"
             >
-              Generate Summary
-            </button>
+              Generate Match Summary
+            </Button>
           </div>
         )}
         
-        <MatchSummary 
-          summary={summaryData?.summary}
-          keyMoments={summaryData?.key_moments}
-          loading={analyzingTranscript}
-        />
+        {summaryData && summaryData.summary && (
+          <Paper elevation={2} sx={{ p: 2, mt: 2 }}>
+            <Typography variant="h6" gutterBottom>
+              Match Summary
+            </Typography>
+            <Typography variant="body1">
+              {summaryData.summary}
+            </Typography>
+          </Paper>
+        )}
       </div>
     )}
-          </div>
-          )}
-        </div>
+      </div>
+    </div>
       </div>
     </div>
   );

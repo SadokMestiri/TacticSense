@@ -30,3 +30,7 @@ coverage/
 *.tox
 *.nox
 *.coverage
+
+# Ignore model cache directories
+**/.cache/huggingface/
+**/models/

@@ -53,6 +53,7 @@ torch = "*"
 numpy = "*"
 ffmpeg-python = "*"
 nltk = "*"
+datasets = "*"
 
 [dev-packages]
 
