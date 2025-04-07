@@ -9,6 +9,7 @@ import Header from "./components/Header";
 import Reset from "./components/Reset";
 import ResetPassword from "./components/ResetPassword";
 import SinglePost from "./components/SinglePost";
+import UserProfilePage from './components/profile';
 
 
 
@@ -29,6 +30,7 @@ export default function App() {
       <Route path="/Reset" element={<Reset/>}/>
       <Route path="/ResetPassword" element={<ResetPassword/>}/>
       <Route path="/post" element={<SinglePost header={header} />} />
+      <Route path="/user/:username" element={<UserProfilePage />} />
     </Routes>
   </div>
     

@@ -16,7 +16,7 @@ from flask_cors import CORS
 app = Flask(__name__,template_folder='templates')
 CORS(app, origins=["http://localhost:3000"])
 app.config['SECRET_KEY'] = '59c9d8576f920846140e2a8985911bec588c08aebf4c7799ba0d5ae388393703'  
-app.config['SQLALCHEMY_DATABASE_URI'] = "postgresql://postgres:admin@localhost/metascout"
+app.config['SQLALCHEMY_DATABASE_URI'] = "postgresql://postgres:amino159753@localhost/metascout"
 db = SQLAlchemy(app)
 app.config['UPLOAD_FOLDER'] = 'uploads'
 app.config['MAIL_SERVER'] = 'smtp.gmail.com'
@@ -560,7 +560,56 @@ def add_comment():
     db.session.add(new_comment)
     db.session.commit()
     return jsonify({'message': 'Comment added'})
+
+
+
+
+####################################################################################################################################
+#####################################################################################################################################    
+#          PARTIE AMINE
+
+
+
+@app.route('/search', methods=['GET'])
+def search_users():
+    query = request.args.get('q', '').strip()
+    if not query:
+        return jsonify([])
+    
+    # Search for users matching the query
+    users = User.query.filter(
+        User.username.ilike(f'%{query}%') | 
+        User.name.ilike(f'%{query}%')
+    ).limit(10).all()
+    
+    # Format the results with clean paths
+    results = [{
+
+        'username': user.username,
+        'profile_image': user.profile_image.replace("\\", "/") if user.profile_image else None,
+    } for user in users]
+    
+    return jsonify(results)
+
+@app.route('/user/<username>', methods=['GET'])
+def get_user_profile(username):
+    user = User.query.filter_by(username=username).first()
+    if not user:
+        return jsonify({'error': 'User not found'}), 404
+    
+    return jsonify({
+        'username': user.username,
+        'name': user.name,
+        'profile_image': user.profile_image.replace("\\", "/") if user.profile_image else None,
+    })
+
+
 app.app_context().push()
 if __name__ == '__main__':
     app.run(debug=True)
+
+
+
+
+
 
