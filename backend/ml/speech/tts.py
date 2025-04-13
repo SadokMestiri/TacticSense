@@ -1,5 +1,6 @@
 import os
 import tempfile
+import hashlib
 from dotenv import load_dotenv
 from elevenlabs.client import ElevenLabs
 from elevenlabs import play
@@ -11,11 +12,25 @@ class ElevenLabsTTS:
         self.api_key = os.getenv("ELEVENLABS_API_KEY")
         self.client = ElevenLabs(api_key=self.api_key)
     
-    def generate_speech(self, text, voice_id="qCwgiN0GsIAYwAJ1nYvZ", output_path=None):
-        """Generate speech from text using ElevenLabs API"""
-        if output_path is None:
-            temp_dir = tempfile.gettempdir()
-            output_path = os.path.join(temp_dir, "tts_output.mp3")
+    def generate_speech(self, text, voice_id="qCwgiN0GsIAYwAJ1nYvZ", output_folder=None, filename_prefix="tts_"):
+        """Generate speech from text using ElevenLabs API with caching"""
+        if output_folder is None:
+            output_folder = os.path.join(os.getcwd(), "processed_videos")
+            
+        # Create the output folder if it doesn't exist
+        os.makedirs(output_folder, exist_ok=True)
+        
+        # Create a content hash to uniquely identify this text
+        content_hash = hashlib.md5(text.encode('utf-8')).hexdigest()[:12]
+        
+        # Create a descriptive filename using the prefix and content hash
+        filename = f"{filename_prefix}{content_hash}.mp3"
+        output_path = os.path.join(output_folder, filename)
+        
+        # Check if the file already exists
+        if os.path.exists(output_path):
+            print(f"Using existing audio file: {filename}")
+            return output_path
         
         try:
             # Convert text to speech using the modern SDK
@@ -35,7 +50,8 @@ class ElevenLabsTTS:
             # Save audio to file
             with open(output_path, "wb") as f:
                 f.write(audio_bytes)
-                
+            
+            print(f"Generated new audio file: {filename}")
             return output_path
         except Exception as e:
             print(f"TTS Error: {str(e)}")
