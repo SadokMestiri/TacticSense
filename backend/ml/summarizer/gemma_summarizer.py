@@ -25,8 +25,17 @@ class GemmaSummarizerService:
         
         print(f"Loading model: {self.model_name}")
         
-        # Load tokenizer
-        self.tokenizer = AutoTokenizer.from_pretrained(self.model_name)
+        # Create persistent cache directory within the project
+        cache_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "model_cache")
+        os.makedirs(cache_dir, exist_ok=True)
+        print(f"Using cache directory: {cache_dir}")
+    
+
+        # Load tokenizer with specific cache directory
+        self.tokenizer = AutoTokenizer.from_pretrained(
+            self.model_name,
+            cache_dir=cache_dir
+        )
         
         if self.use_8bit:
             # 8-bit quantization for memory efficiency
@@ -41,7 +50,8 @@ class GemmaSummarizerService:
                 quantization_config=bnb_config,
                 device_map="auto",
                 torch_dtype=torch.float16,
-                max_memory={0: "7GiB", "cpu": "12GiB"}
+                max_memory={0: "7GiB", "cpu": "12GiB"},
+                cache_dir=cache_dir
             )
         else:
             # Load in FP16 mode

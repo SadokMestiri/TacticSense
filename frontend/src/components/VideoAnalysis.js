@@ -8,6 +8,7 @@ import './VideoAnalysis.css';
 import MatchSummary from './MatchSummary';
 import { Button, CircularProgress, Paper, Typography } from '@mui/material';
 import SummarizeIcon from '@mui/icons-material/Summarize';
+import SummaryTTS from './TTS';
 
 
 const VideoAnalysis = () => {
@@ -336,32 +337,14 @@ const handleUpload = async () => { // depreacted
     );
   };
 
-
-  const handleTTS = async () => {
-    try {
-      setLoading(true);
-      
-      // Use the public endpoint instead
-      const response = await axios.post(
-        `${process.env.REACT_APP_BASE_URL}/api/public-tts`,
-        { text: result.transcript || 'No transcript available' }
-      );
-      
-      if (response.data && response.data.audio_url) {
-        setAudioUrl(`${process.env.REACT_APP_BASE_URL}${response.data.audio_url}`);
-        setAudioPlaying(true);
-        
-        // Play the audio automatically
-        const audio = new Audio(`${process.env.REACT_APP_BASE_URL}${response.data.audio_url}`);
-        audio.play();
-      }
-    } catch (err) {
-      console.error('Error converting text to speech:', err);
-      setError('Could not convert text to speech');
-    } finally {
-      setLoading(false);
-    }
+  const loadSampleSummary = () => {
+    setSummaryData({
+      summary: "In a thrilling match that showcased both teams' attacking prowess, Manchester United secured a 3-2 victory over Liverpool at Old Trafford. Rashford opened the scoring in the 12th minute with a stunning strike from outside the box, but Liverpool quickly equalized through Salah's clever finish. Bruno Fernandes put United back in front with a perfectly placed penalty just before halftime. The second half saw Liverpool press forward, with Diaz hitting the post before Salah grabbed his second to level the score at 2-2. Just when a draw seemed likely, Garnacho became the hero with a dramatic 89th-minute winner, sending the home crowd into raptures.",
+      video_id: "sample_test_id"
+    });
+    setShowSummary(true);
   };
+
   
   return (
     <div className="video-analysis-container">
@@ -392,61 +375,90 @@ const handleUpload = async () => { // depreacted
         </div>
         {/* Right side - Transcript */}
         <div className="analysis-section">
-  {/* Always render the transcript section, but with a class indicating if it's expanded */}
-  <div className={`transcript-section ${showTranscript ? 'expanded' : 'collapsed'}`}>
-    <h3 onClick={() => setShowTranscript(prev => !prev)} className="transcript-header">
-      Live Transcript
-      <span className="toggle-icon">{showTranscript ? '▼' : '▶'}</span>
-    </h3>
-    
-    {/* Only render the content when expanded */}
-    {captionsData && showTranscript && (
-      <div className="transcript-content">
-        <TranscriptDisplay 
-          captionsData={captionsData}
-          currentTime={currentTime}
-          showTranscript={true}
-        />
-      </div>
-    )}
-  </div>
-
-  <div className={`summary-section ${showSummary ? 'expanded' : 'collapsed'}`}>
-    <h3 onClick={() => setShowSummary(prev => !prev)} className="transcript-header">
-      Match Summary
-      <span className="toggle-icon">{showSummary ? '▼' : '▶'}</span>
-    </h3>
-    
-    {showSummary && (
-      <div className="summary-content">
-        {!summaryData && !generatingSummary && (
-          <div className="summary-actions">
-            <Button 
-              onClick={handleGenerateSummary}
-              disabled={!videoData || generatingSummary}
-              startIcon={generatingSummary ? <CircularProgress size={20} /> : <SummarizeIcon />}
-              variant="contained"
-              color="primary"
-            >
-              Generate Match Summary
-            </Button>
+          {/* Always render the transcript section, but with a class indicating if it's expanded */}
+          <div className={`transcript-section ${showTranscript ? 'expanded' : 'collapsed'}`}>
+            <h3 onClick={() => setShowTranscript(prev => !prev)} className="transcript-header">
+              Live Transcript
+              <span className="toggle-icon">{showTranscript ? '▼' : '▶'}</span>
+            </h3>
+            
+            {/* Only render the content when expanded */}
+            {captionsData && showTranscript && (
+              <div className="transcript-content">
+                <TranscriptDisplay 
+                  captionsData={captionsData}
+                  currentTime={currentTime}
+                  showTranscript={true}
+                />
+              </div>
+            )}
           </div>
-        )}
-        
-        {summaryData && summaryData.summary && (
-          <Paper elevation={2} sx={{ p: 2, mt: 2 }}>
-            <Typography variant="h6" gutterBottom>
+
+          <div className={`summary-section ${showSummary ? 'expanded' : 'collapsed'}`}>
+            <h3 onClick={() => setShowSummary(prev => !prev)} className="transcript-header">
               Match Summary
-            </Typography>
-            <Typography variant="body1">
-              {summaryData.summary}
-            </Typography>
-          </Paper>
-        )}
-      </div>
-    )}
-      </div>
-    </div>
+              <span className="toggle-icon">{showSummary ? '▼' : '▶'}</span>
+            </h3>
+            
+            {showSummary && (
+              <div className="summary-content">
+                {!summaryData && !generatingSummary && (
+                  <div className="summary-actions">
+                    <Button 
+                      onClick={handleGenerateSummary}
+                      disabled={!videoData || generatingSummary}
+                      startIcon={generatingSummary ? <CircularProgress size={20} /> : <SummarizeIcon />}
+                      variant="contained"
+                      color="primary"
+                    >
+                      Generate Match Summary
+                    </Button>
+                  </div>
+                )}
+                
+                {summaryData && summaryData.summary && (
+                  <Paper elevation={2} sx={{ p: 2, mt: 2 }}>
+                    <Typography variant="h6" gutterBottom>
+                      Match Summary
+                    </Typography>
+                    <Typography variant="body1">
+                      {summaryData.summary}
+                    </Typography>
+                    <div className="summary-tts-container" style={{ marginTop: '1rem' }}>
+                      <SummaryTTS summaryText={summaryData.summary} />
+                    </div>
+                  </Paper>
+                )}
+
+
+                {!summaryData && !generatingSummary && (
+                  <div className="summary-actions">
+                    <Button 
+                      onClick={handleGenerateSummary}
+                      disabled={!videoData || generatingSummary}
+                      startIcon={generatingSummary ? <CircularProgress size={20} /> : <SummarizeIcon />}
+                      variant="contained"
+                      color="primary"
+                      style={{ marginRight: '10px' }}
+                    >
+                      Generate Match Summary
+                    </Button>
+                    
+                    {/* Test button */}
+                    <Button
+                      onClick={loadSampleSummary}
+                      variant="outlined"
+                      color="secondary"
+                    >
+                      Load Test Summary
+                    </Button>
+                  </div>
+                )}
+              </div>
+            )}
+
+          </div>
+        </div>
       </div>
     </div>
   );

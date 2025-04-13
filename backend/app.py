@@ -966,13 +966,21 @@ def public_text_to_speech():
     voice_id = request.json.get('voice_id', '21m00Tcm4TlvDq8ikWAM')  # Default voice
     
     try:
-        # For testing, just return a success response
+        # Generate speech using TTS
+        audio_path = tts_engine.generate_speech(text, voice_id)
+        
+        # Create a unique filename
+        unique_filename = f"tts_summary_{datetime.now().strftime('%Y%m%d%H%M%S')}.mp3"
+        target_path = os.path.join(PROCESSED_FOLDER, unique_filename)
+        
+        # Copy the audio to accessible location
+        shutil.copy(audio_path, target_path)
+        
         return jsonify({
-            'audio_url': f"/processed_videos/test_audio.mp3",
-            'message': 'Audio would be generated here in production'
+            'audio_url': f"/processed_videos/{unique_filename}"
         }), 200
     except Exception as e:
-        return jsonify({'error': str(e)}), 500   
+        return jsonify({'error': str(e)}), 500 
     
 
 @app.route('/api/file-debug', methods=['GET'])

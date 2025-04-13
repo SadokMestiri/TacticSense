@@ -34,3 +34,4 @@ coverage/
 # Ignore model cache directories
 **/.cache/huggingface/
 **/models/
+model_cache/

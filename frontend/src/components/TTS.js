@@ -1,114 +1,74 @@
 import React, { useState } from 'react';
 import axios from 'axios';
-import Cookies from 'js-cookie';
+import { FaVolumeUp, FaStop } from 'react-icons/fa';
 
-const TextToSpeech = () => {
-  const [text, setText] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [audioUrl, setAudioUrl] = useState(null);
+const SummaryTTS = ({ summaryText }) => {
+  const [isLoading, setIsLoading] = useState(false);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [audioElement, setAudioElement] = useState(null);
   const [error, setError] = useState(null);
-  const [voice, setVoice] = useState('21m00Tcm4TlvDq8ikWAM'); // Default voice
 
-  // List of available voices
-  const voices = [
-    { id: '21m00Tcm4TlvDq8ikWAM', name: 'English Male (Josh)' },
-    { id: 'EXAVITQu4vr4xnSDxMaL', name: 'English Female (Rachel)' },
-    { id: 'AZnzlk1XvdvUeBnXmlld', name: 'English Male (Domi)' },
-    { id: 'MF3mGyEYCl7XYWbV9V6O', name: 'English Female (Elli)' }
-  ];
+  const handleTTS = async () => {
+    // If already playing, stop the audio
+    if (isPlaying && audioElement) {
+      audioElement.pause();
+      setIsPlaying(false);
+      return;
+    }
 
-  const handleTextChange = (e) => {
-    setText(e.target.value);
-  };
-
-  const handleVoiceChange = (e) => {
-    setVoice(e.target.value);
-  };
-
-  const handleGenerateSpeech = async () => {
-    if (!text.trim()) return;
-    
-    setLoading(true);
+    setIsLoading(true);
     setError(null);
-    
+
     try {
-      const token = Cookies.get('token');
       const response = await axios.post(
-        `${process.env.REACT_APP_BASE_URL}/api/tts`,
-        { text, voice_id: voice },
-        {
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
-          }
-        }
+        `${process.env.REACT_APP_BASE_URL}/api/public-tts`,
+        { text: summaryText }
       );
-      
-      setAudioUrl(`${process.env.REACT_APP_BASE_URL}${response.data.audio_url}`);
+
+      if (response.data && response.data.audio_url) {
+        // Create a new audio element
+        const audio = new Audio(`${process.env.REACT_APP_BASE_URL}${response.data.audio_url}`);
+        
+        // Add event listeners
+        audio.addEventListener('ended', () => setIsPlaying(false));
+        audio.addEventListener('error', () => {
+          setError('Error playing audio');
+          setIsPlaying(false);
+        });
+        
+        // Store audio element reference and play
+        setAudioElement(audio);
+        audio.play();
+        setIsPlaying(true);
+      }
     } catch (err) {
-      setError(err.response?.data?.error || 'An error occurred');
+      console.error('Error converting text to speech:', err);
+      setError('Could not convert text to speech');
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
   };
-  
+
   return (
-    <div className="tts-container">
-      <h2>Text to Speech</h2>
-      
-      <div className="form-group mb-3">
-        <label htmlFor="voice-select">Choose a voice:</label>
-        <select 
-          id="voice-select"
-          className="form-control" 
-          value={voice} 
-          onChange={handleVoiceChange}
-        >
-          {voices.map(v => (
-            <option key={v.id} value={v.id}>{v.name}</option>
-          ))}
-        </select>
-      </div>
-      
-      <div className="form-group mb-3">
-        <label htmlFor="tts-text">Enter text to convert to speech:</label>
-        <textarea
-          id="tts-text"
-          className="form-control"
-          rows={5}
-          value={text}
-          onChange={handleTextChange}
-          placeholder="Type your text here..."
-        />
-      </div>
-      
+    <div className="summary-tts">
       <button 
-        onClick={handleGenerateSpeech} 
-        disabled={!text.trim() || loading}
-        className="btn btn-primary mb-3"
+        className={`tts-button ${isPlaying ? 'playing' : ''}`}
+        onClick={handleTTS}
+        disabled={isLoading || !summaryText}
+        title={isPlaying ? "Stop audio" : "Listen to summary"}
       >
-        {loading ? 'Generating...' : 'Generate Speech'}
+        {isLoading ? (
+          <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+        ) : isPlaying ? (
+          <FaStop />
+        ) : (
+          <FaVolumeUp />
+        )}
+        {isPlaying ? ' Stop' : ' Listen'}
       </button>
-      
-      {error && <div className="alert alert-danger">{error}</div>}
-      
-      {audioUrl && (
-        <div className="audio-player mt-3">
-          <h3>Generated Audio</h3>
-          <audio controls src={audioUrl} className="w-100" />
-          <div className="mt-2">
-            <a 
-              href={audioUrl} 
-              download
-              className="btn btn-secondary"
-            >
-              Download Audio
-            </a>
-          </div>
-        </div>
-      )}
+      {error && <div className="text-danger mt-2">{error}</div>}
     </div>
   );
 };
 
-export default TextToSpeech;
+export default SummaryTTS;

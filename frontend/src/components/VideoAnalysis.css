@@ -213,24 +213,48 @@
     cursor: not-allowed;
   }
   
-  .tts-button {
-    padding: 8px 16px;
-    background: #4CAF50;
-    color: white;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    transition: background 0.2s;
+  .summary-tts-container {
+    display: flex;
+    justify-content: flex-start;
+    margin-top: 1rem;
+    border-top: 1px solid #eaeaea;
+    padding-top: 1rem;
   }
   
-  .tts-button:hover {
-    background: #3e8e41;
-  }
-  
-  .tts-button:disabled {
-    background: #cccccc;
-    cursor: not-allowed;
-  }
+
+.summary-tts {
+  margin-top: 10px;
+}
+
+.tts-button {
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 6px 12px;
+  font-size: 14px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  transition: all 0.2s ease;
+}
+
+.tts-button:hover {
+  background-color: #0069d9;
+}
+
+.tts-button.playing {
+  background-color: #dc3545;
+}
+
+.tts-button:disabled {
+  background-color: #6c757d;
+  cursor: not-allowed;
+}
+
+.tts-button svg {
+  margin-right: 5px;
+}
   
   .error-message {
     background: #f8d7da;
