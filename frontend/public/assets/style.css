@@ -947,3 +947,146 @@ margin-left: 100px;
     margin-left: 2.9rem;
     margin-top: -0.75rem;
   }
+
+  /* Styling for the popup */
+.popup {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.7); /* Semi-transparent dark background */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999; /* Ensure it shows on top of everything */
+    animation: fadeIn 0.5s ease-in-out;
+}
+
+/* Popup content container */
+.popup-content {
+    background: linear-gradient(145deg, #6feb8c, #feb47b); /* Gradient background for a dynamic look */
+    color: white;
+    padding: 30px 40px;
+    border-radius: 12px;
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+    text-align: center;
+    width: 100%;
+    max-width: 450px;
+    animation: popupAnimation 0.6s ease-in-out;
+}
+
+/* Title and general text inside the popup */
+.popup-content h4 {
+    font-size: 2rem;
+    font-weight: 700;
+    margin-bottom: 20px;
+    color: #fff;
+}
+
+.popup-content p {
+    font-size: 1.2rem;
+    margin: 10px 0;
+}
+
+/* Add a close button with modern styling */
+.popup-content button {
+    background-color: #4caf50;
+    border: none;
+    color: white;
+    padding: 12px 24px;
+    text-align: center;
+    text-decoration: none;
+    font-size: 1.1rem;
+    border-radius: 8px;
+    cursor: pointer;
+    margin-top: 20px;
+    transition: all 0.3s ease;
+}
+
+.popup-content button:hover {
+    background-color: #45a049;
+}
+
+/* Styling for the consecutive days (small circles) */
+.streak-circle {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 15px;
+    margin-top: 20px;
+}
+
+.consecutive-day {
+    background-color: #fff;
+    width: 20px;
+    height: 20px;
+    margin: 0 8px;
+    border-radius: 50%;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    animation: pulseAnimation 1s ease-in-out infinite;
+}
+
+@keyframes pulseAnimation {
+    0% {
+        transform: scale(0.9);
+    }
+    50% {
+        transform: scale(1.2);
+    }
+    100% {
+        transform: scale(0.9);
+    }
+}
+
+/* Smooth fade-in effect for the popup */
+@keyframes fadeIn {
+    0% {
+        opacity: 0;
+    }
+    100% {
+        opacity: 1;
+    }
+}
+
+/* Popup entry animation */
+@keyframes popupAnimation {
+    0% {
+        transform: scale(0.8);
+    }
+    100% {
+        transform: scale(1);
+    }
+}
+
+/* Close button styling */
+.popup-content .close-btn {
+    background-color: transparent;
+    color: white;
+    border: none;
+    font-size: 1.3rem;
+    cursor: pointer;
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    transition: background-color 0.3s ease;
+}
+
+.popup-content .close-btn:hover {
+    background-color: rgba(255, 255, 255, 0.2);
+}
+
+/* Optional responsive adjustments */
+@media (max-width: 480px) {
+    .popup-content {
+        padding: 20px;
+        width: 90%;
+    }
+
+    .popup-content h4 {
+        font-size: 1.8rem;
+    }
+
+    .popup-content button {
+        font-size: 1rem;
+    }
+}

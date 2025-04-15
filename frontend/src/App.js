@@ -40,7 +40,6 @@ export default function App() {
       <Route path="/jobApplications" element={<JobApplications header={header} footer={footer} />} />
       <Route path="/hashtag" element={<HashtagPage header={header} footer={footer} />} />
       <Route path="/postJob" element={<PostJob header={header} footer={footer} />} />
-
     </Routes>
   </div>
     

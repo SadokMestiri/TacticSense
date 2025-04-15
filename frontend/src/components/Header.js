@@ -42,10 +42,10 @@ const Header = () => {
 
   // Handle user logout
   const handleLogout = () => {
-    Cookies.remove('token'); // Remove token cookie
-    Cookies.remove('user');  // Remove user cookie
-    navigate('/'); // Redirect to login page
-  };
+    Cookies.remove('token');
+    Cookies.remove('user');
+    navigate('/');  // Navigate to login page after logout
+};
 
   // Conditionally render based on user data availability
   if (!user) {

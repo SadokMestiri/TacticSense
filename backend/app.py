@@ -12,6 +12,7 @@ from datetime import datetime, timedelta
 from flask_mail import Mail
 import re
 from flask_cors import CORS
+from datetime import date, timedelta
 
 
 app = Flask(__name__,template_folder='templates')
@@ -40,6 +41,22 @@ class User(db.Model):
     password = db.Column(db.String(200), nullable=False)
     name = db.Column(db.String(80), nullable=False)
     profile_image = db.Column(db.String(255), nullable=True) 
+
+
+class UserStreak(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), unique=True, nullable=False)
+    current_streak = db.Column(db.Integer, nullable=False)
+    highest_streak = db.Column(db.Integer, nullable=False)
+    score = db.Column(db.Integer, nullable=False)
+    connection_dates = db.Column(db.JSON, nullable=False)  # Storing dates as JSON
+    daily_points = db.Column(db.JSON, nullable=False)  # Store daily points in JSON
+    last_login_date = db.Column(db.Date, nullable=True)
+
+    user = db.relationship('User', backref='user_streak', uselist=False)
+
+    def __repr__(self):
+        return f"<UserStreak {self.user_id}>"
 
 
 class PostHashtag(db.Model):
@@ -1434,6 +1451,147 @@ def get_single_job(job_id):
         return jsonify(job_details), 200
     except Exception as e:
         return jsonify({'message': str(e)}), 500
+    
+
+
+""" @app.route('/update_streak/<int:user_id>', methods=['POST'])
+def update_streak(user_id):
+    # Get the current date
+    current_date = date.today()
+
+    # Try to get the user's existing streak record
+    user_streak = UserStreak.query.filter_by(user_id=user_id).first()
+
+    if user_streak:
+        # Get the user's last connection date
+        last_connection_date = user_streak.connection_dates[-1] if user_streak.connection_dates else None
+
+        # Check if the last connection date exists and calculate if the streak is consecutive
+        if last_connection_date:
+            last_connection_date = date.fromisoformat(last_connection_date)
+
+            # Check if the last connection was the day before today (consecutive days)
+            if last_connection_date == current_date - timedelta(days=1):
+                # Consecutive streak, increment current streak
+                user_streak.current_streak += 1
+            else:
+                # Non-consecutive streak (user hasn't logged in for a while), reset current streak to 1
+                user_streak.current_streak = 1
+
+            # Update the highest streak if necessary
+            if user_streak.current_streak > user_streak.highest_streak:
+                user_streak.highest_streak = user_streak.current_streak
+
+        else:
+            # If there is no last connection date, it's the user's first login, so set streak to 1
+            user_streak.current_streak = 1
+
+        # Update other fields
+        user_streak.score += 10  # Increment score by 10, for example
+        user_streak.connection_dates.append(current_date.isoformat())  # Append today's date
+        user_streak.last_login_date = current_date.isoformat()
+
+    else:
+        # If no streak exists, create a new streak record
+        user_streak = UserStreak(
+            user_id=user_id,
+            current_streak=1,  # First login, so streak is 1
+            highest_streak=1,  # First login, so highest streak is also 1
+            score=10,  # Initial score, can be customized
+            connection_dates=[current_date.isoformat()],  # Start with today's date
+            daily_points={current_date.isoformat(): 10},  # Points for the first day
+            last_login_date=current_date.isoformat()  # Set today's date as the last login
+        )
+        db.session.add(user_streak)
+
+    try:
+        db.session.commit()
+        return jsonify({"message": "User streak updated successfully!"}), 200
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": str(e)}), 500 """
+
+""" 
+@app.route('/get_streak/<int:user_id>', methods=['GET'])
+def get_streak(user_id):
+    streak = UserStreak.query.filter_by(user_id=user_id).first()
+    if not streak:
+        return jsonify({"message": "No streak data found"}), 404
+    
+    return jsonify({
+        "current_streak": streak.current_streak,
+        "highest_streak": streak.highest_streak,
+        "score": streak.score,
+        "connection_days": streak.connection_dates,
+        "daily_points": streak.daily_points,
+        "last_login_date": streak.last_login_date
+    }) """
+
+@app.route('/get_streak/<int:user_id>', methods=['GET'])
+def get_and_update_streak(user_id):
+    # Get the current date
+    current_date = date.today()
+
+    # Try to get the user's existing streak record
+    user_streak = UserStreak.query.filter_by(user_id=user_id).first()
+
+    if user_streak:
+        # Get the user's last connection date
+        last_connection_date = user_streak.connection_dates[-1] if user_streak.connection_dates else None
+
+        # Check if the last connection date exists and calculate if the streak is consecutive
+        if last_connection_date:
+            last_connection_date = date.fromisoformat(last_connection_date)
+
+            # Check if the last connection was the day before today (consecutive days)
+            if last_connection_date == current_date - timedelta(days=1):
+                # Consecutive streak, increment current streak
+                user_streak.current_streak += 1
+            else:
+                # Non-consecutive streak (user hasn't logged in for a while), reset current streak to 1
+                user_streak.current_streak = 1
+
+            # Update the highest streak if necessary
+            if user_streak.current_streak > user_streak.highest_streak:
+                user_streak.highest_streak = user_streak.current_streak
+
+        else:
+            # If there is no last connection date, it's the user's first login, so set streak to 1
+            user_streak.current_streak = 1
+
+        # Update other fields
+        user_streak.score += 10  # Increment score by 10, for example
+        user_streak.connection_dates.append(current_date.isoformat())  # Append today's date
+        user_streak.last_login_date = current_date.isoformat()
+
+    else:
+        # If no streak exists, create a new streak record
+        user_streak = UserStreak(
+            user_id=user_id,
+            current_streak=1,  # First login, so streak is 1
+            highest_streak=1,  # First login, so highest streak is also 1
+            score=10,  # Initial score, can be customized
+            connection_dates=[current_date.isoformat()],  # Start with today's date
+            daily_points={current_date.isoformat(): 10},  # Points for the first day
+            last_login_date=current_date.isoformat()  # Set today's date as the last login
+        )
+        db.session.add(user_streak)
+
+    try:
+        db.session.commit()
+        
+        # Return the updated streak data
+        return jsonify({
+            "current_streak": user_streak.current_streak,
+            "highest_streak": user_streak.highest_streak,
+            "score": user_streak.score,
+            "connection_days": user_streak.connection_dates,
+            "daily_points": user_streak.daily_points,
+            "last_login_date": user_streak.last_login_date
+        }), 200
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": str(e)}), 500
 
 
 app.app_context().push()
