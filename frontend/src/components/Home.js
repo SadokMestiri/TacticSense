@@ -4,6 +4,9 @@ import Cookies from 'js-cookie';
 import jwt_decode from 'jwt-decode';
 import { useNavigate } from "react-router-dom";
 
+////////////////////
+import RecommendationSidebar from './RecommendationSidebar';
+
 const Home = ({ header }) => {
   const navigate = useNavigate();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -65,6 +68,8 @@ useEffect(() => {
     const weeks = Math.floor(days / 7);
     const months = Math.floor(days / 30);
     const years = Math.floor(days / 365);
+
+
   
     if (years > 0) {
       return `${years} year${years > 1 ? 's' : ''} ago`;
@@ -247,7 +252,7 @@ console.log(user)
             <div className="sidebar-profile-info">
               <img  src={`${process.env.REACT_APP_BASE_URL}/${user.profile_image}`}   alt="profile" />
               <h1>{user.name}</h1>
-              <h3>Professional footballer</h3>
+              <h3>{user.user_type}</h3>
               <ul>
                 <li>Your profile views <span>24K</span></li>
                 <li>Your post views <span>128K</span></li>
@@ -540,8 +545,12 @@ console.log(user)
           ))}
         </div>
 
+
+
         {/* Right Sidebar */}
         <div className="right-sidebar">
+          {/*recommendation */}
+        <RecommendationSidebar token={token} />
           <div className="sidebar-news">
             <img src="assets/images/more.svg" className="info-icon" alt="more" />
             <h3>Trending News</h3>

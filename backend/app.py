@@ -13,6 +13,20 @@ from flask_mail import Mail
 from flask_cors import CORS
 
 
+
+##############################################PARTIE AMINE####################################################
+import numpy as np
+import pandas as pd
+from lightfm import LightFM
+from lightfm.data import Dataset
+import unicodedata
+import random
+from fuzzywuzzy import process
+import pickle
+import os
+##################################################################################################################
+
+
 app = Flask(__name__,template_folder='templates')
 CORS(app, origins=["http://localhost:3000"])
 app.config['SECRET_KEY'] = '59c9d8576f920846140e2a8985911bec588c08aebf4c7799ba0d5ae388393703'  
@@ -39,7 +53,9 @@ class User(db.Model):
     email = db.Column(db.String(120), unique=True, nullable=False)
     password = db.Column(db.String(200), nullable=False)
     name = db.Column(db.String(80), nullable=False)
-    profile_image = db.Column(db.String(255), nullable=True) 
+    profile_image = db.Column(db.String(255), nullable=True)
+    user_type = db.Column(db.String(80), nullable=False)
+
 
 
 
@@ -105,22 +121,89 @@ class Conversation(db.Model):
     user2_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     last_message_time = db.Column(db.DateTime, default=db.func.current_timestamp())
 
+
+########################################################PARTIE AMINE############################################################
+# Global variables for models (add near top)
+recommendation_models = None
+model_loaded = False
+
+#class
+class Recommendation(db.Model):
+    __tablename__ = 'recommendations'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    recommended_club = db.Column(db.String(255))
+    recommended_player = db.Column(db.String(255))
+    recommended_agency = db.Column(db.String(255))
+
+    club_id = db.Column(db.Integer)  # Optional
+    player_id = db.Column(db.Integer)  # Optional
+    agency_id = db.Column(db.Integer)  # Optional
+
+    score = db.Column(db.Float)
+    model_version = db.Column(db.String(50))
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    viewed = db.Column(db.Boolean, default=False)
+
+# I CHANGED THE TOKEN    
+# #############################################################################################################################   
+
+#def token_required(f):
+#    @wraps(f)
+#    def decorated(*args, **kwargs):
+#        token = request.headers.get('Authorization')
+
+ #       if not token:
+  #          return jsonify({'message': 'Token is missing!'}), 401
+#
+ #       try:
+  #          decoded_token = jwt.decode(token.split(" ")[1], app.config['SECRET_KEY'], algorithms=['HS256'])
+   #         current_user = User.query.get(decoded_token['user_id'])
+    #    except:
+     #       return jsonify({'message': 'Token is invalid!'}), 401
+#
+ #       return f(current_user, *args, **kwargs)
+    
+  #  return decorated
+##################################################################################################################################3  
+
 def token_required(f):
     @wraps(f)
     def decorated(*args, **kwargs):
         token = request.headers.get('Authorization')
-
+        print(f"🔑 Raw Authorization header: {token}")  # Debug
+        
         if not token:
+            print("❌ No token provided")
             return jsonify({'message': 'Token is missing!'}), 401
 
         try:
-            decoded_token = jwt.decode(token.split(" ")[1], app.config['SECRET_KEY'], algorithms=['HS256'])
-            current_user = User.query.get(decoded_token['user_id'])
-        except:
+            # Extract token (remove "Bearer " prefix if present)
+            token = token.split(" ")[1] if " " in token else token
+            print(f"🔍 Token after extraction: {token}")
+            
+            decoded_token = jwt.decode(token, app.config['SECRET_KEY'], algorithms=['HS256'])
+            print(f"📄 Decoded token: {decoded_token}")
+            
+            # Use 'public_id' (matching your login endpoint)
+            current_user = User.query.get(decoded_token['public_id'])
+            if not current_user:
+                print(f"❌ User not found for public_id: {decoded_token['public_id']}")
+                return jsonify({'message': 'Invalid user!'}), 401
+                
+        except jwt.ExpiredSignatureError:
+            print("❌ Token expired")
+            return jsonify({'message': 'Token has expired!'}), 401
+        except jwt.InvalidTokenError:
+            print("❌ Invalid token")
             return jsonify({'message': 'Token is invalid!'}), 401
+        except Exception as e:
+            print(f"❌ Unexpected error: {str(e)}")
+            return jsonify({'message': 'Token verification failed!'}), 401
 
+        print(f"✅ Authenticated as user ID: {current_user.id}")
         return f(current_user, *args, **kwargs)
-    
     return decorated
 
 
@@ -568,7 +651,7 @@ def add_comment():
 #####################################################################################################################################    
 #          PARTIE AMINE
 
-
+##recherche
 
 @app.route('/search', methods=['GET'])
 def search_users():
@@ -602,6 +685,456 @@ def get_user_profile(username):
         'name': user.name,
         'profile_image': user.profile_image.replace("\\", "/") if user.profile_image else None,
     })
+
+
+####################################recommendation##########################################################3
+def load_recommendation_models():
+    global recommendation_models
+    try:
+        model_path = os.path.join(os.path.dirname(__file__), 'models', 'recommendation_models.pkl')
+        print(f"Attempting to load models from: {model_path}")
+        
+        if not os.path.exists(model_path):
+            print("❌ Error: Model file not found")
+            return
+            
+        with open(model_path, 'rb') as f:
+            recommendation_models = pickle.load(f)
+            
+            # Validate required keys
+            required_keys = {
+                'club_model', 'player_model', 'club_dataset', 
+                'player_dataset', 'club_id_to_name'
+            }
+            if not all(key in recommendation_models for key in required_keys):
+                missing = required_keys - recommendation_models.keys()
+                raise KeyError(f"Missing required model components: {missing}")
+                
+            print("✅ Successfully loaded and validated models")
+    except Exception as e:
+        print(f"❌ Load error: {str(e)}")
+        recommendation_models = None
+        
+
+
+
+# Call this when starting your app
+load_recommendation_models()
+
+# Add this helper function at the top of your file
+def get_user_type(user_id, recommendation_models):
+    # Agency = user in club dataset
+    if str(user_id) in recommendation_models['club_dataset'].mapping()[0]:
+        return 'agency'
+    # Player = item in player dataset (agencys recommend players)
+    elif str(user_id) in recommendation_models['player_dataset'].mapping()[2]:
+        return 'player'
+    return None
+
+
+
+
+##########################################################################33    
+# CLUBS TO AGENCY
+@app.route('/api/recommend/clubs/toagency', methods=['POST'])
+@token_required
+def recommend_clubs(current_user):
+    try:
+        user_type = get_user_type(current_user.id, recommendation_models)
+        print(user_type)
+        if user_type != 'agency':
+            return jsonify({'message': 'No club recommendations available (user is not an agency)'}), 200
+            
+        data = request.get_json() or {}
+        top_n = min(int(data.get('top_n', 5)), 20)
+        
+        if not recommendation_models:
+            return jsonify({'error': 'Recommendation system not ready'}), 503
+
+        # Get models and mappings
+        model = recommendation_models['club_model']
+        agency_id_map = recommendation_models['agency_id_map_club']
+        club_id_map = recommendation_models['club_id_map']
+        id_to_club = recommendation_models['id_to_club']
+        club_id_to_name = recommendation_models['club_id_to_name']
+
+        # Get agency index
+        agency_idx = agency_id_map.get(str(current_user.id))
+        if agency_idx is None:
+            return jsonify({'message': 'No club recommendations available for this agency'}), 200
+            
+        # Get predictions
+        scores = model.predict(agency_idx, np.arange(len(club_id_map)))
+        top_indices = np.argsort(-scores)[:top_n]
+        
+        # Prepare recommendations
+        recommendations = []
+        for idx in top_indices:
+            club_id = id_to_club[idx]
+            recommendations.append({
+                'club': club_id_to_name.get(club_id, "Unknown Club"),
+                'score': float(scores[idx]),
+                'club_id': club_id
+            })
+        
+        # Save to database
+        for rec in recommendations:
+            db.session.add(Recommendation(
+                user_id=current_user.id,
+                recommended_club=rec['club'],
+                club_id=rec['club_id'],
+                score=rec['score']
+            ))
+        db.session.commit()
+        
+        return jsonify(recommendations)
+    
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+    
+
+# PLAYERS TO AGENCY
+@app.route('/api/recommend/players/toagency', methods=['POST'])
+@token_required
+def recommend_players(current_user):
+    try:
+        user_type = get_user_type(current_user.id, recommendation_models)
+        print(user_type)
+        if user_type != 'agency':
+            return jsonify({'message': 'No player recommendations available (user is not an agency)'}), 200
+            
+        data = request.get_json() or {}
+        top_n = min(int(data.get('top_n', 5)), 20)
+        
+        if not recommendation_models:
+            return jsonify({'error': 'Recommendation system not ready'}), 503
+
+        # Get models and mappings
+        model = recommendation_models['player_model']
+        agency_id_map = recommendation_models['agency_id_map_player']
+        player_id_map = recommendation_models['player_id_map']
+        id_to_player = recommendation_models['id_to_player']
+        player_id_to_name = recommendation_models['player_id_to_name']
+
+        # Get agency index
+        agency_idx = agency_id_map.get(str(current_user.id))
+        if agency_idx is None:
+            return jsonify({'message': 'No player recommendations available for this agency'}), 200
+            
+        # Get predictions
+        scores = model.predict(agency_idx, np.arange(len(player_id_map)))
+        top_indices = np.argsort(-scores)[:top_n]
+        
+        # Prepare recommendations
+        recommendations = []
+        for idx in top_indices:
+            player_id = id_to_player[idx]
+            recommendations.append({
+                'player': player_id_to_name.get(player_id, "Unknown Player"),
+                'score': float(scores[idx]),
+                'player_id': player_id
+            })
+
+        # Save to database
+        for rec in recommendations:
+            db.session.add(Recommendation(
+                user_id=current_user.id,
+                recommended_player=rec['player'],
+                player_id=rec['player_id'],
+                score=rec['score']
+            ))
+        db.session.commit()
+            
+        return jsonify(recommendations)
+        
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+#Agencies to PLayers
+@app.route('/api/recommend/agencies/toplayer', methods=['POST'])
+@token_required
+def recommend_agencies(current_user):      
+    try:
+        user_type = get_user_type(current_user.id, recommendation_models)
+        print(user_type)
+        if user_type != 'player':
+            return jsonify({'message': 'No player recommendations available (user is not an agency)'}), 200
+            
+        data = request.get_json() or {}
+        top_n = min(int(data.get('top_n', 5)), 20)
+        
+        if not recommendation_models:
+            return jsonify({'error': 'Recommendation system not ready'}), 503
+        
+        # Get all required models and mappings
+        model = recommendation_models['player_model']
+        player_id_map = recommendation_models['player_id_map']
+        agency_id_map = recommendation_models['agency_id_map_player']
+        id_to_agency = recommendation_models['id_to_agency_player']
+        agency_id_to_name = recommendation_models['agency_id_to_name']
+
+        # Verify player exists
+        player_idx = player_id_map.get(str(current_user.id))
+        if player_idx is None:
+            return jsonify({'message': 'Player not found'}), 404
+
+        # Get top_n parameter
+        data = request.get_json() or {}
+        top_n = min(int(data.get('top_n', 5)), 20)
+
+        # Get predictions (EXACTLY like Jupyter)
+        scores = model.predict(
+            user_ids=np.arange(len(agency_id_map)),
+            item_ids=np.repeat(player_idx, len(agency_id_map))
+        )
+
+        # Build recommendations (EXACT Jupyter logic)
+        recommendations = []
+        for idx in np.argsort(-scores):
+            agency_id = id_to_agency[idx]
+            agency_name = agency_id_to_name.get(agency_id, agency_id)
+            
+            # Skip NaN like Jupyter
+            if pd.isna(agency_name):
+                continue
+                
+            recommendations.append({
+                'agency': str(agency_name),
+                'score': float(scores[idx]),
+                'agency_id': agency_id
+            })
+            
+            # Stop when we have enough valid recommendations
+            if len(recommendations) >= top_n:
+                break
+
+        return jsonify(recommendations)
+
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+        
+
+# CLUBS TO PLAYER
+@app.route('/api/recommend/clubs/toplayer', methods=['POST'])
+@token_required
+def recommend_clubs_to_player(current_user):
+    try:
+        # Convert to string for consistent comparison
+        player_id = str(current_user.id)
+
+        # Load required data
+        transfer_df = recommendation_models['transfer_df']
+        agency_id_map_club = recommendation_models['agency_id_map_club']
+        club_model = recommendation_models['club_model']
+        club_id_map = recommendation_models['club_id_map']
+        id_to_club = recommendation_models['id_to_club']
+        club_id_to_name = recommendation_models['club_id_to_name']
+
+        # Find representing agencies
+        player_agencies = set(
+            transfer_df[transfer_df['Player Id'].astype(str) == player_id]['Agency Id'].astype(str).unique()
+        )
+
+        if not player_agencies:
+            return jsonify({'message': 'No agencies found for this player'}), 200
+
+        # Predict and aggregate scores
+        all_scores = np.zeros(len(club_id_map))
+        valid_agencies = 0
+        
+        for agency_id in player_agencies:
+            if agency_id in agency_id_map_club:
+                agency_idx = agency_id_map_club[agency_id]
+                all_scores += club_model.predict(agency_idx, np.arange(len(club_id_map)))
+                valid_agencies += 1
+
+        if valid_agencies == 0:
+            return jsonify({'message': 'No valid agency mappings found'}), 200
+
+        # Prepare results
+        recommendations = []
+        for idx in np.argsort(-all_scores)[:3]:  # Return top 3 as requested
+            club_id = id_to_club.get(idx, f"unknown_{idx}")
+            club_name = club_id_to_name.get(club_id, f"Club_{club_id}")
+            
+            if pd.isna(club_name):
+                continue
+                
+            recommendations.append({
+                'club': str(club_name),
+                'score': float(all_scores[idx]),
+                'club_id': str(club_id)
+            })
+
+        return jsonify(recommendations)
+
+    except Exception as e:
+        return jsonify({'error': 'Internal server error'}), 500
+
+
+# PLAYERS TO CLUB
+@app.route('/api/recommend/players/toclub', methods=['POST'])
+@token_required
+def recommend_players_to_club(current_user):
+    try:
+        user_type = get_user_type(current_user.id, recommendation_models)
+        print(user_type)
+        if user_type != 'club':
+            return jsonify({'message': 'No player recommendations available (user is not a club)'}), 200
+
+        data = request.get_json() or {}
+        top_n = min(int(data.get('top_n', 5)), 20)
+
+        if not recommendation_models:
+            return jsonify({'error': 'Recommendation system not ready'}), 503
+
+        # Get models and mappings
+        player_model = recommendation_models['player_model']
+        club_model = recommendation_models['club_model']
+        agency_id_map_player = recommendation_models['agency_id_map_player']
+        player_id_map = recommendation_models['player_id_map']
+        id_to_player = recommendation_models['id_to_player']
+        player_id_to_name = recommendation_models['player_id_to_name']
+        club_id_map = recommendation_models['club_id_map']
+
+        # Get club index
+        club_idx = club_id_map.get(str(current_user.id))
+        if club_idx is None:
+            return jsonify({'message': 'No player recommendations available for this club'}), 200
+
+        # Get all agencies that work with this club (from club model)
+        club_agencies = []
+        for agency_id, agency_idx in agency_id_map_player.items():
+            # Check if this agency works with the club in the club model
+            if agency_id in recommendation_models['agency_id_map_club']:
+                agency_club_idx = recommendation_models['agency_id_map_club'][agency_id]
+                # Get prediction score for this club from the agency
+                score = club_model.predict(agency_club_idx, club_idx)
+                if score > 0:  # Only consider agencies with positive association
+                    club_agencies.append(agency_id)
+
+        if not club_agencies:
+            return jsonify({'message': 'No agencies found for this club'}), 200
+
+        # Predict players for each agency and aggregate scores
+        all_scores = np.zeros(len(player_id_map))
+        for agency_id in club_agencies:
+            agency_idx = agency_id_map_player[agency_id]
+            all_scores += player_model.predict(agency_idx, np.arange(len(player_id_map)))
+
+        # Normalize by number of agencies
+        all_scores /= len(club_agencies)
+
+        # Prepare recommendations
+        recommendations = []
+        for idx in np.argsort(-all_scores)[:top_n]:
+            player_id = id_to_player[idx]
+            player_name = player_id_to_name.get(player_id)
+            if player_name is None:
+                continue
+            recommendations.append({
+                'player': player_name,
+                'score': float(all_scores[idx]),
+                'player_id': player_id
+            })
+
+        # Save to database
+        for rec in recommendations:
+            db.session.add(Recommendation(
+                user_id=current_user.id,
+                recommended_player=rec['player'],
+                player_id=rec['player_id'],
+                score=rec['score']
+            ))
+        db.session.commit()
+
+        return jsonify(recommendations)
+
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+    
+    
+    
+@app.route('/api/recommend/agencies/toclub', methods=['POST'])
+@token_required
+def recommend_agencies_to_club(current_user):
+    try:
+        # Verify club
+        user_type = get_user_type(current_user.id, recommendation_models)
+        if user_type != 'club':
+            return jsonify({'message': 'No agency recommendations available (user is not a club)'}), 200
+
+        # Get parameters
+        data = request.get_json() or {}
+        top_n = min(int(data.get('top_n', 5)), 20)
+
+        if not recommendation_models:
+            return jsonify({'error': 'Recommendation system not ready'}), 503
+
+        # Get models and mappings
+        model = recommendation_models['club_model']
+        club_id_map = recommendation_models['club_id_map']
+        agency_id_map = recommendation_models['agency_id_map_club']
+        id_to_agency = recommendation_models['id_to_agency_club']
+        agency_id_to_name = recommendation_models['agency_id_to_name']
+
+        # Verify club exists
+        club_idx = club_id_map.get(str(current_user.id))
+        if club_idx is None:
+            return jsonify({'message': 'Club not found'}), 404
+
+        # Get predictions
+        scores = model.predict(
+            user_ids=np.arange(len(agency_id_map)),
+            item_ids=np.repeat(club_idx, len(agency_id_map))
+        )
+
+        # Build recommendations
+        recommendations = []
+        for idx in np.argsort(-scores):
+            agency_id = id_to_agency[idx]
+            agency_name = agency_id_to_name.get(agency_id, agency_id)
+            
+            # Skip NaN values
+            if pd.isna(agency_name):
+                continue
+                
+            recommendations.append({
+                'agency': str(agency_name),
+                'score': float(scores[idx]),
+                'agency_id': agency_id
+            })
+            
+            if len(recommendations) >= top_n:
+                break
+
+        return jsonify(recommendations)
+
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+
+
+
+
+
+
+###########################################################################33
+@app.route('/api/recommendations/history', methods=['GET'])
+@token_required
+def get_recommendation_history(current_user):
+    recommendations = Recommendation.query.filter_by(user_id=current_user.id)\
+        .order_by(Recommendation.created_at.desc())\
+        .limit(10)\
+        .all()
+    
+    return jsonify([{
+        'club': rec.recommended_club,
+        'score': rec.score,
+        'date': rec.created_at.strftime('%Y-%m-%d')
+    } for rec in recommendations])
 
 
 app.app_context().push()
