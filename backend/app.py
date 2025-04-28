@@ -16,7 +16,7 @@ from flask_cors import CORS
 app = Flask(__name__,template_folder='templates')
 CORS(app, origins=["http://localhost:3000"])
 app.config['SECRET_KEY'] = '59c9d8576f920846140e2a8985911bec588c08aebf4c7799ba0d5ae388393703'  
-app.config['SQLALCHEMY_DATABASE_URI'] = "postgresql://postgres:admin@localhost/metascout"
+app.config['SQLALCHEMY_DATABASE_URI'] = "postgresql://postgres:feres1@localhost/metascout"
 db = SQLAlchemy(app)
 app.config['UPLOAD_FOLDER'] = 'uploads'
 app.config['MAIL_SERVER'] = 'smtp.gmail.com'
