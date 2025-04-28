@@ -774,7 +774,9 @@ def recommend_clubs(current_user):
             recommendations.append({
                 'club': club_id_to_name.get(club_id, "Unknown Club"),
                 'score': float(scores[idx]),
-                'club_id': club_id
+                'club_id': club_id,
+                'recommended_stars': score_to_stars(float(scores[idx]))
+
             })
         
         # Save to database
@@ -832,7 +834,9 @@ def recommend_players(current_user):
             recommendations.append({
                 'player': player_id_to_name.get(player_id, "Unknown Player"),
                 'score': float(scores[idx]),
-                'player_id': player_id
+                'player_id': player_id,
+                'recommended_stars': score_to_stars(float(scores[idx]))
+
             })
 
         # Save to database
@@ -902,7 +906,9 @@ def recommend_agencies(current_user):
             recommendations.append({
                 'agency': str(agency_name),
                 'score': float(scores[idx]),
+                'recommended_stars': score_to_stars(float(scores[idx])),
                 'agency_id': agency_id
+
             })
             
             # Stop when we have enough valid recommendations
@@ -964,7 +970,9 @@ def recommend_clubs_to_player(current_user):
             recommendations.append({
                 'club': str(club_name),
                 'score': float(all_scores[idx]),
-                'club_id': str(club_id)
+                'club_id': str(club_id),
+                'recommended_stars': score_to_stars(float(all_scores[idx]))
+
             })
 
         return jsonify(recommendations)
@@ -1036,7 +1044,9 @@ def recommend_players_to_club(current_user):
             recommendations.append({
                 'player': player_name,
                 'score': float(all_scores[idx]),
-                'player_id': player_id
+                'player_id': player_id,
+                'recommended_stars': score_to_stars(float(all_scores[idx]))
+
             })
 
         # Save to database
@@ -1053,9 +1063,8 @@ def recommend_players_to_club(current_user):
 
     except Exception as e:
         return jsonify({'error': str(e)}), 500
-    
-    
-    
+
+
 @app.route('/api/recommend/agencies/toclub', methods=['POST'])
 @token_required
 def recommend_agencies_to_club(current_user):
@@ -1103,7 +1112,9 @@ def recommend_agencies_to_club(current_user):
             recommendations.append({
                 'agency': str(agency_name),
                 'score': float(scores[idx]),
-                'agency_id': agency_id
+                'agency_id': agency_id,
+                'recommended_stars': score_to_stars(float(scores[idx]))
+
             })
             
             if len(recommendations) >= top_n:
@@ -1116,8 +1127,15 @@ def recommend_agencies_to_club(current_user):
 
 
 
-
-
+#########################################################################
+def score_to_stars(score, max_stars=5):
+    # Normalize score to be between 0 and 1 if necessary
+    score = max(0, min(score, 1))  
+    
+    # Multiply by max stars and round
+    stars = round(score * max_stars)
+    
+    return '★' * stars + '☆' * (max_stars - stars)
 
 
 

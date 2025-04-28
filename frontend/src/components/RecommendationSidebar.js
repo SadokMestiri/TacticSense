@@ -23,6 +23,30 @@ const RecommendationSidebar = ({ token }) => {
     }));
   };
 
+  const scoreToStars = (score) => {
+    // Round to the nearest 0.5
+    const roundedScore = Math.round(score * 2) / 2;
+  
+    // Clamp the score to a range between 0 and 5
+    const clampedScore = Math.max(0, Math.min(5, roundedScore));
+  
+    // If the score is below 2.5, double the stars
+    const adjustedScore = clampedScore < 2.5 ? clampedScore * 2 : clampedScore;
+  
+    // Determine the number of full stars (integer part of the adjusted score)
+    const fullStars = Math.floor(adjustedScore);
+    // Check if there's a half star
+    const halfStar = adjustedScore % 1 >= 0.5 ? 1 : 0;
+  
+    // Return stars, including half stars
+    return '★'.repeat(fullStars) + (halfStar ? '⯪' : '') + '☆'.repeat(5 - fullStars - halfStar);
+  };
+  
+  
+  
+  
+  
+
   useEffect(() => {
     const fetchRecommendations = async () => {
       try {
@@ -88,6 +112,7 @@ const RecommendationSidebar = ({ token }) => {
               <div key={`club-${index}`} className="recommendation-item">
                 <a href={`/user/${encodeURIComponent(rec.club)}`} target="_blank" rel="noopener noreferrer">{rec.club}</a>
                 <span>Score: {rec.score.toFixed(5)}</span>
+                <span>Stars: {scoreToStars(rec.score)}</span>
               </div>
             ))}
           </div>
@@ -108,6 +133,7 @@ const RecommendationSidebar = ({ token }) => {
               <div key={`player-${index}`} className="recommendation-item">
                 <a href={`/user/${encodeURIComponent(rec.player)}`} target="_blank" rel="noopener noreferrer">{rec.player}</a>
                 <span>Score: {rec.score.toFixed(5)}</span>
+                <span>Stars: {scoreToStars(rec.score)}</span>
               </div>
             ))}
           </div>
@@ -128,6 +154,7 @@ const RecommendationSidebar = ({ token }) => {
               <div key={`agency-${index}`} className="recommendation-item">
                 <a href={`/user/${encodeURIComponent(rec.agency)}`} target="_blank" rel="noopener noreferrer">{rec.agency}</a>
                 <span>Score: {rec.score.toFixed(5)}</span>
+                <span>Stars: {scoreToStars(rec.score)}</span>
               </div>
             ))}
           </div>
@@ -148,6 +175,7 @@ const RecommendationSidebar = ({ token }) => {
               <div key={`clubtoplayer-${index}`} className="recommendation-item">
                 <a href={`/user/${encodeURIComponent(rec.club)}`} target="_blank" rel="noopener noreferrer">{rec.club}</a>
                 <span>Score: {rec.score.toFixed(5)}</span>
+                <span>Stars: {scoreToStars(rec.score)}</span>
               </div>
             ))}
           </div>
