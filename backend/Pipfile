@@ -19,7 +19,6 @@ flask = "==2.3.2"
 flask-cors = "==4.0.0"
 flask-jwt-extended = "==4.5.2"
 flask-mail = "==0.9.1"
-flask-sqlalchemy = "==3.0.5"
 greenlet = "==3.1.1"
 gunicorn = "==23.0.0"
 itsdangerous = "==2.1.2"
@@ -47,6 +46,7 @@ wcwidth = "==0.2.13"
 werkzeug = "==2.3.6"
 "zope.event" = "==5.0"
 "zope.interface" = "==7.2"
+flask-sqlalchemy = "*"
 
 [dev-packages]
 
