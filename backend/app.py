@@ -11,7 +11,7 @@ from functools import wraps
 from datetime import datetime, timedelta
 from flask_mail import Mail
 from flask_cors import CORS
-
+from model.player_predictions import PlayerPredictor
 
 app = Flask(__name__,template_folder='templates')
 CORS(app, origins=["http://localhost:3000"])
@@ -28,6 +28,9 @@ mail = Mail(app)
 app.config['UPLOAD_FOLDER'] = 'uploads'
 app.config['ALLOWED_EXTENSIONS'] = {'png', 'jpg', 'jpeg', 'gif', 'mp4', 'mov', 'avi'}
 app.config['MAX_CONTENT_LENGTH'] = 100 * 1024 * 1024  
+
+# Initialize the predictor
+player_predictor = PlayerPredictor()
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in app.config['ALLOWED_EXTENSIONS']
@@ -560,6 +563,44 @@ def add_comment():
     db.session.add(new_comment)
     db.session.commit()
     return jsonify({'message': 'Comment added'})
+
+@app.route('/train_models', methods=['POST'])
+@token_required
+def train_models(current_user):
+    """Train the prediction models"""
+    try:
+        player_predictor.train_models('backend/model/player_stats_with_positions.csv')
+        return jsonify({'message': 'Models trained successfully'}), 200
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/predict_player_stats', methods=['POST'])
+@token_required
+def predict_player_stats(current_user):
+    """Predict player statistics"""
+    try:
+        # Load models if not already loaded
+        if player_predictor.goals_model is None:
+            player_predictor.load_models()
+        
+        # Get player data from request
+        player_data = request.json
+        required_fields = ['age', 'mp', 'minutes', 'goals', 'assists', 'position']
+        
+        # Validate input
+        if not all(field in player_data for field in required_fields):
+            return jsonify({
+                'error': f'Missing required fields. Required: {required_fields}'
+            }), 400
+            
+        # Make predictions
+        predictions = player_predictor.predict_stats(player_data)
+        
+        return jsonify(predictions), 200
+        
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
 app.app_context().push()
 if __name__ == '__main__':
     app.run(debug=True)
