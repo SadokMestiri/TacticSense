@@ -131,7 +131,7 @@ const GPT = ({ header, footer }) => {
                             
                         </form>
                         {response && (
-                            <div className="mt-6 bg-white p-4 rounded shadow max-w-xl w-full" style={{ border:'1px solid green'}}>
+                            <div className="mt-6 bg-white p-4 rounded shadow max-w-xl w-full" style={{ border:'1px solid green', maxHeight: '300px', overflowY: 'auto' }}>
                                 <h2 className="font-semibold mb-2">Response :</h2>
                                 <p>{response}</p>
                             </div>

@@ -10,6 +10,7 @@ const Register = () => {
     const [error, setError] = useState(null);
     const [success, setSuccess] = useState(null);
     const [profileImage, setProfileImage] = useState(null);
+    const [role, setRole] = useState('');
 
     const navigate = useNavigate();
 
@@ -23,10 +24,14 @@ const Register = () => {
         formData.append('email', email);
         formData.append('password', password);
         formData.append('name', name);
-
+        
+        
         if (profileImage) {
             formData.append('profile_image', profileImage);
         }
+        formData.append('role', role);
+
+        console.log(formData);
 
         try {
             const response = await axios.post(`${process.env.REACT_APP_BASE_URL}/register`, formData, {
@@ -40,7 +45,8 @@ const Register = () => {
                 setTimeout(() => navigate('/login'), 2000);
             }
         } catch (error) {
-            setError(error.response?.data?.message || 'An error occurred. Please try again.');
+            setError(error.response?.data?.message || 'An error occured.');
+            console.log(error);
         }
     };
 
@@ -48,7 +54,6 @@ const Register = () => {
         setProfileImage(e.target.files[0]);
         setSuccess('Profile image uploaded successfully!');
     };
-
     return (
         <div>
             <div id="page-loader" className="fade show"><span className="spinner"></span></div>
@@ -109,7 +114,24 @@ const Register = () => {
                                     required
                                 />
                             </div>
-
+                            <div className="form-group m-b-20">
+                                <select
+                                    className="form-control form-control-lg"
+                                    value={role}
+                                    onChange={(e) => setRole(e.target.value)}
+                                    required
+                                >
+                                    <option value="" disabled>Select Role</option>
+                                    <option value="Player">Player</option>
+                                    <option value="Coach">Coach</option>
+                                    <option value="Agent">Agent</option>
+                                    <option value="Manager">Manager</option>
+                                    <option value="Club">Club</option>
+                                    <option value="Staff">Staff</option>
+                                    <option value="Scout">Scout</option>
+                                </select>
+                            </div>
+                            
                             {/* Profile image upload */}
                             <div className="form-group m-b-20">
                                 <label htmlFor="profile-image-upload" className="upload-label">
@@ -143,7 +165,10 @@ const Register = () => {
                 </div>
             </div>
         </div>
+        
     );
+    
+    
 };
 
 export default Register;
