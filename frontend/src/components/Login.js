@@ -17,7 +17,7 @@ const Login = () => {
     const handleLogin = async (e) => {
         e.preventDefault();
         setError(null);
-        
+        console.log(username, password)
         try {
             const response = await axios.post(
                 `${baseUrl}/login`, 

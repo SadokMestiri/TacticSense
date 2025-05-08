@@ -1,0 +1,25 @@
+.sort-by select {
+    border: none;               /* Supprime la bordure */
+    background: transparent;    /* Fond transparent */
+    font-size: 14px;
+    padding: 6px 10px;
+    color: #333;
+    cursor: pointer;
+    
+}
+
+/* Optionnel : supprimer l'icone OS de la flèche dans certains navigateurs */
+.sort-by select::-ms-expand {
+    display: none;
+}
+
+/* Optionnel : ajout d'un focus personnalisé */
+.sort-by select:focus {
+    outline: none;
+}
+
+.sort-by img {
+    width: 20px; 
+    height: 20px;
+    margin-left:-30px; 
+  }

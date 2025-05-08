@@ -9,7 +9,7 @@ const Register = () => {
     const [password, setPassword] = useState('');
     const [error, setError] = useState(null);
     const [success, setSuccess] = useState(null);
-    const [profileImage, setProfileImage] = useState(null); 
+    const [profileImage, setProfileImage] = useState(null);
 
     const navigate = useNavigate();
 
@@ -31,7 +31,7 @@ const Register = () => {
         try {
             const response = await axios.post(`${process.env.REACT_APP_BASE_URL}/register`, formData, {
                 headers: {
-                    'Content-Type': 'multipart/form-data', 
+                    'Content-Type': 'multipart/form-data',
                 }
             });
 
@@ -55,7 +55,7 @@ const Register = () => {
     };
 
     const handleProfileImageChange = (e) => {
-        setProfileImage(e.target.files[0]); 
+        setProfileImage(e.target.files[0]);
         setSuccess('Profile image uploaded successfully!');
     };
 
@@ -63,7 +63,7 @@ const Register = () => {
         <div>
             <div id="page-loader" className="fade show"><span className="spinner"></span></div>
             <div className="login-cover">
-                <div className="login-cover-image" style={{backgroundImage: "url(assets/img/login-bg/register-bg.jpg)"}} data-id="login-cover-image"></div>
+                <div className="login-cover-image" style={{ backgroundImage: "url(assets/img/login-bg/register-bg.jpg)" }} data-id="login-cover-image"></div>
                 <div className="login-cover-bg"></div>
             </div>
             <div id="page-container" className="fade">
@@ -122,21 +122,21 @@ const Register = () => {
 
                             {/* Profile image upload */}
                             <div className="form-group m-b-20">
-    <label htmlFor="profile-image-upload" className="upload-label">
-        <div className="file-upload-area">
-            <i className="fa fa-cloud-upload-alt"></i> {/* Cloud Icon */}
-            <p>Upload Profile Picture</p>
-        </div>
-    </label>
-    <input
-        type="file"
-        id="profile-image-upload"
-        className="file-upload-input"
-        onChange={handleProfileImageChange}
-        accept="image/*"
-        style={{ display: 'none' }}
-    />
-</div>
+                                <label htmlFor="profile-image-upload" className="upload-label">
+                                    <div className="file-upload-area">
+                                        <i className="fa fa-cloud-upload-alt"></i> {/* Cloud Icon */}
+                                        <p>Upload Profile Picture</p>
+                                    </div>
+                                </label>
+                                <input
+                                    type="file"
+                                    id="profile-image-upload"
+                                    className="file-upload-input"
+                                    onChange={handleProfileImageChange}
+                                    accept="image/*"
+                                    style={{ display: 'none' }}
+                                />
+                            </div>
 
 
                             {error && <p className="text-danger">{error}</p>}
