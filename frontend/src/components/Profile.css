@@ -1,0 +1,187 @@
+/* Profile Page Styles */
+
+.container {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  padding: 20px;
+  background-color: transparent; /* Removed gray background */
+}
+
+.left-sidebar, .right-sidebar {
+  width: 20%;
+  padding: 15px;
+  border-radius: 8px;
+}
+
+.main-content {
+  width: 55%;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  background-color: #fff; /* Matches the rest of the site */
+}
+
+.sidebar-profile-box {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.sidebar-profile-box img {
+  border-radius: 50%;
+  width: 100px;
+  height: 100px;
+  object-fit: cover;
+  margin-bottom: 10px;
+}
+
+.sidebar-profile-info h1 {
+  font-size: 1.5rem;
+  margin: 10px 0;
+}
+
+.sidebar-profile-info h3 {
+  font-size: 1rem;
+  color: #666;
+}
+
+.sidebar-profile-info ul {
+  list-style: none;
+  padding: 0;
+}
+
+.sidebar-profile-info ul li {
+  margin: 5px 0;
+  font-size: 0.9rem;
+}
+
+.sidebar-news h3 {
+  font-size: 1.2rem;
+  margin-bottom: 10px;
+}
+
+.sidebar-news ul {
+  list-style: none;
+  padding: 0;
+}
+
+.sidebar-news ul li {
+  margin: 5px 0;
+  font-size: 0.9rem;
+}
+
+.main-content h2 {
+  font-size: 1.5rem;
+  margin-bottom: 10px;
+  color: #333; /* Darker color for better contrast */
+}
+
+.main-content label {
+  color: #333; /* Darker color for labels */
+}
+
+.main-content input {
+  color: #333; /* Ensure input text is visible */
+  background-color: #fff; /* Keep input background white */
+  border: 1px solid #ccc; /* Add a border for better visibility */
+  padding: 10px;
+  border-radius: 4px;
+}
+
+.main-content input::placeholder {
+  color: #aaa; /* Lighter color for placeholders */
+}
+
+.main-content p, .main-content ul {
+  font-size: 1rem;
+  line-height: 1.5;
+}
+
+.main-content ul {
+  list-style: disc;
+  margin-left: 20px;
+}
+
+.profile-image-wrapper {
+  position: relative;
+  display: inline-block;
+}
+
+.profile-image {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.edit-icon {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  padding: 10px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.edit-icon img {
+  width: 30px;
+  height: 30px;
+  background-color: transparent;
+}
+
+.update-profile-btn {
+  background-color: #0d8020;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 5px;
+  font-size: 16px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.update-profile-btn:hover {
+  background-color: #0056b3;
+}
+
+.uploaded-videos {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+.pagination-button.left {
+  position: absolute;
+  left: -50px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+.pagination-button.right {
+  position: absolute;
+  right: -50px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+.pagination-button img {
+  width: 30px;
+  height: 30px;
+}
+
+.upload-icon {
+  width: 20px; /* Adjust the width */
+  height: 20px; /* Adjust the height */
+  object-fit: contain; /* Ensure the image scales proportionally */
+}

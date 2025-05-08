@@ -11,6 +11,9 @@ from functools import wraps
 from datetime import datetime, timedelta
 from flask_mail import Mail
 from flask_cors import CORS
+import torch
+import torch.nn as nn
+import numpy as np
 
 
 app = Flask(__name__,template_folder='templates')
@@ -560,6 +563,98 @@ def add_comment():
     db.session.add(new_comment)
     db.session.commit()
     return jsonify({'message': 'Comment added'})
+
+@app.route('/update_profile', methods=['PUT'])
+@token_required
+def update_profile(current_user):
+    data = request.form
+
+    # Update user fields
+    if 'username' in data:
+        current_user.username = data['username']
+    if 'email' in data:
+        current_user.email = data['email']
+    if 'name' in data:
+        current_user.name = data['name']
+
+    # Handle profile image upload
+    if 'profile_image' in request.files:
+        profile_image = request.files['profile_image']
+        if profile_image and allowed_file(profile_image.filename):
+            filename = secure_filename(profile_image.filename)
+            profile_image_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+            profile_image.save(profile_image_path)
+            current_user.profile_image = profile_image_path
+
+    try:
+        db.session.commit()
+        return jsonify({'message': 'Profile updated successfully'}), 200
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': 'An error occurred while updating the profile', 'details': str(e)}), 500
+
+
+@app.route('/predict', methods=['POST'])
+def predict():
+    # Load the PyTorch model
+    class MarketValuePredictor(nn.Module):
+        def __init__(self, input_dim, hidden_dim1, hidden_dim2, hidden_dim3, dropout_rate):
+            super(MarketValuePredictor, self).__init__()
+            self.model = nn.Sequential(
+                nn.Linear(input_dim, hidden_dim1),
+                nn.ReLU(),
+                nn.BatchNorm1d(hidden_dim1),
+                nn.Dropout(dropout_rate),
+                nn.Linear(hidden_dim1, hidden_dim2),
+                nn.ReLU(),
+                nn.BatchNorm1d(hidden_dim2),
+                nn.Dropout(dropout_rate),
+                nn.Linear(hidden_dim2, hidden_dim3),
+                nn.ReLU(),
+                nn.Linear(hidden_dim3, 1)
+            )
+            
+        def forward(self, x):
+            return self.model(x)
+
+    input_dim = 39   
+    hidden_dim1= 222
+    hidden_dim2= 80
+    hidden_dim3= 21
+    dropout_rate= 0.038842948881822076
+
+    model = MarketValuePredictor(input_dim, hidden_dim1, hidden_dim2, hidden_dim3, dropout_rate)
+
+    # Load the state dictionary
+    model.load_state_dict(torch.load('uploads/marketValuemodel/market_value_predictor.pth'))
+
+    # Set the model to evaluation mode
+    model.eval()
+
+    try:
+        # Validate the request body
+        if not request.json or 'input' not in request.json:
+            return jsonify({'error': 'Invalid request. "input" key is missing.'}), 400
+
+        # Get input data from the request
+        input_data = request.json['input']
+
+        # Ensure input_data is a list of numbers
+        if not isinstance(input_data, list) or not all(isinstance(i, (int, float)) for i in input_data):
+            return jsonify({'error': 'Invalid input format. Expected a list of numbers.'}), 400
+
+        input_tensor = torch.tensor([input_data], dtype=torch.float32) # Convert to tensor
+        input_tensor = torch.tensor([input_data], dtype=torch.float32)  # Shape: [1, 39]
+        # Perform prediction
+        with torch.no_grad():
+            prediction = model(input_tensor)
+        
+        # Convert prediction to a list and return as JSON
+        prediction_list = prediction.numpy().tolist()
+        return jsonify({'prediction': prediction_list})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 400
+
 app.app_context().push()
 if __name__ == '__main__':
     app.run(debug=True)

@@ -1,6 +1,7 @@
 
 
 import Home from "./components/Home";
+import Profile from "./components/Profile";
 import {Routes, Route } from "react-router-dom";
 import Login from "./components/Login";
 import Register from "./components/Register";
@@ -24,6 +25,7 @@ export default function App() {
       <Route path="/" element={<Login />} />
       <Route path="/Home" element={<Home header={header} />} />
       <Route path="/Chat" element={<Chat header={header}/>} />
+      <Route path="/Profile" element={<Profile header={header}/>} />
       <Route path="/Register" element={<Register/>} />
       <Route path="/header" element={<Header />} />
       <Route path="/Reset" element={<Reset/>}/>

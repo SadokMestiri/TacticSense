@@ -118,7 +118,7 @@ const Header = () => {
                   <div className="desc">{"Professional footballer"}</div>
                 </div>
               </div>
-              <a href="#" className="profile-btn">See your profile</a>
+              <a href="/Profile" className="profile-btn">See your profile</a>
               <a href="#" className="logout-btn" onClick={handleLogout}>Logout</a>
             </div>
           )}
