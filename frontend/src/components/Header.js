@@ -40,7 +40,7 @@ const Header = () => {
         setAllowed(true);
       }
     }
-  }, [token, user, navigate]);
+  }, [token, user, navigate, date]);
 
   // Handle dropdown toggle for user profile
   const toggleDropdown = () => {

@@ -17,6 +17,10 @@ import MatchUpload from './components/MatchUpload';
 import AnalysisHubMain from './components/AnalysisHubMain'; // New landing page for the hub
 import MatchAnalysisDetail from './components/MatchAnalysisDetail'; // RENAMED from AnalysisHub
 
+import PlayerPredictor from './components/PlayerPredictor';
+import ExistingPlayerPredictor from './components/ExistingPlayerPredictor';
+import PlayerProfile from './components/PlayerProfile';
+
 function App() {
     const isAuthenticated = !!Cookies.get('token');
     const location = useLocation();
@@ -77,16 +81,15 @@ function App() {
                 />
                 
                 {/* Player Prediction Routes (Placeholder for future integration) */}
-                {/* 
                 <Route 
-                    path="/analysis-hub/players" 
-                    element={isAuthenticated ? <PlayersList /> : <Navigate to="/login" />} 
-                />
+                    path="/StatPredictions/new" 
+                    element={<PlayerPredictor />} />
                 <Route 
-                    path="/analysis-hub/players/:playerId/prediction" 
-                    element={isAuthenticated ? <PlayerPredictionPage /> : <Navigate to="/login" />} 
-                />
-                */}
+                    path="/StatPredictions/existing" 
+                    element={<ExistingPlayerPredictor />} />
+                <Route 
+                    path="/player/:name" 
+                    element={<PlayerProfile />} />
 
                 {/* Catch-all route */}
                 <Route

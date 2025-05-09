@@ -1,0 +1,255 @@
+.predictor-container {
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+    padding: 2rem;
+    max-width: 700px;
+    margin: 2rem auto;
+  }
+  
+.predictor-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+.season-row label {
+    display: flex;
+    flex-direction: column;
+    font-weight: 500;
+    color: #222; 
+    margin-right: 8px;
+}
+.season-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+    background: #f4f8fb;           
+    border: 1px solid #d0d7de;
+    border-radius: 10px;
+    padding: 1.5rem 1rem 1rem 1rem;
+    position: relative;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+    color: #222;            
+}
+.season-header {
+    position: absolute;
+    top: -18px;
+    left: 18px;
+    background: #0073b1;
+    color: #fff;
+    padding: 4px 16px;
+    border-radius: 14px;
+    font-size: 1rem;
+    font-weight: bold;
+    letter-spacing: 1px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+  }
+@media (max-width: 900px) {
+    .season-row {
+      flex-direction: column;
+      gap: 0.5rem;
+      background: #f4f8fb;
+      border: 1px solid #d0d7de;
+      border-radius: 10px;
+      padding: 1rem;
+    }
+    .season-row label {
+      min-width: 0;
+      width: 100%;
+    }
+    .season-header {
+      top: -14px;
+      left: 16px;
+      background: #0073b1;
+      color: #fff;
+      padding: 2px 12px;
+      border-radius: 12px;
+      font-size: 0.95rem;
+      font-weight: bold;
+      letter-spacing: 1px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+    }
+  }
+  
+.input, .season-row input {
+    padding: 0.5rem;
+    border-radius: 6px;
+    border: 1px solid #ddd;
+    font-size: 1rem;
+  }
+  
+.add-btn, .submit-btn {
+    background: #007bff;
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    padding: 0.5rem 1.5rem;
+    cursor: pointer;
+    margin-right: 0.5rem;
+  }
+  
+.add-btn {
+    background: #28a745;
+  }
+  
+.add-btn:hover, .submit-btn:hover {
+    opacity: 0.9;
+  }
+  
+.prediction-result {
+    margin-top: 2rem;
+    background: #f8f9fa;
+    border-radius: 8px;
+    padding: 1rem;
+  }
+  
+.error {
+    color: #d9534f;
+    font-weight: bold;
+  }
+  
+  
+.predictor-container h2,
+.predictor-container h4 {
+  color: #222; 
+  margin-bottom: 0.5rem;
+}
+.remove-btn {
+    background: #d9534f;
+    color: #fff;
+    border: none;
+    border-radius: 50%;
+    width: 28px;
+    height: 28px;
+    font-size: 1.2rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s;
+  }
+.remove-btn:hover:enabled {
+    background: #c9302c;
+  }
+.remove-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+/* Pagination buttons */
+.pagination-btn {
+    background: #0073b1;
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    padding: 6px 18px;
+    font-size: 1rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+  
+.pagination-btn:disabled {
+    background: #b0c4d8;
+    color: #eee;
+    cursor: not-allowed;
+  }
+  
+.pagination-btn:not(:disabled):hover {
+    background: #005580;
+  }
+.recharts-dot.animate {
+    animation: fadeInDot 1s;
+  }
+  @keyframes fadeInDot {
+    from { opacity: 0; transform: scale(0.5);}
+    to { opacity: 1; transform: scale(1);}
+  }
+/* PlayerProfile Dashboard Styles */
+.profile-container {
+    background: #fff;
+    border-radius: 14px;
+    box-shadow: 0 2px 16px rgba(0,0,0,0.07);
+    padding: 2.5rem 2rem 2rem 2rem;
+    max-width: 1200px;
+    margin: 2rem auto;
+    font-family: 'Segoe UI', Arial, sans-serif;
+  }
+  
+.profile-container h2 {
+    color: #0073b1;
+    font-size: 2.2rem;
+    margin-bottom: 0.5rem;
+    letter-spacing: 0.5px;
+  }
+  
+.profile-header {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+    border-bottom: 1px solid #e6e6e6;
+    padding-bottom: 1rem;
+  }
+  
+.profile-avatar {
+    width: 72px;
+    height: 72px;
+    border-radius: 50%;
+    background: #e6f0fa;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2.5rem;
+    color: #0073b1;
+    font-weight: bold;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+  }
+  
+.profile-info {
+    font-size: 1.1rem;
+    color: #222;
+  }
+  
+.profile-info b {
+    color: #0073b1;
+  }
+  
+.dashboard-graphs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 2rem;
+    margin-bottom: 2.5rem;
+  }
+  
+.dashboard-graphs > div {
+    background: #f8fafc;
+    border-radius: 10px;
+    padding: 1.2rem 1rem 0.5rem 1rem;
+    box-shadow: 0 1px 6px rgba(0,0,0,0.04);
+    flex: 1 1 350px;
+    min-width: 320px;
+  }
+  
+.submit-btn {
+    background: #0073b1;
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    padding: 10px 32px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s;
+    margin-top: 1rem;
+  }
+  
+.submit-btn:disabled {
+    background: #b0c4d8;
+    color: #eee;
+    cursor: not-allowed;
+  }
+  
+.submit-btn:not(:disabled):hover {
+    background: #005580;
+  }
