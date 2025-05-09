@@ -79,8 +79,8 @@ const Header = () => {
               </Link>
             </li>
             <li>
-              <Link to="/matches" className={window.location.pathname.startsWith('/matches') ? 'active-link' : ''}>
-                <img src="assets/images/jobs.png" alt="matches" /> <span>Matches</span>
+              <Link to="/analysis-hub" className={window.location.pathname.startsWith('/matches') ? 'active-link' : ''}>
+                <img src="assets/images/analysis.png" alt="matches" /> <span>Analysis Hub</span>
               </Link>
             </li>
             <li>

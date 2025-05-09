@@ -154,11 +154,11 @@ function VideoAnalysis() {
             </div>
                 <div className="header-buttons">
                     {matchData.status === 'analysis_complete' && (
-                        <Link to={`/matches/${matchId}/analysis`} className="btn btn-outline-primary analysis-hub-button">
+                        <Link to={`/analysis-hub/matches/${matchId}/analysis`} className="btn btn-outline-primary analysis-hub-button">
                             View Tactical Analysis Hub
                         </Link>
                     )}
-                    <Link to={`/matches/${matchId}/analysis`} className="btn btn-primary analyze-button">
+                    <Link to={`/analysis-hub/matches/${matchId}/analysis`} className="btn btn-primary analyze-button">
                         Analyze
                     </Link>
                 </div>
