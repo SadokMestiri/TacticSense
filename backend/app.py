@@ -246,6 +246,19 @@ class Match(db.Model):
             return None
 
     def to_dict(self):
+        display_status_value = None
+
+        # Prioritize tactical analysis status if it's active, completed, or failed
+        if self.tactical_analysis_status and \
+           self.tactical_analysis_status not in [TacticalAnalysisStatus.NOT_STARTED]:
+            display_status_value = self.tactical_analysis_status.value
+        # Otherwise, use the general match status (captioning, uploaded, etc.)
+        elif self.status:
+            display_status_value = self.status.value
+        # Fallback if neither is set (should ideally not happen if initialized properly)
+        else:
+            display_status_value = TacticalAnalysisStatus.NOT_STARTED.value 
+
         return {
             'id': self.id,
             'user_id': self.user_id,
@@ -260,10 +273,10 @@ class Match(db.Model):
             'srt_url': self.get_srt_url(),
             'captioned_video_url': self.get_captioned_video_url(),
             'summary': self.summary,
-            'status': self.status.value if self.status else None,
+            'status': display_status_value, # This is the primary status for MatchesList
             'uploaded_at': self.uploaded_at.strftime('%Y-%m-%d %H:%M:%S'),
             'error_message': self.error_message,
-            # New fields for tactical analysis
+            # Keep the specific tactical_analysis_status for detailed views if needed
             'tactical_analysis_status': self.tactical_analysis_status.value if self.tactical_analysis_status else None,
             'tactical_overlay_video_url': self.get_tactical_overlay_video_url(),
             'heatmaps_generated': self.heatmaps_generated

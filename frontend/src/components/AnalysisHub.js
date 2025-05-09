@@ -4,6 +4,7 @@ import Cookies from 'js-cookie';
 import axios from 'axios';
 import CustomVideoPlayer from './CustomVideoPlayer'; // Assuming you want to use this for the overlay video
 import Slider from "react-slick"; // Import react-slick
+import Spinner from './Spinner'; // Import the Spinner
 import "slick-carousel/slick/slick.css"; 
 import "slick-carousel/slick/slick-theme.css";
 import './AnalysisHub.css';
@@ -203,9 +204,24 @@ function AnalysisHub() {
 
     const displayTitle = title || `${team1_name || 'Team 1'} vs ${team2_name || 'Team 2'}`;
 
+    // Calculate specific processing message
+    let currentProcessingMessage = "Processing analysis...";
+    if (status === 'processing') {
+        if (!overlay_video_url && (!heatmaps_final || heatmaps_final.length === 0) && (!heatmaps_intermediate || heatmaps_intermediate.length === 0)) {
+            currentProcessingMessage = "Preparing analysis and generating tactical overlay video...";
+        } else if (overlay_video_url && (!heatmaps_final || heatmaps_final.length === 0) && (!heatmaps_intermediate || heatmaps_intermediate.length === 0)) {
+            currentProcessingMessage = "Generating heatmaps...";
+        } else if (overlay_video_url && (heatmaps_final?.length > 0 || heatmaps_intermediate?.length > 0) && !heatmaps_final?.every(h => h) && !heatmaps_intermediate?.every(h => h)) {
+            currentProcessingMessage = "Finalizing heatmap generation..."; // Example if some heatmaps are there but not all
+        }
+    }
+
+    const showGlobalSpinner =
+        (status === 'pending') ||
+        (status === 'processing' && !overlay_video_url && (!heatmaps_final || heatmaps_final.length === 0) && (!heatmaps_intermediate || heatmaps_intermediate.length === 0));
+
     return (
         <div className="analysis-hub-container">
-            {/* ... existing header and match title ... */}
             <header className="analysis-hub-page-header">
                 <Link to="/matches" className="back-to-matches">&larr; Back to Matches</Link>
             </header>
@@ -217,8 +233,8 @@ function AnalysisHub() {
                 </div>
 
                 <div className="analysis-actions">
-                    <button 
-                        onClick={startAnalysis} 
+                    <button
+                        onClick={startAnalysis}
                         disabled={status === 'processing' || status === 'pending'}
                         className="btn-start-analysis"
                     >
@@ -236,24 +252,38 @@ function AnalysisHub() {
                     {status === 'failed' && analysisError && <p className="hub-error-message">Error: {analysisError}</p>}
                 </div>
 
-                {(status === 'completed' || status === 'processing' || status === 'pending') && (
+                {showGlobalSpinner && (
+                    <Spinner message={status === 'pending' ? 'Analysis is pending...' : currentProcessingMessage} />
+                )}
+
+                {!showGlobalSpinner && (status === 'completed' || status === 'processing') && (
                     <>
+                        {/* Tactical Overlay Video Section */}
                         {overlay_video_url && status === 'completed' && (
                             <div className="analysis-video-section">
                                 <h3>Tactical Overlay Video</h3>
                                 <CustomVideoPlayer videoUrl={overlay_video_url} />
                             </div>
                         )}
-                        {status === 'processing' && !overlay_video_url && <p>Overlay video will appear here once processing is complete.</p>}
+                        {status === 'processing' && !overlay_video_url && (
+                            <div className="info-message-box">
+                                <p>Tactical overlay video is being generated...</p>
+                            </div>
+                        )}
+                        {status === 'completed' && !overlay_video_url && (
+                             <div className="info-message-box">
+                                <p>Tactical overlay video is not available for this analysis.</p>
+                            </div>
+                        )}
 
                         {/* Final Heatmaps Section - Collapsible */}
-                        {heatmaps_final && heatmaps_final.length > 0 && status === 'completed' && (
+                        {(heatmaps_final && heatmaps_final.length > 0 && status === 'completed') && (
                             <div className="analysis-heatmaps-section final-heatmaps collapsible-section">
                                 <h3 onClick={() => setIsFinalHeatmapsOpen(!isFinalHeatmapsOpen)} className="collapsible-header">
-                                    Final Heatmaps 
+                                    Final Heatmaps
                                     <span className={`arrow ${isFinalHeatmapsOpen ? 'open' : ''}`}>{isFinalHeatmapsOpen ? '▼' : '►'}</span>
                                 </h3>
-                                {isFinalHeatmapsOpen && (
+                                <div className={`collapsible-content ${isFinalHeatmapsOpen ? 'open' : ''}`}>
                                     <div className="heatmaps-grid">
                                         {heatmaps_final.map((url, index) => (
                                             <div key={`final-${index}`} className="heatmap-item">
@@ -261,23 +291,42 @@ function AnalysisHub() {
                                             </div>
                                         ))}
                                     </div>
-                                )}
+                                </div>
+                            </div>
+                        )}
+                        {status === 'processing' && (!heatmaps_final || heatmaps_final.length === 0) && (
+                            <div className="info-message-box">
+                                <p>Final heatmaps are being generated...</p>
+                            </div>
+                        )}
+                         {status === 'completed' && (!heatmaps_final || heatmaps_final.length === 0) && ( // Show if completed but no final heatmaps
+                            <div className="info-message-box">
+                                <p>No final heatmaps are available for this analysis.</p>
                             </div>
                         )}
 
                         {/* Intermediate Heatmaps Section - Collapsible */}
-                        {heatmaps_intermediate && heatmaps_intermediate.length > 0 && status === 'completed' && (
+                        {(heatmaps_intermediate && heatmaps_intermediate.length > 0 && status === 'completed') && (
                             <div className="analysis-heatmaps-section intermediate-heatmaps collapsible-section">
                                <h3 onClick={() => setIsIntermediateHeatmapsOpen(!isIntermediateHeatmapsOpen)} className="collapsible-header">
                                    Intermediate Heatmaps (Segments)
                                    <span className={`arrow ${isIntermediateHeatmapsOpen ? 'open' : ''}`}>{isIntermediateHeatmapsOpen ? '▼' : '►'}</span>
                                 </h3>
-                               {isIntermediateHeatmapsOpen && (
-                                   <ImageCarousel images={heatmaps_intermediate} title="" /> // Title prop is now redundant here
-                               )}
+                               <div className={`collapsible-content ${isIntermediateHeatmapsOpen ? 'open' : ''}`}>
+                                   <ImageCarousel images={heatmaps_intermediate} title="" />
+                               </div>
                             </div>
                         )}
-                         {(status === 'processing' || status === 'pending') && (!heatmaps_final || heatmaps_final.length === 0) && <p>Heatmaps will appear here once processing is complete.</p>}
+                        {status === 'processing' && (!heatmaps_intermediate || heatmaps_intermediate.length === 0) && (
+                             <div className="info-message-box">
+                                <p>Intermediate heatmaps are being generated...</p>
+                            </div>
+                        )}
+                        {status === 'completed' && (!heatmaps_intermediate || heatmaps_intermediate.length === 0) && ( // Show if completed but no intermediate
+                            <div className="info-message-box">
+                                <p>No intermediate heatmaps are available for this analysis.</p>
+                            </div>
+                        )}
                     </>
                 )}
             </div>

@@ -365,19 +365,62 @@
 .collapsible-section .collapsible-header .arrow {
     font-size: 0.8em;
     margin-left: 10px;
-    transition: transform 0.2s ease-in-out;
+    transition: transform 0.3s ease-in-out;
 }
 
 .collapsible-section .collapsible-header .arrow.open {
-    /* transform: rotate(90deg); If using a different arrow character */
+    transform: rotate(0deg); 
 }
 
-/* Styling for the content of the heatmaps sections if needed */
-.analysis-heatmaps-section .heatmaps-grid {
-    /* Your existing styles for heatmaps-grid */
-    padding-top: 10px; /* Add some space below the header */
+.collapsible-content {
+    overflow: hidden;
+    transition: max-height 0.4s ease-in-out, opacity 0.3s ease-in-out, padding-top 0.4s ease-in-out, margin-bottom 0.4s ease-in-out;
+    max-height: 0; /* Start closed */
+    opacity: 0;   /* Start transparent */
+    padding-top: 0; /* Start with no top padding */
+    margin-bottom: 0; /* Start with no bottom margin */
 }
 
-.analysis-heatmaps-section.intermediate-heatmaps .image-carousel-main-container {
-    padding-top: 10px; /* Add some space below the header */
+.collapsible-content.open {
+    max-height: 5000px; /* Or a larger value if needed, e.g., 3000px or more */
+    opacity: 1;
+    padding-top: 15px; 
+    margin-bottom: 20px; 
+}
+
+.slick-slide-image {
+    width: 100%; 
+    height: auto; 
+    max-height: 350px; 
+    object-fit: contain; 
+    border-radius: 4px;
+    display: block; 
+    margin: 0 auto; 
+    transition: transform 0.25s ease-in-out, box-shadow 0.25s ease-in-out; /* Added box-shadow transition */
+    cursor: pointer; /* Indicate it's interactive */
+}
+
+.slick-slide-image:hover {
+    transform: scale(1.03); 
+    box-shadow: 0 4px 15px rgba(0, 170, 255, 0.3); /* Subtle blue glow */
+}
+
+.hub-loading-indicator { /* This can be removed if Spinner component is used everywhere */
+    text-align: center;
+    font-size: 1.5em;
+    padding: 50px;
+    color: #e0e0e0;
+}
+
+/* Styling for informational messages (non-error) */
+.info-message-box {
+    background-color: #232946; /* Same as section cards */
+    padding: 20px;
+    border-radius: 8px;
+    margin: 20px auto; /* Centered with some margin */
+    text-align: center;
+    color: #bbbbbb;
+    font-size: 1.1em;
+    border: 1px dashed #0077cc; /* Subtle border */
+    max-width: 600px; /* Limit width for better readability */
 }

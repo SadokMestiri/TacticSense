@@ -88,3 +88,68 @@
     color: #dc3545; /* Red */
     font-weight: bold;
 }
+
+.match-status-container {
+    display: flex;
+    align-items: center;
+    font-size: 0.9em;
+    margin-top: 5px;
+}
+
+.match-status-container > span:first-child {
+    margin-right: 5px;
+    color: #555; /* Or your preferred text color for "Status:" label */
+}
+
+.status-tag {
+    padding: 3px 8px;
+    border-radius: 12px; /* More rounded for a pill shape */
+    font-size: 0.85em;
+    font-weight: 600;
+    color: #fff;
+    text-align: center;
+    min-width: 70px; /* Ensure a minimum width for consistency */
+    display: inline-block;
+    line-height: 1.4; /* Adjust for vertical centering of text */
+}
+
+.status-tag.status-captions-ready {
+    background-color: #28a745; /* Green */
+    /* Specific styling for the CC icon if needed */
+}
+.status-tag.status-captions-ready span { /* If CC is wrapped in a span */
+    font-weight: bold;
+}
+
+.status-tag.status-processing {
+    background-color: #007bff; /* Blue */
+}
+
+.status-tag.status-pending {
+    background-color: #ffc107; /* Yellow */
+    color: #212529; /* Darker text for yellow background */
+}
+
+.status-tag.status-completed {
+    background-color: #17a2b8; /* Info/Teal Blue - distinct from captions green */
+}
+
+.status-tag.status-failed {
+    background-color: #dc3545; /* Red */
+}
+
+.status-tag.status-not-started {
+    background-color: #6c757d; /* Grey */
+}
+
+.status-tag.status-unknown {
+    background-color: #6c757d; /* Grey for unknown */
+    font-style: italic;
+}
+
+.item-error-message {
+    font-size: 0.8em;
+    color: #dc3545;
+    margin-top: 3px;
+    margin-left: 0; /* Align with other paragraph tags if Link is block */
+}
