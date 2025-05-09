@@ -1,0 +1,82 @@
+.match-upload-container {
+    max-width: 600px;
+    margin: 30px auto;
+    padding: 25px;
+    background-color: #ffffff;
+    border-radius: 8px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+.match-upload-container h2 {
+    text-align: center;
+    margin-bottom: 25px;
+    color: #333;
+}
+
+.match-upload-form .form-group {
+    margin-bottom: 20px;
+}
+
+.match-upload-form label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 600;
+    color: #555;
+}
+
+.match-upload-form input[type="text"],
+.match-upload-form input[type="number"],
+.match-upload-form input[type="date"],
+.match-upload-form input[type="file"] {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    box-sizing: border-box; /* Important to include padding in width */
+    font-size: 1em;
+}
+
+.match-upload-form input[type="file"] {
+    padding: 5px;
+}
+
+.match-upload-form button[type="submit"] {
+    width: 100%;
+    padding: 12px 15px;
+    background-color: #28a745; /* Green */
+    color: white;
+    border: none;
+    border-radius: 5px;
+    font-size: 1.1em;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.match-upload-form button[type="submit"]:hover {
+    background-color: #218838;
+}
+
+.match-upload-form button[type="submit"]:disabled {
+    background-color: #cccccc;
+    cursor: not-allowed;
+}
+
+.error-message {
+    color: #dc3545; /* Red */
+    background-color: #f8d7da;
+    border: 1px solid #f5c6cb;
+    padding: 10px;
+    border-radius: 4px;
+    margin-bottom: 15px;
+    text-align: center;
+}
+
+.success-message {
+    color: #155724; /* Dark Green */
+    background-color: #d4edda;
+    border: 1px solid #c3e6cb;
+    padding: 10px;
+    border-radius: 4px;
+    margin-bottom: 15px;
+    text-align: center;
+}

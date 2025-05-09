@@ -1,87 +1,59 @@
 .match-summary {
-  padding: 0 15px;
-}
-
-.summary-text {
   margin-bottom: 20px;
 }
 
-.summary-text h4 {
-  font-size: 16px;
+.match-summary h3 {
   margin-bottom: 10px;
   color: #333;
 }
 
-.summary-text p {
-  line-height: 1.5;
-  color: #444;
+.match-summary p {
+  margin-bottom: 15px;
+  color: #555;
 }
 
-.key-moments h4 {
-  font-size: 16px;
+.summary-actions {
+  display: flex;
+  gap: 10px;
   margin-bottom: 10px;
-  color: #333;
 }
 
-.key-moments ul {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-}
-
-.moment {
-  padding: 10px 12px;
-  margin-bottom: 8px;
+.summary-actions .btn {
+  padding: 8px 12px;
+  font-size: 0.9em;
   border-radius: 4px;
-  background-color: #f8f9fa;
-  border-left: 3px solid #ddd;
-  transition: all 0.2s ease;
+  cursor: pointer;
 }
 
-.moment:hover {
-  background-color: #f1f3f4;
+.summary-actions .btn-primary {
+  background-color: #007bff;
+  color: white;
+  border: none;
 }
 
-.moment-time {
-  font-weight: bold;
-  margin-right: 8px;
-  color: #666;
-  font-size: 12px;
+.summary-actions .btn-primary:disabled {
+  background-color: #cccccc;
+  cursor: not-allowed;
 }
 
-/* Excitement levels */
-.excitement-1 {
-  border-left-color: #4fc3f7;
+.summary-actions .btn-secondary {
+  background-color: #6c757d;
+  color: white;
+  border: none;
 }
 
-.excitement-2 {
-  border-left-color: #29b6f6;
+.summary-actions .btn-secondary:disabled {
+  background-color: #cccccc;
+  cursor: not-allowed;
 }
 
-.excitement-3 {
-  border-left-color: #2196f3;
-  background-color: #e3f2fd;
+.error-message {
+  color: #dc3545;
+  font-size: 0.9em;
+  margin-top: 10px;
 }
 
-.excitement-4 {
-  border-left-color: #1976d2;
-  background-color: #bbdefb;
-}
-
-.excitement-5 {
-  border-left-color: #0d47a1;
-  background-color: #90caf9;
-  font-weight: bold;
-}
-
-.summary-loading {
-  padding: 20px;
-  text-align: center;
-  color: #666;
-}
-
-.summary-placeholder {
-  padding: 15px;
-  color: #999;
-  font-style: italic;
+audio {
+  margin-top: 10px;
+  width: 100%;
 }

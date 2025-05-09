@@ -54,6 +54,8 @@ numpy = "*"
 ffmpeg-python = "*"
 nltk = "*"
 datasets = "*"
+redis = "*"
+gevent = "*"
 
 [dev-packages]
 

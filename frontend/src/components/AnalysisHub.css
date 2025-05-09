@@ -1,0 +1,383 @@
+.analysis-hub-container {
+    background-color: #1a1a2e; /* Dark blue/purple background */
+    color: #e0e0e0; /* Light grey text */
+    min-height: 100vh;
+    padding: 0; /* Remove padding if header takes full width */
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.analysis-hub-page-header {
+    background-color: #162447; /* Slightly lighter dark blue for header */
+    padding: 15px 30px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.back-to-matches {
+    color: #f0f0f0;
+    text-decoration: none;
+    font-size: 1rem;
+    transition: color 0.2s ease;
+}
+
+.back-to-matches:hover {
+    color: #00aaff;
+}
+
+.analysis-hub-content {
+    padding: 20px 40px; /* Add padding for content area */
+    position: relative; /* For absolute positioning of title */
+}
+
+.analysis-hub-main-title {
+    position: absolute;
+    top: 20px; /* Adjust as needed from the top of .analysis-hub-content */
+    left: 40px; /* Adjust as needed from the left of .analysis-hub-content */
+    font-size: 2.5em;
+    color: #00aaff; /* Bright blue for emphasis */
+    font-weight: bold;
+    margin: 0;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+}
+
+.analysis-hub-match-title-container {
+    text-align: center;
+    margin-top: 80px; /* Space below the absolute positioned title */
+    margin-bottom: 30px;
+}
+
+.analysis-hub-match-title-container h2 {
+    font-size: 2.2em;
+    color: #ffffff;
+    margin-bottom: 5px;
+}
+
+.analysis-hub-match-title-container .match-meta-info {
+    font-size: 1em;
+    color: #bbbbbb;
+}
+
+.analysis-actions {
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.btn-start-analysis {
+    background-color: #00aaff;
+    color: white;
+    border: none;
+    padding: 12px 25px;
+    font-size: 1.1em;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.btn-start-analysis:hover:not(:disabled) {
+    background-color: #0077cc;
+}
+
+.btn-start-analysis:disabled {
+    background-color: #555;
+    cursor: not-allowed;
+}
+
+.analysis-status-section {
+    text-align: center;
+    margin-bottom: 30px;
+    font-size: 1.1em;
+}
+
+.status-tactical-not_started { color: #adb5bd; }
+.status-tactical-pending { color: #ffc107; } /* Yellow for pending */
+.status-tactical-processing { color: #007bff; } /* Blue for processing */
+.status-tactical-completed { color: #28a745; } /* Green for completed */
+.status-tactical-failed { color: #dc3545; } /* Red for failed */
+
+.hub-error-message {
+    color: #ff6b6b; /* Light red for errors */
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.hub-loading-indicator {
+    text-align: center;
+    font-size: 1.5em;
+    padding: 50px;
+    color: #e0e0e0;
+}
+
+/* Video and Heatmap Sections */
+.analysis-video-section,
+.analysis-heatmaps-section {
+    background-color: #232946; /* Darker card background */
+    padding: 20px;
+    border-radius: 8px;
+    margin-bottom: 30px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+
+.analysis-video-section h3,
+.analysis-heatmaps-section h3 {
+    color: #00aaff;
+    margin-top: 0;
+    margin-bottom: 15px;
+    border-bottom: 1px solid #0077cc;
+    padding-bottom: 10px;
+}
+
+.analysis-video-section video,
+.analysis-video-section .custom-video-player-container { /* Target your CustomVideoPlayer's wrapper if it has one */
+    max-width: 100%;
+    border-radius: 5px;
+}
+
+.heatmaps-grid {
+    display: grid;
+    /* Adjust grid-template-columns to have fewer columns, making each item wider */
+    /* For example, to show 2 heatmaps per row: */
+    grid-template-columns: repeat(2, 1fr); 
+    /* Or for 1 heatmap per row (very large): */
+    /* grid-template-columns: 1fr; */
+    gap: 20px; /* Adjust gap as needed */
+}
+
+.heatmap-item {
+    /* background-color: #1a1a2e; */ /* Optional: if you want a bg for the item */
+    /* padding: 10px; */ /* Optional: padding around the image */
+    border-radius: 6px;
+    overflow: hidden; /* If you add padding and want to clip image to rounded corners */
+}
+
+.heatmap-item img {
+    width: 100%; /* Make image take full width of its .heatmap-item container */
+    height: auto; /* Maintain aspect ratio */
+    max-height: 500px; /* Example: Set a max-height if needed */
+    display: block;
+    border-radius: 4px; /* Optional: if item has padding and you want image rounded */
+    object-fit: contain; /* Or 'cover' if you prefer, but 'contain' shows the whole image */
+}
+
+/* Simple Carousel for Intermediate Heatmaps */
+.image-carousel-container h4 {
+    color: #00aaff;
+    margin-top: 0;
+    margin-bottom: 10px;
+}
+.image-carousel-container h5 { /* For set labels */
+    color: #cccccc;
+    margin-top: 10px;
+    margin-bottom: 5px;
+    font-size: 0.9em;
+}
+
+.carousel-track {
+    display: flex;
+    overflow-x: auto; /* Makes it scrollable horizontally */
+    padding-bottom: 15px; /* Space for scrollbar */
+    gap: 20px; /* Increased gap between sets */
+    background-color: rgba(0,0,0,0.1); /* Light background for the track itself */
+    padding: 10px; /* Padding around the sets */
+    border-radius: 5px;
+}
+
+.carousel-set {
+    /* Styles for a set if you group them */
+    background-color: #2a2f4c; /* Slightly different background for each set */
+    padding: 10px;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+    flex-shrink: 0; /* Prevent sets from shrinking if track is too narrow */
+}
+
+.carousel-set h5 { /* Style the label within the set */
+    color: #00aaff;
+    margin-top: 0;
+    margin-bottom: 10px;
+    font-size: 0.9em;
+    text-align: center;
+}
+
+.carousel-set-images {
+    display: flex; /* This lays out the 3 images of a set in a row */
+    gap: 10px; 
+    justify-content: center; /* Center the images if they don't fill the width */
+    /* min-height: 100px; */ /* Remove debug style or adjust */
+}
+
+.carousel-item {
+    flex: 0 0 auto; /* Prevent items from shrinking */
+    background-color: #1a1a2e; 
+    padding: 5px; 
+    border-radius: 5px; 
+    box-shadow: 0 2px 5px rgba(0,0,0,0.3); 
+    /* min-width: 50px; */ /* Remove debug style or adjust */
+    display: flex; 
+    align-items: center; 
+    justify-content: center; 
+}
+
+.carousel-item img {
+    max-height: 150px;  /* Adjust max-height for intermediate images */
+    width: auto;    
+    display: block; 
+    border-radius: 3px;
+    object-fit: contain; /* Good to keep */
+}
+
+/* Scrollbar styling for webkit browsers */
+.carousel-track::-webkit-scrollbar {
+    height: 8px;
+}
+
+.carousel-track::-webkit-scrollbar-track {
+    background: #232946;
+    border-radius: 4px;
+}
+
+.carousel-track::-webkit-scrollbar-thumb {
+    background: #0077cc;
+    border-radius: 4px;
+}
+
+.carousel-track::-webkit-scrollbar-thumb:hover {
+    background: #00aaff;
+}
+
+.image-carousel-main-container h4 { /* Overall title for all intermediate segments */
+    color: #00aaff;
+    margin-top: 0;
+    margin-bottom: 15px; /* More space below overall title */
+}
+
+.carousel-segment-block {
+    background-color: #2a2f4c;
+    padding: 15px;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+    margin-bottom: 20px;
+}
+
+/* Styles for the title of each image segment */
+.carousel-segment-block h5 {
+    color: #cccccc;
+    margin-top: 0;
+    margin-bottom: 10px;
+    font-size: 1em;
+    text-align: left;
+}
+
+/* Scoped .carousel-track for within .carousel-segment-block */
+/* This is the container that will scroll horizontally */
+.carousel-segment-block .carousel-track {
+    display: flex; /* Lays out image items in a row */
+    overflow-x: auto; /* Enables horizontal scrolling if content overflows */
+    overflow-y: hidden; /* Prevents vertical scrollbar on the track itself */
+    padding: 10px 5px; /* Padding inside the track (e.g., top/bottom and a little on sides) */
+    gap: 15px; /* Consistent spacing between image items */
+    
+    /* Optional: A subtle background can help define the scrollable area */
+    /* background-color: rgba(0, 0, 0, 0.05); */
+    /* border-radius: 6px; */
+
+    /* For a smoother scrolling feel on touch devices */
+    -webkit-overflow-scrolling: touch;
+
+    /* Scroll-snap can be re-enabled later for a more guided scroll experience
+       if basic scrolling works well.
+    */
+    /* scroll-snap-type: x mandatory; */
+}
+
+/* Scoped .carousel-item for within .carousel-segment-block */
+/* This is each individual image container */
+.carousel-segment-block .carousel-item {
+    box-sizing: border-box; /* Ensures padding/border are included in width/height */
+    
+    /* Define a clear size for each item. Adjust these values as needed. */
+    width: 220px;  /* Example fixed width */
+    height: 165px; /* Example fixed height (e.g., for a 4:3 aspect ratio with 220px width) */
+    
+    flex-shrink: 0; /* IMPORTANT: Prevents items from shrinking */
+    
+    background-color: #1a1a2e; /* Background for the item card */
+    border-radius: 6px;
+    box-shadow: 0 3px 6px rgba(0,0,0,0.25);
+    
+    display: flex; /* Used to center the image within the item */
+    align-items: center;
+    justify-content: center;
+    overflow: hidden; /* Clips the image if it somehow tries to overflow the item bounds */
+
+    /* scroll-snap-align: start; */ /* For use with scroll-snap-type */
+}
+
+/* Scoped .carousel-item img for within .carousel-segment-block */
+/* Styling for the actual image element */
+.carousel-segment-block .carousel-item img {
+    display: block;
+    max-width: 100%; /* Image will not exceed the content box of .carousel-item */
+    max-height: 100%; /* Image will not exceed the content box of .carousel-item */
+    width: auto;   /* Maintain aspect ratio */
+    height: auto;  /* Maintain aspect ratio */
+    object-fit: contain; /* Scales image to fit within item, preserving aspect ratio (letterboxing if necessary) */
+    border-radius: 4px; /* Slightly rounded corners for the image itself */
+}
+
+/* Optional: Sleeker scrollbar styling for webkit browsers */
+.carousel-segment-block .carousel-track::-webkit-scrollbar {
+    height: 10px; /* Slightly taller scrollbar for easier interaction */
+}
+
+.carousel-segment-block .carousel-track::-webkit-scrollbar-track {
+    background: rgba(0,0,0,0.1); /* Subtle track background */
+    border-radius: 5px;
+    margin: 0 5px; /* Give a little space from the edges of the track padding */
+}
+
+.carousel-segment-block .carousel-track::-webkit-scrollbar-thumb {
+    background: #0077cc;
+    border-radius: 5px;
+    border: 2px solid transparent; /* Creates padding around thumb */
+    background-clip: content-box;
+}
+
+.carousel-segment-block .carousel-track::-webkit-scrollbar-thumb:hover {
+    background: #00aaff;
+}
+
+.collapsible-section .collapsible-header {
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 0; /* Add some padding to make it look more like a button */
+    /* border-bottom: 1px solid #444; Optional: if you want a separator */
+}
+
+.collapsible-section .collapsible-header:hover {
+    color: #00aaff; /* Or your theme's hover color */
+}
+
+.collapsible-section .collapsible-header .arrow {
+    font-size: 0.8em;
+    margin-left: 10px;
+    transition: transform 0.2s ease-in-out;
+}
+
+.collapsible-section .collapsible-header .arrow.open {
+    /* transform: rotate(90deg); If using a different arrow character */
+}
+
+/* Styling for the content of the heatmaps sections if needed */
+.analysis-heatmaps-section .heatmaps-grid {
+    /* Your existing styles for heatmaps-grid */
+    padding-top: 10px; /* Add some space below the header */
+}
+
+.analysis-heatmaps-section.intermediate-heatmaps .image-carousel-main-container {
+    padding-top: 10px; /* Add some space below the header */
+}

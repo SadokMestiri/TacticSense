@@ -1,360 +1,278 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
+// import { useNavigate } from 'react-router-dom'; // No longer needed if analyze button is removed
 import './CustomVideoPlayer.css';
-import Cookies from 'js-cookie';
+// import Cookies from 'js-cookie'; // No longer needed if no API calls from player
 
-const CustomVideoPlayer = ({ videoUrl, postId, onTimeUpdate, onCaptionsLoaded, isInAnalysisPage = false }) => {
+const CustomVideoPlayer = ({ videoUrl, srtUrl, onTimeUpdate, onCaptionsLoaded }) => {
   const [playing, setPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
-  const [showCaptions, setShowCaptions] = useState(false);
+  const [showPlayerCaptions, setShowPlayerCaptions] = useState(false); // Internal state for player's own caption overlay
   const [captionsData, setCaptionsData] = useState(null);
-  const [currentCaption, setCurrentCaption] = useState('');
-  const [debugMode, setDebugMode] = useState(false);
-  const [loadingCaptions, setLoadingCaptions] = useState(false);
+  const [currentCaptionText, setCurrentCaptionText] = useState('');
+  const [loadingSrt, setLoadingSrt] = useState(false);
+  const [volume, setVolume] = useState(1);
+  const [isControlsVisible, setIsControlsVisible] = useState(true); // Show controls initially
+  const [isHovering, setIsHovering] = useState(false);
 
 
   const videoRef = useRef(null);
-  const navigate = useNavigate();
-  
+  const playerContainerRef = useRef(null);
+  let controlsTimeoutRef = useRef(null);
+
+  const parseSRT = useCallback((srtText) => {
+    const captions = [];
+    if (!srtText) return captions;
+    try {
+      const normalizedText = srtText.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+      const regex = /(\d+)\n(\d{2}:\d{2}:\d{2}[,.]\d{3}) --> (\d{2}:\d{2}:\d{2}[,.]\d{3})(?:[ \t]+\S+:.+)*\n([\s\S]*?)(?=\n\n\d+\n|\n\n$|$)/g;
+      let match;
+      while ((match = regex.exec(normalizedText)) !== null) {
+        captions.push({
+          start: timeToSeconds(match[2]),
+          end: timeToSeconds(match[3]),
+          text: match[4].trim().replace(/<[^>]+>/g, ''), // Strip HTML tags from captions
+        });
+      }
+    } catch (error) {
+      console.error("Error parsing SRT:", error);
+    }
+    return captions;
+  }, []);
+
+  const timeToSeconds = useCallback((timeStr) => {
+    try {
+      const parts = timeStr.split(':');
+      const secondsAndMillis = parts[2].replace(',', '.').split('.');
+      const hours = parseInt(parts[0], 10);
+      const minutes = parseInt(parts[1], 10);
+      const seconds = parseInt(secondsAndMillis[0], 10);
+      const milliseconds = secondsAndMillis[1] ? parseInt(secondsAndMillis[1], 10) : 0;
+      return hours * 3600 + minutes * 60 + seconds + milliseconds / 1000;
+    } catch (error) {
+      console.error(`Error parsing time string: ${timeStr}`, error);
+      return 0;
+    }
+  }, []);
+
+
+  useEffect(() => {
+    if (srtUrl) {
+      setLoadingSrt(true);
+      fetch(srtUrl)
+        .then(response => {
+          if (!response.ok) throw new Error(`Failed to fetch SRT: ${response.status} ${response.statusText}`);
+          return response.text();
+        })
+        .then(srtText => {
+          const parsed = parseSRT(srtText);
+          setCaptionsData(parsed);
+          // Inform parent that captions are loaded (or failed), but this is not a user toggle action.
+          // Parent can decide if it wants to show its transcript by default based on this.
+          if (onCaptionsLoaded) {
+            onCaptionsLoaded(parsed, false); // false: initial load, not direct user toggle of CC button
+          }
+        })
+        .catch(error => {
+          console.error("Error loading SRT file:", error);
+          setCaptionsData(null);
+          if (onCaptionsLoaded) {
+            onCaptionsLoaded(null, false); // Inform parent captions failed to load
+          }
+        })
+        .finally(() => {
+          setLoadingSrt(false);
+        });
+    } else {
+      setCaptionsData(null);
+      if (onCaptionsLoaded) {
+        onCaptionsLoaded(null, false); // No SRT URL provided
+      }
+    }
+  }, [srtUrl, onCaptionsLoaded, parseSRT]);
+
 
   useEffect(() => {
     const video = videoRef.current;
     if (!video) return;
-    
-    const onLoadedMetadata = () => {
-      console.log("Video metadata loaded, duration:", video.duration);
-      setDuration(video.duration);
+
+    const handleLoadedMetadata = () => setDuration(video.duration);
+    const handleTimeUpdateInternal = () => {
+      const newTime = video.currentTime;
+      setCurrentTime(newTime);
+      if (onTimeUpdate) onTimeUpdate(newTime);
+
+      if (showPlayerCaptions && captionsData) {
+        const currentCap = captionsData.find(cap => newTime >= cap.start && newTime <= cap.end);
+        setCurrentCaptionText(currentCap ? currentCap.text : '');
+      } else {
+        setCurrentCaptionText('');
+      }
     };
-    
-    video.addEventListener('loadedmetadata', onLoadedMetadata);
-    
-    // Try to set duration immediately if already available
+    const handlePlay = () => setPlaying(true);
+    const handlePause = () => setPlaying(false);
+    const handleEnded = () => setPlaying(false);
+
+
+    video.addEventListener('loadedmetadata', handleLoadedMetadata);
+    video.addEventListener('timeupdate', handleTimeUpdateInternal);
+    video.addEventListener('play', handlePlay);
+    video.addEventListener('pause', handlePause);
+    video.addEventListener('ended', handleEnded);
+    video.addEventListener('volumechange', () => setVolume(video.volume));
+
+
+    // Initial duration if already loaded
     if (video.readyState >= 1) {
-      setDuration(video.duration);
+        handleLoadedMetadata();
     }
-    
+
+
     return () => {
-      video.removeEventListener('loadedmetadata', onLoadedMetadata);
+      video.removeEventListener('loadedmetadata', handleLoadedMetadata);
+      video.removeEventListener('timeupdate', handleTimeUpdateInternal);
+      video.removeEventListener('play', handlePlay);
+      video.removeEventListener('pause', handlePause);
+      video.removeEventListener('ended', handleEnded);
+      video.removeEventListener('volumechange', () => setVolume(video.volume));
     };
-  }, []); // Empty dependency array - runs once on mount
+  }, [onTimeUpdate, captionsData, showPlayerCaptions]);
   
+  const hideControls = useCallback(() => {
+    if (playing && !isHovering) { // Only hide if playing and not hovering over controls
+        setIsControlsVisible(false);
+    }
+  }, [playing, isHovering]);
 
   useEffect(() => {
-    const video = videoRef.current;
-    if (!video || !captionsData?.length) return;
-    
-    // Keep the metadata handler from your existing code
-    const onLoadedMetadata = () => {
-      setDuration(video.duration);
-    };
-    
-    const handleTimeUpdate = () => {
-      const currentTime = video.currentTime;
-      // Keep updating currentTime state from your existing code
-      setCurrentTime(currentTime);
+    if (playing) {
+        controlsTimeoutRef.current = setTimeout(hideControls, 3000); // Hide after 3s of inactivity
+    } else {
+        setIsControlsVisible(true); // Always show if paused
+        clearTimeout(controlsTimeoutRef.current);
+    }
+    return () => clearTimeout(controlsTimeoutRef.current);
+  }, [playing, currentTime, hideControls]); // Re-evaluate on play/pause or activity
 
-      // Call the callback if provided
-      if (onTimeUpdate) {
-        onTimeUpdate(currentTime);
-      }
-      
-      // Find the caption that matches the current time
-      const currentCap = captionsData.find(
-        cap => currentTime >= cap.start && currentTime <= cap.end
-      );
-      
-      // For debugging: log every 5 seconds
-      if (Math.floor(currentTime) % 5 === 0) {
-        console.log(`Time: ${currentTime}, Found caption: ${currentCap?.text?.substring(0, 20) || 'none'}`);
-      }
-      
-      setCurrentCaption(currentCap ? currentCap.text : '');
-    };
-    
-    video.addEventListener('loadedmetadata', onLoadedMetadata);
-    video.addEventListener('timeupdate', handleTimeUpdate);
-    
-    return () => {
-      video.removeEventListener('loadedmetadata', onLoadedMetadata);
-      video.removeEventListener('timeupdate', handleTimeUpdate);
-    };
-  }, [onTimeUpdate, captionsData]);
-  
+  const handleMouseEnterPlayer = () => {
+    setIsControlsVisible(true);
+    clearTimeout(controlsTimeoutRef.current);
+  };
+
+  const handleMouseLeavePlayer = () => {
+    if (playing) {
+        controlsTimeoutRef.current = setTimeout(hideControls, 500); // Shorter delay on mouse leave if playing
+    }
+  };
+   const handleControlsMouseEnter = () => {
+    setIsHovering(true);
+    clearTimeout(controlsTimeoutRef.current); // Keep controls visible while hovering them
+  };
+
+  const handleControlsMouseLeave = () => {
+    setIsHovering(false);
+    if (playing) {
+        controlsTimeoutRef.current = setTimeout(hideControls, 3000); // Restart hide timer
+    }
+  };
+
+
   const handlePlayPause = () => {
     const video = videoRef.current;
-    if (playing) {
-      video.pause();
-    } else {
-      video.play();
-    }
-    setPlaying(!playing);
+    if (playing) video.pause();
+    else video.play();
+    // setPlaying(!playing); // State will be updated by event listeners
   };
-  
+
   const handleSliderChange = (e) => {
-    const video = videoRef.current;
-    const newTime = e.target.value;
-    video.currentTime = newTime;
+    const newTime = parseFloat(e.target.value);
+    videoRef.current.currentTime = newTime;
     setCurrentTime(newTime);
   };
-  
-  const handleCaptions = async () => {
-    // Always load captions if needed, regardless of context
-    if (!captionsData) {
-      setLoadingCaptions(true);
-      try {
-        // Extract filename as you're already doing
-        let filename = videoUrl;
-        if (filename.includes('/uploads/')) {
-          filename = filename.split('/uploads/')[1];
-        } else {
-          filename = filename.split('/').pop();
-        }
-        
-        // Try to load directly from the expected location
-        const base_filename = filename.replace(/\.[^/.]+$/, '');
-        const srtUrl = `/processed_videos/${base_filename}.srt`;
-      
-      try {
-        // Try to fetch the SRT directly
-        const srtResponse = await fetch(`${process.env.REACT_APP_BASE_URL}${srtUrl}`);
-        
-        if (srtResponse.ok) {
-          console.log("Found existing captions!");
-          const srtText = await srtResponse.text();
-          const parsedCaptions = parseSRT(srtText);
-          setCaptionsData(parsedCaptions);
 
-          // Now we can safely pass the parsed captions to the parent
-          if (onCaptionsLoaded) {
-            onCaptionsLoaded(parsedCaptions);
-          }
+  const handleSkip = (amount) => {
+    videoRef.current.currentTime += amount;
+  };
 
-          setLoadingCaptions(false);
-
-          // Only toggle visibility if NOT in analysis page
-          if (!isInAnalysisPage) {
-            setShowCaptions(!showCaptions);
-          }
-
-          return;
-        }
-      } catch (error) {
-        console.log("No existing SRT found, will generate new captions");
-      }
-      
-      // Continue with caption generation if we didn't find existing captions
-      console.log("No existing captions found, generating new ones...");
-      
-        
-        // If we get here, no existing captions were found, so generate new ones
-        console.log("Starting caption generation for video:", filename);
-      
-            
-            const response = await fetch(`${process.env.REACT_APP_BASE_URL}/api/public-transcribe`, {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json'
-              },
-              body: JSON.stringify({ video_path: filename })
-            });
-            
-            console.log("Transcription API response status:", response.status);
-            
-            if (response.ok) {
-              const result = await response.json();
-              console.log("REAL CAPTIONS GENERATED:", result);
-              
-              // Now fetch the SRT file
-              const srtResponse = await fetch(`${process.env.REACT_APP_BASE_URL}${result.srt_url}`);
-              console.log("SRT file response status:", srtResponse.status);
-              
-              if (srtResponse.ok) {
-                const srtText = await srtResponse.text();
-                console.log("SRT content received, length:", srtText.length);
-                const parsedCaptions = parseSRT(srtText);
-                console.log("FINAL PARSED CAPTIONS:", parsedCaptions);
-                setCaptionsData(parsedCaptions);
-
-                // Now we can safely pass the parsed captions to the parent
-                if (onCaptionsLoaded) {
-                  onCaptionsLoaded(parsedCaptions);
-                }
-              } else {
-                throw new Error(`Failed to fetch SRT file: ${srtResponse.status}`);
-              }
-            } else {
-              throw new Error(await response.text());
-            }
-          } catch (error) {
-            console.error("ERROR GENERATING REAL CAPTIONS:", error);
-            // Fall back to debug captions only in case of error
-            setDebugMode(true);
-            const debugCaptions = [
-              { start: 1, end: 5, text: "FALLBACK - Real transcription failed" },
-              { start: 6, end: 10, text: "Please check the console for error details" },
-              { start: 11, end: 15, text: "Try again or select a different video" }
-            ];
-            setCaptionsData(debugCaptions);
-          } finally {
-            setLoadingCaptions(false);
-          }
-        } else {
-      // Captions already loaded
-      
-      // If we're in the analysis page, just toggle parent's state
-      if (isInAnalysisPage) {
-        // Just notify parent to toggle transcript visibility
-        if (onCaptionsLoaded) {
-          onCaptionsLoaded(captionsData, true); // Pass true to indicate toggle request
-        }
-      } else {
-        // Normal behavior - toggle overlay
-        setShowCaptions(!showCaptions);
-      }
+  const handleTogglePlayerCaptions = () => {
+    const newShowState = !showPlayerCaptions;
+    setShowPlayerCaptions(newShowState);
+    if (onCaptionsLoaded) {
+      // Inform parent about user's explicit toggle action
+      onCaptionsLoaded(newShowState && captionsData ? captionsData : null, true);
     }
   };
-
-      // Add a useEffect to share captions when they're initially loaded
-      useEffect(() => {
-        if (captionsData && onCaptionsLoaded) {
-          onCaptionsLoaded(captionsData);
-        }
-      }, [captionsData, onCaptionsLoaded]);
   
-    const handleAnalyze = () => {
-        navigate(`/video-analysis/${postId}`);
-      };
-  
-      const parseSRT = (srtText) => {
-        const captions = [];
-        
-        try {
-          // Normalize line endings to avoid Windows/Unix issues
-          const normalizedText = srtText.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
-          
-          // Use regex to properly extract captions
-          const regex = /(\d+)\n(\d{2}:\d{2}:\d{2},\d{3}) --> (\d{2}:\d{2}:\d{2},\d{3})\n([\s\S]*?)(?=\n\n\d+\n|$)/g;
-          
-          let match;
-          while ((match = regex.exec(normalizedText + "\n\n")) !== null) {
-            const index = parseInt(match[1]);
-            const startTime = timeToSeconds(match[2]);
-            const endTime = timeToSeconds(match[3]);
-            const text = match[4].trim();
-            
-            if (!isNaN(startTime) && !isNaN(endTime)) {
-              captions.push({
-                index,
-                start: startTime,
-                end: endTime,
-                text
-              });
-            }
-          }
-          
-          console.log(`Successfully parsed ${captions.length} discrete captions`);
-          
-          // Debug the first few captions
-          captions.slice(0, 3).forEach((cap, i) => {
-            console.log(`Caption ${i+1}: ${cap.start.toFixed(2)}-${cap.end.toFixed(2)}: ${cap.text.substring(0, 30)}...`);
-          });
-          
-          return captions;
-        } catch (error) {
-          console.error("Error parsing SRT with regex:", error);
-          return []; // Return empty array on error
-        }
-      };
-      
-      // Improved timeToSeconds function
-      const timeToSeconds = (timeStr) => {
-        try {
-          // Format: 00:00:00,000
-          const parts = timeStr.trim().split(':');
-          if (parts.length !== 3) {
-            console.error(`Invalid time format: ${timeStr}`);
-            return NaN;
-          }
-          
-          let [hours, minutes, secPart] = parts;
-          
-          // Handle both comma and period as decimal separators
-          secPart = secPart.replace(',', '.');
-          const [seconds, milliseconds] = secPart.includes('.') ? 
-            secPart.split('.') : [secPart, '0'];
-          
-          const totalSeconds = 
-            parseInt(hours) * 3600 + 
-            parseInt(minutes) * 60 + 
-            parseInt(seconds) + 
-            parseFloat(`0.${milliseconds}`);
-          
-          return totalSeconds;
-        } catch (error) {
-          console.error(`Error parsing time: ${timeStr}`, error);
-          return NaN;
-        }
-      };
-  
-  const formatTime = (time) => {
-    const minutes = Math.floor(time / 60);
-    const seconds = Math.floor(time % 60);
-    return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+  const handleVolumeChange = (e) => {
+    const newVolume = parseFloat(e.target.value);
+    videoRef.current.volume = newVolume;
+    setVolume(newVolume);
   };
-  
+
+  const formatTime = (timeInSeconds) => {
+    const minutes = Math.floor(timeInSeconds / 60).toString().padStart(2, '0');
+    const seconds = Math.floor(timeInSeconds % 60).toString().padStart(2, '0');
+    return `${minutes}:${seconds}`;
+  };
+
   return (
-    <div className={`custom-video-player ${isInAnalysisPage ? 'analysis-mode' : ''}`}>
-      <div className="video-container">
-      <video ref={videoRef} src={videoUrl} onClick={handlePlayPause}>
+    <div 
+        ref={playerContainerRef} 
+        className="custom-video-player-modern"
+        onMouseEnter={handleMouseEnterPlayer}
+        onMouseLeave={handleMouseLeavePlayer}
+        onMouseMove={handleMouseEnterPlayer} // Show controls on any mouse move over player
+    >
+      <div className="video-wrapper-modern">
+        <video ref={videoRef} src={videoUrl} onClick={handlePlayPause}>
           Your browser does not support the video tag.
         </video>
-        
-        {/* Only show overlay captions if not in analysis page */}
-        {showCaptions && !isInAnalysisPage && (
-          <div className="captions-overlay">
-            {currentCaption}
-          </div>
+        {showPlayerCaptions && currentCaptionText && (
+          <div className="captions-overlay-modern">{currentCaptionText}</div>
         )}
-
-        {loadingCaptions && (
-          <div className="caption-loading">
-            Generating captions...
-          </div>
-        )}
+        {loadingSrt && <div className="srt-loading-indicator">Loading Captions...</div>}
       </div>
-      
-      <div className="controls">
-        <button className="play-button" onClick={handlePlayPause}>
-          {playing ? '⏸' : '▶'}
+
+      <div 
+        className={`controls-modern ${isControlsVisible ? 'visible' : ''}`}
+        onMouseEnter={handleControlsMouseEnter}
+        onMouseLeave={handleControlsMouseLeave}
+      >
+        <button onClick={handlePlayPause} className="control-button-modern">
+          {playing ? '❚❚' : '►'}
         </button>
+        <button onClick={() => handleSkip(-10)} className="control-button-modern">« 10s</button>
+        <button onClick={() => handleSkip(10)} className="control-button-modern">10s »</button>
         
-        <div className="time-display">
+        <div className="time-display-modern">
           {formatTime(currentTime)} / {formatTime(duration)}
         </div>
-        
         <input
           type="range"
           min="0"
-          max={duration}
+          max={duration || 0}
           value={currentTime}
           onChange={handleSliderChange}
-          className="time-slider"
+          className="time-slider-modern"
         />
-        
-        <button 
-          className={`control-btn caption-btn ${showCaptions ? 'active' : ''}`}
-          onClick={handleCaptions}
-          disabled={loadingCaptions}
+        <div className="volume-control-modern">
+            <span>🔊</span>
+            <input 
+                type="range" 
+                min="0" 
+                max="1" 
+                step="0.05" 
+                value={volume} 
+                onChange={handleVolumeChange}
+                className="volume-slider-modern"
+            />
+        </div>
+        <button
+          onClick={handleTogglePlayerCaptions}
+          className={`control-button-modern caption-button-modern ${showPlayerCaptions && captionsData ? 'active' : ''}`}
+          disabled={loadingSrt || !captionsData}
         >
-          {loadingCaptions ? '...' : 'CC'}
-        </button>
-        
-        <button 
-          className="analyze-button"
-          onClick={handleAnalyze}
-        >
-          🔍 Analyze
+          CC
         </button>
       </div>
     </div>

@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from "react-router-dom";
 import axios from 'axios';
 import { FaEye, FaEyeSlash } from 'react-icons/fa';
-import Cookies from 'js-cookie';
+import Cookies from 'js-cookie'; // Re-added Cookies import
 import jwt_decode from 'jwt-decode';
 
 const Login = () => {
@@ -34,11 +34,12 @@ const Login = () => {
                 const userResponse = await axios.get(`${baseUrl}/get_user/${userId}`);
                 const user = userResponse.data;
     
-                // Store token and user data in cookies
-                Cookies.set('token', token, { expires: 1 });
+                // Store token and user data in Cookies (Reverted)
+                Cookies.set('token', token, { expires: 1 }); // Expires in 1 day
                 Cookies.set('user', JSON.stringify(user), { expires: 1 });
 
-                navigate('/home');
+                // Navigate to root path (App.js handles the redirect logic based on cookie)
+                navigate('/'); 
             }
         } catch (error) {
             setError(error.response?.data?.message || 'Invalid username or password');

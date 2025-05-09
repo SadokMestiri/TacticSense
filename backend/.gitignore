@@ -35,3 +35,8 @@ coverage/
 **/.cache/huggingface/
 **/models/
 model_cache/
+
+
+# Ignore Model Results
+/results
+/processed_videos

@@ -386,6 +386,7 @@ console.log(user)
   <CustomVideoPlayer 
     videoUrl={`${process.env.REACT_APP_BASE_URL}${post.video_url}`}
     postId={post.id}
+    srtUrl={post.srt_url ? `${process.env.REACT_APP_BASE_URL}${post.srt_url.startsWith('/') ? '' : '/'}${post.srt_url}` : undefined}
   />
 )}
 

@@ -1,467 +1,243 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import Cookies from 'js-cookie';
-import { useParams, useNavigate } from 'react-router-dom';
+import Cookies from 'js-cookie'; // Using Cookies
 import CustomVideoPlayer from './CustomVideoPlayer';
 import TranscriptDisplay from './TranscriptDisplay';
-import './VideoAnalysis.css';
 import MatchSummary from './MatchSummary';
-import { Button, CircularProgress, Paper, Typography } from '@mui/material';
-import SummarizeIcon from '@mui/icons-material/Summarize';
-import SummaryTTS from './TTS';
+import './VideoAnalysis.css';
 
+function VideoAnalysis() {
+    const { matchId } = useParams();
+    const navigate = useNavigate();
+    const [matchData, setMatchData] = useState(null);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState('');
+    const [captions, setCaptions] = useState([]);
+    const [showTranscript, setShowTranscript] = useState(false); // Start false
+    const [summary, setSummary] = useState('');
+    const [loadingSummary, setLoadingSummary] = useState(false);
+    const [currentTime, setCurrentTime] = useState(0);
 
-const VideoAnalysis = () => {
-  const { postId } = useParams();
-  const navigate = useNavigate();
-  const [file, setFile] = useState(null);
-  const [videoUrl, setVideoUrl] = useState(null);
-  const [loading, setLoading] = useState(false);
-  const [result, setResult] = useState(null);
-  const [error, setError] = useState(null);
-  const [audioPlaying, setAudioPlaying] = useState(false);
-  const [audioUrl, setAudioUrl] = useState(null);
-  const [debugMode, setDebugMode] = useState(true); // Set to true for testing
-  const [captionsFromPlayer, setCaptionsFromPlayer] = useState(null);
-  const [showTranscript, setShowTranscript] = useState(false);
-  const [showSummary, setShowSummary] = useState(false);
-  const [summaryData, setSummaryData] = useState(null);
-  const [analyzingTranscript, setAnalyzingTranscript] = useState(false);
-  
+    const fetchMatchData = useCallback(async () => {
+        setLoading(true);
+        setError('');
+        try {
+            const token = Cookies.get('token');
+            if (!token) {
+                navigate('/login');
+                return;
+            }
+            const response = await axios.get(`http://localhost:5000/api/matches/${matchId}`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            setMatchData(response.data);
+            setSummary(response.data.summary || '');
+        } catch (err) {
+            console.error("Error fetching match data:", err);
+            setError(`Failed to load match data: ${err.response?.data?.error || err.message}`);
+            if (err.response?.status === 401) {
+                navigate('/login');
+            }
+        } finally {
+            setLoading(false);
+        }
+    }, [matchId, navigate]);
 
-  // states for transcript functionality
-  const [currentTime, setCurrentTime] = useState(0);
-  const [captionsData, setCaptionsData] = useState(null);
-  
-  // states for video data
-  const [videoData, setVideoData] = useState(null);
-  const [generatingSummary, setGeneratingSummary] = useState(false);
-  
+    useEffect(() => {
+        fetchMatchData();
+    }, [fetchMatchData]);
 
+    const handleCaptionsLoaded = useCallback((loadedCaptions, isUserToggleAction = false) => {
+        // isUserToggleAction: true if this call is a direct result of user clicking CC in player,
+        //                     which means the player's internal state for showing captions has changed.
+        //                     false if captions were loaded programmatically (e.g., on initial page load from srtUrl).
+        console.log("VideoAnalysis: handleCaptionsLoaded called. Captions count:", loadedCaptions ? loadedCaptions.length : 0, "Is user toggle:", isUserToggleAction);
 
-  // Fetch post video if postId is provided
-  useEffect(() => {
-    if (postId) {
-      fetchPostVideo(postId);
-      
-      // Debug mode: generate sample results if needed
-      if (debugMode && !result) {
-        setResult({
-          transcript: "This is a sample transcript for debugging purposes. The analysis feature works with this test data.",
-          srt_url: "/processed_videos/sample.srt",
-          captioned_video_url: "/processed_videos/sample_captioned.mp4"
-        });
-      }
-    }
-  }, [postId]);
-
-  // Parse SRT data when result.srt_url changes
-  useEffect(() => {
-    if (result?.srt_url) {
-      fetchAndParseSRT(result.srt_url);
-    }
-  }, [result?.srt_url]);
-
-  const fetchPostVideo = async (id) => {
-    try {
-      setLoading(true);
-      setError(null);
-      
-      const response = await axios.get(
-        `${process.env.REACT_APP_BASE_URL}/get_post_by_id/${id}`
-      );
-
-      if (response.data) {
-        // Set video data
-        setVideoData({
-          video_id: response.data._id || id, // Use post ID if no specific video ID exists
-          title: response.data.title,
-        });
-      
-      if (response.data.video_url) {
-        // Set video URL
-        setVideoUrl(`${process.env.REACT_APP_BASE_URL}${response.data.video_url}`);
-        
-        // Auto-generate analysis if in debug mode
-        if (debugMode) {
-          const vidFilename = response.data.video_url.split('/').pop().split('.')[0];
-          setResult({
-            transcript: "This is a sample transcript for debugging purposes.\n\nThe analysis feature can identify key moments in sports videos and provide insights into player movements, tactical patterns, and game statistics.",
-            srt_url: `/processed_videos/${vidFilename}.srt`
-          });
+        if (loadedCaptions && loadedCaptions.length > 0) {
+            setCaptions(loadedCaptions);
+            if (isUserToggleAction) {
+                // If user toggled CC ON in the player and captions loaded, show the transcript section.
+                setShowTranscript(true);
+            }
+            // If !isUserToggleAction (e.g., initial silent load), captions are set,
+            // but showTranscript remains its current state (initially false).
+            // User must click header or player CC to expand.
         } else {
-          // If not in debug mode, analyze the video
-          analyzePostVideo(response.data.video_url);
+            // No captions loaded, or CC was toggled OFF in the player.
+            setCaptions([]);
+            setShowTranscript(false); // Always collapse/hide if no captions or CC is OFF.
         }
-      }
-      } else {
-        setError('No video found in this post');
-      }
-    } catch (err) {
-      console.error("Error fetching post:", err);
-      setError('Could not load video from post');
-    } finally {
-      setLoading(false);
-    }
-  };
+    }, []);
 
-  // Function to fetch and parse SRT file
-  const fetchAndParseSRT = async (srtUrl) => {
-    try {
-      console.log("Fetching SRT with modified path");
-      
-      // Extract filename from video URL
-      let filename = videoUrl;
-      if (filename.includes('/uploads/')) {
-        filename = filename.split('/uploads/')[1];
-      } else {
-        filename = filename.split('/').pop();
-      }
-      
-      // Get base filename WITHOUT using split('.')[0] which truncates at first period
-      // Instead use regex to only remove the file extension
-      const base_filename = filename.replace(/\.[^/.]+$/, '');
-      console.log("Full base_filename:", base_filename);
-      
-      const srtUrl = `/processed_videos/${base_filename}.srt`;
-      console.log("Trying SRT URL:", srtUrl);
-      
-      // Fetch SRT content directly with fetch API
-      const srtResponse = await fetch(`${process.env.REACT_APP_BASE_URL}${srtUrl}`);
-      
-      if (srtResponse.ok) {
-        console.log("SRT found successfully!");
-        const srtText = await srtResponse.text();
-        const parsedCaptions = parseSRT(srtText);
-        setCaptionsData(parsedCaptions);
-      } else {
-        console.error("SRT file not found at:", srtUrl);
-      }
-    } catch (err) {
-      console.error("Error fetching SRT:", err);
-    }
-  };
 
-  // SRT parsing function
-  const parseSRT = (srtText) => {
-    const captions = [];
-    
-    try {
-      // Normalize line endings
-      const normalizedText = srtText.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
-      
-      // Extract caption blocks with regex
-      const regex = /(\d+)\n(\d{2}:\d{2}:\d{2},\d{3}) --> (\d{2}:\d{2}:\d{2},\d{3})\n([\s\S]*?)(?=\n\n\d+\n|$)/g;
-      
-      let match;
-      while ((match = regex.exec(normalizedText + "\n\n")) !== null) {
-        const index = parseInt(match[1]);
-        const startTime = timeToSeconds(match[2]);
-        const endTime = timeToSeconds(match[3]);
-        const text = match[4].trim();
-        
-        if (!isNaN(startTime) && !isNaN(endTime)) {
-          captions.push({
-            index,
-            start: startTime,
-            end: endTime,
-            text
-          });
+    const handleTimeUpdate = (time) => {
+        setCurrentTime(time);
+    };
+
+    const handleGenerateSummary = async () => {
+        if (!matchId || loadingSummary) return;
+        setLoadingSummary(true);
+        setError('');
+        try {
+            const token = Cookies.get('token');
+            if (!token) {
+                navigate('/login');
+                setLoadingSummary(false);
+                return;
+            }
+            // The backend endpoint /api/matches/${matchId}/summarize is called.
+            // If "it loaded the model and stopped", this is likely a backend issue:
+            // - The summarization task might be hanging or taking too long (timeout).
+            // - There could be an unhandled error in the backend summarization script.
+            // - Resource limitations on the server when loading/running the ML model.
+            // The frontend code below for making the request is standard.
+            const response = await axios.post(`http://localhost:5000/api/matches/${matchId}/summarize`, {}, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            setSummary(response.data.summary);
+        } catch (err) {
+            console.error("Error generating summary:", err);
+            setError(err.response?.data?.error || 'Failed to generate summary. The process might have failed on the server.');
+            if (err.response?.status === 401) {
+                navigate('/login');
+            }
+        } finally {
+            setLoadingSummary(false);
         }
-      }
-      
-      console.log(`Successfully parsed ${captions.length} captions`);
-      return captions;
-    } catch (error) {
-      console.error("Error parsing SRT:", error);
-      return [];
-    }
-  };
-
-  // Helper function to convert timestamp to seconds
-  const timeToSeconds = (timeStr) => {
-    try {
-      const parts = timeStr.split(':');
-      const [hours, minutes, secPart] = parts;
-      const [seconds, milliseconds] = secPart.split(',');
-      
-      return parseInt(hours) * 3600 + 
-             parseInt(minutes) * 60 + 
-             parseInt(seconds) + 
-             parseInt(milliseconds) / 1000;
-    } catch (error) {
-      console.error(`Error parsing time: ${timeStr}`, error);
-      return NaN;
-    }
-  };
-
-  // Handle time updates from the video player
-  const handleTimeUpdate = (time) => {
-    setCurrentTime(time);
-  };
-
-  // function to receive captions from player
-  const handleCaptionsLoaded = (captions, toggleRequest = false) => {
-    console.log("Received captions from player:", captions?.length || 0);
-    setCaptionsData(captions);
+    };
     
-    // If this is a toggle request from the CC button
-    if (toggleRequest) {
-      setShowTranscript(prev => !prev);
-    }
-  };
+    const captionsAvailable = captions && captions.length > 0;
+    const canGenerateSummary = captionsAvailable || (matchData && (matchData.status === 'captions_ready' || matchData.status === 'analysis_complete'));
 
-  const analyzePostVideo = async (videoPath) => {
-    setLoading(true);
-    setError(null);
-    
-    try {
-      const token = Cookies.get('token');
-      const response = await axios.post(
-        `${process.env.REACT_APP_BASE_URL}/api/transcribe-from-path`,
-        { video_path: videoPath },
-        {
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
-          }
+    const toggleTranscriptDisplay = () => {
+        if (captionsAvailable) {
+            setShowTranscript(prev => !prev);
         }
-      );
-      
-      setResult(response.data);
-    } catch (err) {
-      setError(err.response?.data?.error || 'Error analyzing video');
-    } finally {
-      setLoading(false);
-    }
-  };
-  
-  const handleFileChange = (e) => { // deprecated
-    setFile(e.target.files[0]);
-    // Create a preview URL for the selected file
-    if (e.target.files[0]) {
-      setVideoUrl(URL.createObjectURL(e.target.files[0]));
-    }
-  };
-  
-
-const handleUpload = async () => { // depreacted
-    if (!file) return;
-    
-    setLoading(true);
-    setError(null);
-    
-    const formData = new FormData();
-    formData.append('file', file);
-    
-    try {
-      const token = Cookies.get('token');
-      console.log("Using token:", token); // Debug the token
-      
-      const response = await axios.post(
-        `${process.env.REACT_APP_BASE_URL}/api/transcribe`,
-        formData,
-        {
-          headers: {
-            'Content-Type': 'multipart/form-data',
-            'Authorization': `Bearer ${token}`
-          }
-        }
-      );
-      
-      setResult(response.data);
-    } catch (err) {
-      console.error("API Error:", err);
-      setError(err.response?.data?.error || 'An error occurred');
-    } finally {
-      setLoading(false);
-    }
-  };
+    };
 
 
-  const analyzeTranscript = async () => {
-    if (!result?.transcript || analyzingTranscript) return;
-    
-    setAnalyzingTranscript(true);
-    try {
-      const response = await axios.post(
-        `${process.env.REACT_APP_BASE_URL}/api/analyze-transcript`,
-        { transcript: result.transcript }
-      );
-      
-      setSummaryData(response.data);
-      // Auto-expand the summary when it's ready
-      setShowSummary(true);
-    } catch (err) {
-      console.error("Error analyzing transcript:", err);
-      setError("Failed to analyze the transcript");
-    } finally {
-      setAnalyzingTranscript(false);
+    if (loading) return <div className="loading-indicator">Loading match data...</div>;
+    if (error && !matchData) return <p className="error-message" style={{ padding: '20px' }}>{error}</p>;
+    if (!matchData) return <div className="loading-indicator" style={{ padding: '20px' }}>Match data not found.</div>;
+
+    let videoUrlToPlay = matchData.captioned_video_url || matchData.video_url;
+    let srtUrlForPlayer = matchData.srt_url;
+
+    const baseUrl = process.env.REACT_APP_BASE_URL || '';
+
+    if (videoUrlToPlay && !videoUrlToPlay.startsWith('http')) {
+        videoUrlToPlay = `${baseUrl}${videoUrlToPlay.startsWith('/') ? '' : '/'}${videoUrlToPlay}`;
     }
-  };
-  
-  const handleGenerateSummary = async () => {
-    if (!videoData || !videoData.video_id) {
-      setError("No video selected for summary generation");
-      return;
-    }
-    
-    try {
-      setGeneratingSummary(true);
-      
-      const response = await axios.post(
-        `${process.env.REACT_APP_BASE_URL}/api/summarize-transcript`,
-        { video_id: videoData.video_id }
-      );
-      
-      if (response.data && response.data.summary) {
-        setSummaryData({
-          summary: response.data.summary,
-          video_id: response.data.video_id
-        });
-        
-        // Auto-expand the summary when it's ready
-        setShowSummary(true);
-      }
-    } catch (err) {
-      console.error("Error generating summary:", err);
-      setError("Failed to generate match summary");
-    } finally {
-      setGeneratingSummary(false);
+    if (srtUrlForPlayer && !srtUrlForPlayer.startsWith('http')) {
+        srtUrlForPlayer = `${baseUrl}${srtUrlForPlayer.startsWith('/') ? '' : '/'}${srtUrlForPlayer}`;
     }
 
-        console.log("Sending request with video_id:", videoData.video_id);
-    const response = await axios.post(
-      `${process.env.REACT_APP_BASE_URL}/api/summarize-transcript`,
-      { video_id: videoData.video_id }
-    );
-  };
-
-  const loadSampleSummary = () => {
-    setSummaryData({
-      summary: "In a thrilling match that showcased both teams' attacking prowess, Manchester United secured a 3-2 victory over Liverpool at Old Trafford. Rashford opened the scoring in the 12th minute with a stunning strike from outside the box, but Liverpool quickly equalized through Salah's clever finish. Bruno Fernandes put United back in front with a perfectly placed penalty just before halftime. The second half saw Liverpool press forward, with Diaz hitting the post before Salah grabbed his second to level the score at 2-2. Just when a draw seemed likely, Garnacho became the hero with a dramatic 89th-minute winner, sending the home crowd into raptures.",
-      video_id: "sample_test_id"
-    });
-    setShowSummary(true);
-  };
-
-  
-  return (
-    <div className="video-analysis-container">
-      <div className="video-analysis-header">
-        <h2>Video Analysis</h2>
-      </div>
-      
-      <div className="video-analysis-content">
-        {/* Left side - Video */}
-        <div className="video-section">
-          {videoUrl ? (
-            <CustomVideoPlayer 
-            videoUrl={videoUrl} 
-            postId={postId}
-            onTimeUpdate={handleTimeUpdate}
-            onCaptionsLoaded={handleCaptionsLoaded}
-            isInAnalysisPage={true} // Let player know it's in analysis page
-          />
-          ) : (
-            <div className="video-container-loader">
-              {loading ? (
-                <div className="loading-indicator">Loading video...</div>
-              ) : (
-                <div className="error-message">{error || 'No video available'}</div>
-              )}
+    return (
+        <div className="video-analysis-container">
+            <div className="video-analysis-header">
+            <div>
+                <h2>{matchData.title || `${matchData.team1_name || 'Team 1'} vs ${matchData.team2_name || 'Team 2'}`}</h2>
+                <p>{matchData.competition || 'N/A'} - {matchData.match_date || 'N/A'}</p>
+                <p>Match Status: <span className={`status-${matchData.status}`}>{matchData.status}</span></p>
+                {matchData.tactical_analysis_status && (matchData.tactical_analysis_status === 'processing' || matchData.tactical_analysis_status === 'pending') && (
+                    <p className="tactical-processing-status">
+                        Tactical Analysis: {matchData.tactical_analysis_status}
+                        <span className="loading-dots">
+                            <span>.</span><span>.</span><span>.</span>
+                        </span>
+                    </p>
+                )}
+                {matchData.tactical_analysis_status && matchData.tactical_analysis_status !== 'processing' && matchData.tactical_analysis_status !== 'pending' && matchData.tactical_analysis_status !== 'not_started' && (
+                     <p>Tactical Analysis Status: <span className={`status-tactical-${matchData.tactical_analysis_status}`}>{matchData.tactical_analysis_status}</span></p>
+                )}
             </div>
-          )}
-        </div>
-        {/* Right side - Transcript */}
-        <div className="analysis-section">
-          {/* Always render the transcript section, but with a class indicating if it's expanded */}
-          <div className={`transcript-section ${showTranscript ? 'expanded' : 'collapsed'}`}>
-            <h3 onClick={() => setShowTranscript(prev => !prev)} className="transcript-header">
-              Live Transcript
-              <span className="toggle-icon">{showTranscript ? '▼' : '▶'}</span>
-            </h3>
-            
-            {/* Only render the content when expanded */}
-            {captionsData && showTranscript && (
-              <div className="transcript-content">
-                <TranscriptDisplay 
-                  captionsData={captionsData}
-                  currentTime={currentTime}
-                  showTranscript={true}
-                />
-              </div>
-            )}
-          </div>
-
-          <div className={`summary-section ${showSummary ? 'expanded' : 'collapsed'}`}>
-            <h3 onClick={() => setShowSummary(prev => !prev)} className="transcript-header">
-              Match Summary
-              <span className="toggle-icon">{showSummary ? '▼' : '▶'}</span>
-            </h3>
-            
-            {showSummary && (
-              <div className="summary-content">
-                {!summaryData && !generatingSummary && (
-                  <div className="summary-actions">
-                    <Button 
-                      onClick={handleGenerateSummary}
-                      disabled={!videoData || generatingSummary}
-                      startIcon={generatingSummary ? <CircularProgress size={20} /> : <SummarizeIcon />}
-                      variant="contained"
-                      color="primary"
+                <div className="header-buttons">
+                    {matchData.status === 'analysis_complete' && (
+                        <Link to={`/matches/${matchId}/analysis`} className="btn btn-outline-primary analysis-hub-button">
+                            View Tactical Analysis Hub
+                        </Link>
+                    )}
+                    <Link to={`/matches/${matchId}/analysis`} className="btn btn-primary analyze-button">
+                        Analyze
+                    </Link>
+                </div>
+            </div>
+    
+            {error && <p className="error-message" style={{ margin: '0 20px 10px 20px' }}>{error}</p>}
+            {matchData.status === 'error' && matchData.error_message && (!error || !error.includes(matchData.error_message)) &&
+                <p className="error-message" style={{ margin: '0 20px 10px 20px' }}>Processing Error: {matchData.error_message}</p>}
+    
+            <div className="analysis-layout">
+                <div className="video-player-section">
+                    {videoUrlToPlay ? (
+                        <CustomVideoPlayer
+                            videoUrl={videoUrlToPlay}
+                            srtUrl={srtUrlForPlayer}
+                            matchId={matchId}
+                            onCaptionsLoaded={handleCaptionsLoaded}
+                            onTimeUpdate={handleTimeUpdate}
+                        />
+                    ) : (
+                        <div className="video-container-loader">
+                            <p>Video not available for this match.</p>
+                        </div>
+                    )}
+                </div>
+    
+                <div className="analysis-sidebar">
+                    <MatchSummary
+                        summary={summary}
+                        onGenerate={handleGenerateSummary}
+                        loading={loadingSummary}
+                        captionsReady={canGenerateSummary}
+                    />
+                    <div
+                        className={`transcript-section ${showTranscript && captionsAvailable ? 'expanded' : 'collapsed'}`}
                     >
-                      Generate Match Summary
-                    </Button>
-                  </div>
-                )}
-                
-                {summaryData && summaryData.summary && (
-                  <Paper elevation={2} sx={{ p: 2, mt: 2 }}>
-                    <Typography variant="h6" gutterBottom>
-                      Match Summary
-                    </Typography>
-                    <Typography variant="body1">
-                      {summaryData.summary}
-                    </Typography>
-                    <div className="summary-tts-container" style={{ marginTop: '1rem' }}>
-                      <SummaryTTS summaryText={summaryData.summary} />
+                        <div className="transcript-header" onClick={toggleTranscriptDisplay}>
+                            <h3>Transcript</h3>
+                            {captionsAvailable && <span className="toggle-icon">{showTranscript ? '▼' : '►'}</span>}
+                        </div>
+    
+                        {showTranscript && captionsAvailable ? (
+                            <div className="transcript-content">
+                                <TranscriptDisplay
+                                    captionsData={captions}
+                                    currentTime={currentTime}
+                                />
+                            </div>
+                        ) : (
+                            <div className="transcript-content" style={{ paddingTop: '10px' }}>
+                                {captionsAvailable && !showTranscript && (
+                                    <p>Transcript available. Click header to expand.</p>
+                                )}
+                                {!captionsAvailable && (
+                                    <>
+                                        {matchData.status === 'uploaded' && (
+                                            <p>Video uploaded. Captions will be processed.</p>
+                                        )}
+                                        {matchData.status === 'processing_captions' && (
+                                            <p>Captions are being processed...</p>
+                                        )}
+                                        {(matchData.status === 'error' || matchData.status === 'transcription_failed') && (
+                                            <p>Caption generation failed. Check player CC or error messages.</p>
+                                        )}
+                                        {['captions_ready', 'analysis_pending', 'processing_analysis', 'analysis_complete'].includes(matchData.status) && !captionsAvailable && (
+                                             <p>Captions should be available. Try toggling CC on the video player to load them.</p>
+                                         )}
+                                        {!captionsAvailable && !['uploaded', 'processing_captions', 'error', 'transcription_failed', 'captions_ready', 'analysis_pending', 'processing_analysis', 'analysis_complete'].includes(matchData.status) && (
+                                            <p>No captions loaded. Captions may still be processing or try toggling CC on player.</p>
+                                        )}
+                                    </>
+                                )}
+                            </div>
+                        )}
                     </div>
-                  </Paper>
-                )}
-
-
-                {!summaryData && !generatingSummary && (
-                  <div className="summary-actions">
-                    <Button 
-                      onClick={handleGenerateSummary}
-                      disabled={!videoData || generatingSummary}
-                      startIcon={generatingSummary ? <CircularProgress size={20} /> : <SummarizeIcon />}
-                      variant="contained"
-                      color="primary"
-                      style={{ marginRight: '10px' }}
-                    >
-                      Generate Match Summary
-                    </Button>
-                    
-                    {/* Test button */}
-                    <Button
-                      onClick={loadSampleSummary}
-                      variant="outlined"
-                      color="secondary"
-                    >
-                      Load Test Summary
-                    </Button>
-                  </div>
-                )}
-              </div>
-            )}
-
-          </div>
+                </div>
+            </div>
         </div>
-      </div>
-    </div>
-  );
-};
+    );
+}
 
 export default VideoAnalysis;
