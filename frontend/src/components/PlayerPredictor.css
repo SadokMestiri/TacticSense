@@ -4,14 +4,15 @@
     max-width: 1600px;
     margin: 2rem auto;
     padding: 1.5rem 2rem;
-    background: #fff;
+    background: #1f2333; /* Dark background */
+    color: #e0e0e0; /* Light text */
     border-radius: 12px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.5); /* Adjusted shadow for dark theme */
 }
 
 .predictor-container h2,
 .predictor-container h4 {
-  color: #222; 
+  color: #f0f0f0; /* Brighter text for headings */
   margin-bottom: 0.5rem;
 }
 
@@ -27,20 +28,20 @@
     flex-wrap: wrap;
     gap: 1rem;
     margin-bottom: 1.5rem;
-    background: #f4f8fb;           
-    border: 1px solid #d0d7de;
+    background: #2a2f4c; /* Slightly lighter dark for cards */        
+    border: 1px solid #3a3f5c; /* Darker border */
     border-radius: 10px;
     padding: 1.5rem 1rem 1rem 1rem;
     position: relative;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
-    color: #222;            
+    box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+    color: #e0e0e0;            
 }
 
 .season-row label {
     display: flex;
     flex-direction: column;
     font-weight: 500;
-    color: #222; 
+    color: #e0e0e0; 
     margin-right: 8px;
 }
 
@@ -48,14 +49,14 @@
     position: absolute;
     top: -18px;
     left: 18px;
-    background: #0073b1;
+    background: #007bff; /* Accent color */
     color: #fff;
     padding: 4px 16px;
     border-radius: 14px;
     font-size: 1rem;
     font-weight: bold;
     letter-spacing: 1px;
-    box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+    box-shadow: 0 1px 4px rgba(0,0,0,0.2);
 }
 
 .remove-btn {
@@ -84,18 +85,28 @@
 
 .prediction-result {
     margin-top: 2rem;
-    background: #f8f9fa;
+    background: #2a2f4c; /* Card background */
+    color: #e0e0e0;
     border-radius: 8px;
     padding: 1rem;
 }
 
 /* General Input Style (Base) */
 .input, 
-.season-row input { /* Applied to inputs in PlayerPredictor form and potentially others */
-    padding: 0.5rem;
-    border-radius: 6px;
-    border: 1px solid #ddd;
-    font-size: 1rem;
+.season-row input,
+.filters-container .input,
+.filters-container .filter-select {
+    padding: 0.6rem 0.8rem;
+    border-radius: 5px;
+    border: 1px solid #4a4f6c; /* Lighter border for dark theme */
+    background-color: #2a2f4c; /* Dark input background */
+    color: #e0e0e0; /* Light text in input */
+    font-size: 0.9rem;
+}
+
+.filters-container .input::placeholder,
+.season-row input::placeholder {
+    color: #a0a0a0; /* Lighter placeholder text */
 }
 
 /* General Button Styles */
@@ -127,8 +138,8 @@
 }
   
 .submit-btn:disabled {
-    background: #b0c4d8;
-    color: #eee;
+    background: #5a5f7c; /* Darker disabled background */
+    color: #a0a0a0;
     cursor: not-allowed;
 }
   
@@ -154,17 +165,18 @@
 
 /* PlayerProfile.js Specific Styles */
 .profile-container {
-    background: #fff;
+    background: #1f2333; /* Dark background */
+    color: #e0e0e0; /* Light text */
     border-radius: 14px;
-    box-shadow: 0 2px 16px rgba(0,0,0,0.07);
+    box-shadow: 0 2px 16px rgba(0,0,0,0.5);
     padding: 2.5rem 2rem 2rem 2rem;
-    max-width: 1200px; /* Specific max-width for profile page */
+    max-width: 1200px; 
     margin: 2rem auto;
     font-family: 'Segoe UI', Arial, sans-serif;
 }
   
-.profile-container h2 { /* Overrides .predictor-container h2 for profile */
-    color: #0073b1;
+.profile-container h2 { 
+    color: #00aaff; /* Accent color for main title */
     font-size: 2.2rem;
     margin-bottom: 0.5rem;
     letter-spacing: 0.5px;
@@ -175,7 +187,7 @@
     align-items: center;
     gap: 1.5rem;
     margin-bottom: 2rem;
-    border-bottom: 1px solid #e6e6e6;
+    border-bottom: 1px solid #3a3f5c; /* Darker border */
     padding-bottom: 1rem;
 }
   
@@ -183,23 +195,23 @@
     width: 72px;
     height: 72px;
     border-radius: 50%;
-    background: #e6f0fa;
+    background: #3a3f5c; /* Darker background for avatar */
     display: flex;
     align-items: center;
     justify-content: center;
     font-size: 2.5rem;
-    color: #0073b1;
+    color: #00aaff; /* Accent color for initial */
     font-weight: bold;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
 }
   
 .profile-info {
     font-size: 1.1rem;
-    color: #222;
+    color: #e0e0e0;
 }
   
 .profile-info b {
-    color: #0073b1;
+    color: #00aaff; /* Accent for bolded labels */
 }
   
 .dashboard-graphs {
@@ -210,25 +222,25 @@
 }
   
 .dashboard-graphs > div {
-    background: #f8fafc;
+    background: #2a2f4c; /* Card background for graphs */
     border-radius: 10px;
     padding: 1.2rem 1rem 0.5rem 1rem;
-    box-shadow: 0 1px 6px rgba(0,0,0,0.04);
+    box-shadow: 0 1px 6px rgba(0,0,0,0.3);
     flex: 1 1 350px;
     min-width: 320px;
 }
 
 .profile-container .dashboard-graphs h4 {
-  color: #333; /* Dark grey - adjust if you prefer pure black (#000) or another shade */
-  font-size: 1.15rem; /* Adjust as needed */
-  font-weight: 600;   /* Make them a bit bolder */
-  margin-top: 0;      /* Remove default top margin if any */
-  margin-bottom: 1rem; /* Space below the title before the chart */
-  text-align: left;   /* Ensure they are not centered if that's an issue */
+  color: #f0f0f0; /* Brighter text for graph titles */
+  font-size: 1.15rem; 
+  font-weight: 600;   
+  margin-top: 0;      
+  margin-bottom: 1rem; 
+  text-align: left;   
 }
 
 /* ExistingPlayerPredictor.js Specific Styles */
-.existing-players-layout { /* Applied to .predictor-container for this specific layout */
+.existing-players-layout { 
     display: flex;
     gap: 2rem;
 }
@@ -252,21 +264,12 @@
     align-items: center;
 }
   
-.filters-container .input,
-.filters-container .filter-select { /* Specific styles for inputs/selects within filters */
-    padding: 0.6rem 0.8rem;
-    border: 1px solid #ccc;
-    border-radius: 5px;
-    font-size: 0.9rem;
-    background-color: #fff;
-}
-
-.filters-container .input { /* Specific to search input in filters */
+.filters-container .input { 
     min-width: 150px;
     flex-grow: 1;
 }
 
-.filters-container .filter-select { /* Specific to select dropdowns in filters */
+.filters-container .filter-select { 
     min-width: 120px;
 }
   
@@ -276,57 +279,58 @@
   
 .player-list-item {
     cursor: pointer;
-    background: #f9f9f9;
+    background: #2a2f4c; /* Card background */
     padding: 12px 18px;
     border-radius: 6px;
     margin-bottom: 10px;
     transition: background-color 0.2s ease, box-shadow 0.2s ease;
-    border: 1px solid #e0e0e0;
+    border: 1px solid #3a3f5c; /* Darker border */
 }
   
 .player-list-item:hover {
-    background-color: #f0f0f0;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    background-color: #3a3f5c; /* Slightly lighter on hover */
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
 }
   
 .player-item-name {
     font-weight: 600;
     font-size: 1.1rem;
-    color: #333;
+    color: #00aaff; /* Accent for player name */
     margin-bottom: 4px;
 }
   
 .player-item-details {
     font-size: 0.9rem;
-    color: #555;
+    color: #b0b0b0; /* Lighter grey for details */
 }
   
-.add-player-prompt { /* Sidebar prompt box */
-    background-color: #f8f9fa;
+.add-player-prompt { 
+    background-color: #2a2f4c; /* Card background */
     padding: 1.5rem;
     border-radius: 8px;
-    border: 1px solid #e9ecef;
+    border: 1px solid #3a3f5c;
     text-align: center;
+    color: #e0e0e0;
 }
   
-.add-player-prompt h4 { /* Overrides .predictor-container h4 for this specific element */
+.add-player-prompt h4 { 
     margin-top: 0;
     margin-bottom: 0.75rem;
-    color: #343a40;
+    color: #f0f0f0; /* Brighter heading */
     font-size: 1.1rem;
 }
   
 .add-player-prompt p {
     font-size: 0.9rem;
-    color: #495057;
+    color: #b0b0b0;
     margin-bottom: 1.25rem;
     line-height: 1.5;
 }
   
-.add-player-link { /* Link within the sidebar prompt */
+.add-player-link { 
     display: inline-block;
     padding: 0.6rem 1.2rem;
-    background-color: #007bff;
+    background-color: #007bff; /* Accent color */
     color: white;
     text-decoration: none;
     border-radius: 5px;
@@ -343,27 +347,28 @@
     /* Styles for pagination container if needed */
 }
   
-.pagination-btn { /* Intended style for pagination buttons in ExistingPlayerPredictor */
+.pagination-btn { 
     padding: 0.5rem 1rem;
-    border: 1px solid #ccc;
-    background-color: #fff; /* White background */
-    color: #333; /* Default text color, or specify e.g. #007bff */
+    border: 1px solid #4a4f6c; /* Lighter border */
+    background-color: #2a2f4c; /* Dark background */
+    color: #e0e0e0; /* Light text */
     cursor: pointer;
     border-radius: 4px;
-    font-size: 0.9rem; /* Example font size */
+    font-size: 0.9rem; 
     transition: background-color 0.2s ease, border-color 0.2s ease;
 }
   
 .pagination-btn:hover:not(:disabled) {
-    background-color: #f0f0f0; /* Light grey on hover */
-    border-color: #bbb;
+    background-color: #3a3f5c; 
+    border-color: #5a5f7c;
 }
 
 .pagination-btn:disabled {
     opacity: 0.6;
     cursor: not-allowed;
-    background-color: #e9ecef;
-    border-color: #ddd;
+    background-color: #3a3f5c;
+    border-color: #4a4f6c;
+    color: #a0a0a0;
 }
 
 /* Media Queries */

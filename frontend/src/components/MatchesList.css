@@ -2,9 +2,57 @@
     padding: 20px;
     max-width: 900px;
     margin: 20px auto;
-    background-color: #f9f9f9;
+    background-color: #1a1a2e; /* Base dark background */
+    color: #e0e0e0; /* Default light text */
     border-radius: 8px;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.matches-list-container h1, .matches-list-container h2 {
+    color: #00aaff; /* Accent for titles */
+    margin-bottom: 1.5rem;
+    text-align: center;
+}
+
+.matches-table { /* If you use a table */
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 1.5rem;
+    background-color: #1f2333; /* Table background */
+    box-shadow: 0 2px 8px rgba(0,0,0,0.5);
+    border-radius: 8px;
+    overflow: hidden; /* To respect border-radius on th/td */
+}
+
+.matches-table th, .matches-table td {
+    padding: 12px 15px;
+    text-align: left;
+    border-bottom: 1px solid #3a3f5c; /* Darker border for rows */
+}
+
+.matches-table th {
+    background-color: #2a2f4c; /* Header background for table */
+    color: #f0f0f0; /* Brighter text for headers */
+    font-weight: 600;
+}
+
+.matches-table tr:last-child td {
+    border-bottom: none;
+}
+
+.matches-table tr:hover {
+    background-color: #2f3452; /* Hover effect for rows */
+}
+
+.matches-table a {
+    color: #00aaff; /* Accent for links */
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.matches-table a:hover {
+    text-decoration: underline;
+    color: #33c6ff;
 }
 
 .upload-match-link {
@@ -105,8 +153,9 @@
     padding: 3px 8px;
     border-radius: 12px; /* More rounded for a pill shape */
     font-size: 0.85em;
-    font-weight: 600;
-    color: #fff;
+    font-weight: 500;
+    color: #1f2333;
+    background-color: #b0b0b0;
     text-align: center;
     min-width: 70px; /* Ensure a minimum width for consistency */
     display: inline-block;
@@ -152,4 +201,31 @@
     color: #dc3545;
     margin-top: 3px;
     margin-left: 0; /* Align with other paragraph tags if Link is block */
+}
+
+.matches-list-actions { /* Container for buttons like "Upload Match" */
+    text-align: right;
+    margin-bottom: 1.5rem;
+}
+
+.matches-list-actions .btn-upload-match { /* Style for an upload button */
+    background-color: #007bff; /* Accent */
+    color: white;
+    padding: 10px 20px;
+    border-radius: 5px;
+    text-decoration: none;
+    font-weight: 500;
+    border: none;
+    cursor: pointer;
+}
+
+.matches-list-actions .btn-upload-match:hover {
+    background-color: #0056b3;
+}
+
+.no-matches-message {
+    text-align: center;
+    font-size: 1.1em;
+    color: #a0a0a0;
+    padding: 3rem 0;
 }

@@ -86,7 +86,7 @@ function MatchesList() {
 
     return (
         <div className="matches-list-container">
-            <h2 style={{color: 'black'}}>Matches</h2>
+            <h2 >Matches</h2>
             <Link to="/matches/upload" className="upload-match-link">Upload New Match</Link>
 
             {loading && <p>Loading matches...</p>}
