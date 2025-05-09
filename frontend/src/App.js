@@ -12,7 +12,7 @@ import SinglePost from './components/SinglePost';
 import VideoAnalysis from './components/VideoAnalysis';
 import MatchesList from './components/MatchesList';
 import MatchUpload from './components/MatchUpload';
-import AnalysisHub from './components/AnalysisHub'; // Import the new component
+import AnalysisHub from './components/MatchAnalysisDetail'; // Import the new component
 
 function App() {
     // Check for token in Cookies instead of localStorage
@@ -55,6 +55,15 @@ function App() {
                     path="/matches/upload"
                     element={isAuthenticated ? <MatchUpload /> : <Navigate to="/login" />}
                 />
+                {/* New Analysis Hub Main Route */}
+                <Route 
+                    path="/analysis-hub" 
+                    element={
+                        <ProtectedRoute>
+                            <AnalysisHubMain />
+                    </ProtectedRoute>} 
+                />
+
                 <Route
                     path="/matches/:matchId" 
                     element={isAuthenticated ? <VideoAnalysis /> : <Navigate to="/login" />}
