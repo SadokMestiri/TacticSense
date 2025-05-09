@@ -80,16 +80,19 @@ function App() {
                     element={isAuthenticated ? <MatchAnalysisDetail /> : <Navigate to="/login" />} 
                 />
                 
-                {/* Player Prediction Routes (Placeholder for future integration) */}
+                {/* Player Prediction Routes */}
                 <Route 
-                    path="/StatPredictions/new" 
-                    element={<PlayerPredictor />} />
+                    path="/analysis-hub/players"  // This will render ExistingPlayerPredictor (the list)
+                    element={isAuthenticated ? <ExistingPlayerPredictor /> : <Navigate to="/login" />} 
+                />
                 <Route 
-                    path="/StatPredictions/existing" 
-                    element={<ExistingPlayerPredictor />} />
+                    path="/analysis-hub/players/new" // For adding a new player for prediction
+                    element={isAuthenticated ? <PlayerPredictor /> : <Navigate to="/login" />} 
+                />
                 <Route 
-                    path="/player/:name" 
-                    element={<PlayerProfile />} />
+                    path="/analysis-hub/players/:name" // For viewing a specific player's profile and prediction
+                    element={isAuthenticated ? <PlayerProfile /> : <Navigate to="/login" />} 
+                />
 
                 {/* Catch-all route */}
                 <Route

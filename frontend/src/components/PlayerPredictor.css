@@ -1,24 +1,27 @@
+/* General Container for Predictor Pages */
 .predictor-container {
+    width: 90%;
+    max-width: 1600px;
+    margin: 2rem auto;
+    padding: 1.5rem 2rem;
     background: #fff;
     border-radius: 12px;
     box-shadow: 0 2px 8px rgba(0,0,0,0.07);
-    padding: 2rem;
-    max-width: 700px;
-    margin: 2rem auto;
-  }
-  
+}
+
+.predictor-container h2,
+.predictor-container h4 {
+  color: #222; 
+  margin-bottom: 0.5rem;
+}
+
+/* PlayerPredictor.js Form Styles (New Player Prediction) */
 .predictor-form {
     display: flex;
     flex-direction: column;
     gap: 1rem;
-  }
-.season-row label {
-    display: flex;
-    flex-direction: column;
-    font-weight: 500;
-    color: #222; 
-    margin-right: 8px;
 }
+
 .season-row {
     display: flex;
     flex-wrap: wrap;
@@ -32,6 +35,15 @@
     box-shadow: 0 2px 8px rgba(0,0,0,0.04);
     color: #222;            
 }
+
+.season-row label {
+    display: flex;
+    flex-direction: column;
+    font-weight: 500;
+    color: #222; 
+    margin-right: 8px;
+}
+
 .season-header {
     position: absolute;
     top: -18px;
@@ -44,77 +56,8 @@
     font-weight: bold;
     letter-spacing: 1px;
     box-shadow: 0 1px 4px rgba(0,0,0,0.08);
-  }
-@media (max-width: 900px) {
-    .season-row {
-      flex-direction: column;
-      gap: 0.5rem;
-      background: #f4f8fb;
-      border: 1px solid #d0d7de;
-      border-radius: 10px;
-      padding: 1rem;
-    }
-    .season-row label {
-      min-width: 0;
-      width: 100%;
-    }
-    .season-header {
-      top: -14px;
-      left: 16px;
-      background: #0073b1;
-      color: #fff;
-      padding: 2px 12px;
-      border-radius: 12px;
-      font-size: 0.95rem;
-      font-weight: bold;
-      letter-spacing: 1px;
-      box-shadow: 0 1px 4px rgba(0,0,0,0.08);
-    }
-  }
-  
-.input, .season-row input {
-    padding: 0.5rem;
-    border-radius: 6px;
-    border: 1px solid #ddd;
-    font-size: 1rem;
-  }
-  
-.add-btn, .submit-btn {
-    background: #007bff;
-    color: #fff;
-    border: none;
-    border-radius: 6px;
-    padding: 0.5rem 1.5rem;
-    cursor: pointer;
-    margin-right: 0.5rem;
-  }
-  
-.add-btn {
-    background: #28a745;
-  }
-  
-.add-btn:hover, .submit-btn:hover {
-    opacity: 0.9;
-  }
-  
-.prediction-result {
-    margin-top: 2rem;
-    background: #f8f9fa;
-    border-radius: 8px;
-    padding: 1rem;
-  }
-  
-.error {
-    color: #d9534f;
-    font-weight: bold;
-  }
-  
-  
-.predictor-container h2,
-.predictor-container h4 {
-  color: #222; 
-  margin-bottom: 0.5rem;
 }
+
 .remove-btn {
     background: #d9534f;
     color: #fff;
@@ -128,60 +71,104 @@
     align-items: center;
     justify-content: center;
     transition: background 0.2s;
-  }
+}
+
 .remove-btn:hover:enabled {
     background: #c9302c;
-  }
+}
+
 .remove-btn:disabled {
     opacity: 0.5;
     cursor: not-allowed;
-  }
-/* Pagination buttons */
-.pagination-btn {
+}
+
+.prediction-result {
+    margin-top: 2rem;
+    background: #f8f9fa;
+    border-radius: 8px;
+    padding: 1rem;
+}
+
+/* General Input Style (Base) */
+.input, 
+.season-row input { /* Applied to inputs in PlayerPredictor form and potentially others */
+    padding: 0.5rem;
+    border-radius: 6px;
+    border: 1px solid #ddd;
+    font-size: 1rem;
+}
+
+/* General Button Styles */
+.add-btn { /* Specific for "Add Season" type buttons */
+    background: #28a745;
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    padding: 0.5rem 1.5rem;
+    cursor: pointer;
+    margin-right: 0.5rem;
+}
+
+.add-btn:hover {
+    opacity: 0.9;
+}
+
+.submit-btn { /* Primary action button, e.g., "Predict", "Save" */
     background: #0073b1;
     color: #fff;
     border: none;
     border-radius: 6px;
-    padding: 6px 18px;
-    font-size: 1rem;
-    font-weight: 500;
+    padding: 10px 32px;
+    font-size: 1.1rem;
+    font-weight: 600;
     cursor: pointer;
     transition: background 0.2s;
-  }
+    margin-top: 1rem; /* Note: this was in the second definition, adjust if needed elsewhere */
+}
   
-.pagination-btn:disabled {
+.submit-btn:disabled {
     background: #b0c4d8;
     color: #eee;
     cursor: not-allowed;
-  }
+}
   
-.pagination-btn:not(:disabled):hover {
+.submit-btn:not(:disabled):hover {
     background: #005580;
-  }
+}
+
+/* Error Message Style */
+.error {
+    color: #d9534f;
+    font-weight: bold;
+}
+
+/* Recharts Animation */
 .recharts-dot.animate {
     animation: fadeInDot 1s;
-  }
-  @keyframes fadeInDot {
+}
+
+@keyframes fadeInDot {
     from { opacity: 0; transform: scale(0.5);}
     to { opacity: 1; transform: scale(1);}
-  }
-/* PlayerProfile Dashboard Styles */
+}
+
+/* PlayerProfile.js Specific Styles */
 .profile-container {
     background: #fff;
     border-radius: 14px;
     box-shadow: 0 2px 16px rgba(0,0,0,0.07);
     padding: 2.5rem 2rem 2rem 2rem;
-    max-width: 1200px;
+    max-width: 1200px; /* Specific max-width for profile page */
     margin: 2rem auto;
     font-family: 'Segoe UI', Arial, sans-serif;
-  }
+}
   
-.profile-container h2 {
+.profile-container h2 { /* Overrides .predictor-container h2 for profile */
     color: #0073b1;
     font-size: 2.2rem;
     margin-bottom: 0.5rem;
     letter-spacing: 0.5px;
-  }
+}
   
 .profile-header {
     display: flex;
@@ -190,7 +177,7 @@
     margin-bottom: 2rem;
     border-bottom: 1px solid #e6e6e6;
     padding-bottom: 1rem;
-  }
+}
   
 .profile-avatar {
     width: 72px;
@@ -204,23 +191,23 @@
     color: #0073b1;
     font-weight: bold;
     box-shadow: 0 2px 8px rgba(0,0,0,0.04);
-  }
+}
   
 .profile-info {
     font-size: 1.1rem;
     color: #222;
-  }
+}
   
 .profile-info b {
     color: #0073b1;
-  }
+}
   
 .dashboard-graphs {
     display: flex;
     flex-wrap: wrap;
     gap: 2rem;
     margin-bottom: 2.5rem;
-  }
+}
   
 .dashboard-graphs > div {
     background: #f8fafc;
@@ -229,27 +216,193 @@
     box-shadow: 0 1px 6px rgba(0,0,0,0.04);
     flex: 1 1 350px;
     min-width: 320px;
-  }
+}
+
+.profile-container .dashboard-graphs h4 {
+  color: #333; /* Dark grey - adjust if you prefer pure black (#000) or another shade */
+  font-size: 1.15rem; /* Adjust as needed */
+  font-weight: 600;   /* Make them a bit bolder */
+  margin-top: 0;      /* Remove default top margin if any */
+  margin-bottom: 1rem; /* Space below the title before the chart */
+  text-align: left;   /* Ensure they are not centered if that's an issue */
+}
+
+/* ExistingPlayerPredictor.js Specific Styles */
+.existing-players-layout { /* Applied to .predictor-container for this specific layout */
+    display: flex;
+    gap: 2rem;
+}
   
-.submit-btn {
-    background: #0073b1;
-    color: #fff;
-    border: none;
-    border-radius: 6px;
-    padding: 10px 32px;
-    font-size: 1.1rem;
-    font-weight: 600;
+.existing-players-main-content {
+    flex: 3;
+    display: flex;
+    flex-direction: column;
+}
+  
+.existing-players-sidebar {
+    flex: 1;
+    padding-top: 3.5rem;
+}
+  
+.filters-container {
+    display: flex;
+    gap: 0.75rem;
+    margin-bottom: 1.5rem;
+    flex-wrap: wrap;
+    align-items: center;
+}
+  
+.filters-container .input,
+.filters-container .filter-select { /* Specific styles for inputs/selects within filters */
+    padding: 0.6rem 0.8rem;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    font-size: 0.9rem;
+    background-color: #fff;
+}
+
+.filters-container .input { /* Specific to search input in filters */
+    min-width: 150px;
+    flex-grow: 1;
+}
+
+.filters-container .filter-select { /* Specific to select dropdowns in filters */
+    min-width: 120px;
+}
+  
+.players-list-container {
+    /* Styles for the scrollable list area if needed */
+}
+  
+.player-list-item {
     cursor: pointer;
-    transition: background 0.2s;
-    margin-top: 1rem;
-  }
+    background: #f9f9f9;
+    padding: 12px 18px;
+    border-radius: 6px;
+    margin-bottom: 10px;
+    transition: background-color 0.2s ease, box-shadow 0.2s ease;
+    border: 1px solid #e0e0e0;
+}
   
-.submit-btn:disabled {
-    background: #b0c4d8;
-    color: #eee;
+.player-list-item:hover {
+    background-color: #f0f0f0;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+}
+  
+.player-item-name {
+    font-weight: 600;
+    font-size: 1.1rem;
+    color: #333;
+    margin-bottom: 4px;
+}
+  
+.player-item-details {
+    font-size: 0.9rem;
+    color: #555;
+}
+  
+.add-player-prompt { /* Sidebar prompt box */
+    background-color: #f8f9fa;
+    padding: 1.5rem;
+    border-radius: 8px;
+    border: 1px solid #e9ecef;
+    text-align: center;
+}
+  
+.add-player-prompt h4 { /* Overrides .predictor-container h4 for this specific element */
+    margin-top: 0;
+    margin-bottom: 0.75rem;
+    color: #343a40;
+    font-size: 1.1rem;
+}
+  
+.add-player-prompt p {
+    font-size: 0.9rem;
+    color: #495057;
+    margin-bottom: 1.25rem;
+    line-height: 1.5;
+}
+  
+.add-player-link { /* Link within the sidebar prompt */
+    display: inline-block;
+    padding: 0.6rem 1.2rem;
+    background-color: #007bff;
+    color: white;
+    text-decoration: none;
+    border-radius: 5px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    transition: background-color 0.2s ease;
+}
+  
+.add-player-link:hover {
+    background-color: #0056b3;
+}
+  
+.pagination-controls {
+    /* Styles for pagination container if needed */
+}
+  
+.pagination-btn { /* Intended style for pagination buttons in ExistingPlayerPredictor */
+    padding: 0.5rem 1rem;
+    border: 1px solid #ccc;
+    background-color: #fff; /* White background */
+    color: #333; /* Default text color, or specify e.g. #007bff */
+    cursor: pointer;
+    border-radius: 4px;
+    font-size: 0.9rem; /* Example font size */
+    transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+  
+.pagination-btn:hover:not(:disabled) {
+    background-color: #f0f0f0; /* Light grey on hover */
+    border-color: #bbb;
+}
+
+.pagination-btn:disabled {
+    opacity: 0.6;
     cursor: not-allowed;
-  }
-  
-.submit-btn:not(:disabled):hover {
-    background: #005580;
-  }
+    background-color: #e9ecef;
+    border-color: #ddd;
+}
+
+/* Media Queries */
+@media (max-width: 900px) { /* For PlayerPredictor.js form */
+    .season-row {
+      flex-direction: column;
+      gap: 0.5rem;
+      /* background, border, radius, padding already defined, ensure they are what you want or override */
+    }
+    .season-row label {
+      min-width: 0;
+      width: 100%;
+    }
+    .season-header {
+      top: -14px;
+      left: 16px;
+      padding: 2px 12px;
+      border-radius: 12px;
+      font-size: 0.95rem;
+    }
+}
+
+/* Add other media queries as needed for .existing-players-layout, .profile-container etc. */
+/* Example for existing players layout */
+@media (max-width: 768px) {
+    .existing-players-layout {
+        flex-direction: column;
+    }
+    .existing-players-sidebar {
+        padding-top: 1rem; /* Adjust spacing when stacked */
+        order: -1; /* Optionally move sidebar to top on small screens */
+    }
+    .filters-container {
+        flex-direction: column;
+        align-items: stretch; /* Make filters take full width */
+    }
+    .filters-container .input,
+    .filters-container .filter-select {
+        width: 100%;
+        min-width: auto; /* Reset min-width */
+    }
+}

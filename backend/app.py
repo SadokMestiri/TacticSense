@@ -298,61 +298,96 @@ class Match(db.Model):
     
 def process_new_player_data(career_stats):
     df = pd.DataFrame(career_stats)
+
+    # Convert key statistical columns to numeric types
+    # These might come as strings from the frontend form
+    numeric_cols = ['age', 'matches', 'minutes', 'goals', 'assists']
+    for col in numeric_cols:
+        if col in df.columns: # Check if column exists before trying to convert
+            df[col] = pd.to_numeric(df[col], errors='coerce') # errors='coerce' will turn unparseable strings into NaN
+
     df['position'] = df['position'].str.upper().str.strip()
     valid_positions = ['DF', 'MF', 'FW']
     df['position'] = df['position'].apply(lambda x: x if x in valid_positions else 'FW')
-    df['minutes_adj'] = df['minutes'].replace(0, 1)
+    
+    # df['minutes'] is now numeric (float64) or contains NaN.
+    # Create 'minutes_adj' for division, ensuring it's non-zero and numeric.
+    # 1. Fill NaN in 'minutes' with 0.0 (if a player had missing minutes for a season)
+    # 2. Replace 0.0 minutes with 1.0 to avoid division by zero.
+    df['minutes_adj'] = df['minutes'].fillna(0.0).replace(0.0, 1.0)
+
+    # df['goals'] and df['assists'] are now numeric (float64) or contains NaN.
+    # Calculations will propagate NaN, which is fine as the imputer handles it later.
     df['goals_per_90'] = (df['goals'] * 90) / df['minutes_adj']
     df['assists_per_90'] = (df['assists'] * 90) / df['minutes_adj']
+    
     primary_position = df['position'].mode()[0] if not df['position'].mode().empty else 'FW'
     pos_DF = 1 if primary_position == 'DF' else 0
     pos_MF = 1 if primary_position == 'MF' else 0
     pos_FW = 1 if primary_position == 'FW' else 0
-    max_minutes = 5000
+    
+    max_minutes = 5000 # This constant is used for position score calculation
     if primary_position == 'FW':
         df['position_score'] = 0.7 * df['goals_per_90'] + 0.3 * df['assists_per_90']
     elif primary_position == 'MF':
         df['position_score'] = 0.4 * df['goals_per_90'] + 0.6 * df['assists_per_90']
-    else:
+    else: # DF
+        # Ensure df['minutes'] is numeric here for the division
         df['position_score'] = 0.2 * df['goals_per_90'] + 0.3 * df['assists_per_90'] + 0.5 * (df['minutes'] / max_minutes)
+    
     last_3 = df.iloc[-3:] if len(df) >= 3 else df
     weights = np.arange(1, len(last_3)+1)
-    def safe_avg(series): return np.average(series, weights=weights[:len(series)]) if len(series) else 0
+    def safe_avg(series): return np.average(series.dropna(), weights=weights[:len(series.dropna())]) if not series.dropna().empty else 0.0
+
     last_season = df.iloc[-1]
-    matches_adj = max(last_season['matches'], 1)
-    minutes_adj = max(last_season['minutes'], 1)
-    rolling_3season_mins = df['minutes'].iloc[-3:].mean() if len(df) >= 3 else df['minutes'].mean()
-    rolling_3season_mins_pct = (df['minutes'] / (df['matches'] * 90)).replace(0, 1).iloc[-3:].mean() if len(df) >= 3 else (df['minutes'] / (df['matches'] * 90)).replace(0, 1).mean()
+    matches_adj = max(last_season['matches'], 1) if pd.notna(last_season['matches']) else 1
+    minutes_adj_last_season = max(last_season['minutes'], 1) if pd.notna(last_season['minutes']) else 1 # Renamed to avoid conflict with df['minutes_adj']
+
+    # Calculate rolling_3season_mins and rolling_3season_mins_pct carefully with potential NaNs
+    rolling_3season_mins = df['minutes'].dropna().tail(3).mean() if len(df['minutes'].dropna()) >= 1 else 0.0
+    
+    # For rolling_3season_mins_pct, ensure 'mp' is also numeric
+    if 'mp' not in df.columns or not pd.api.types.is_numeric_dtype(df['mp']): # 'mp' might be named 'matches' in input
+        df['mp_numeric'] = pd.to_numeric(df.get('matches', df.get('mp')), errors='coerce').fillna(0) # Use 'matches' if 'mp' not present
+    else:
+        df['mp_numeric'] = df['mp'].fillna(0)
+
+    possible_minutes_per_season = (df['mp_numeric'] * 90).replace(0, 1) # Avoid division by zero
+    minutes_pct_this_season = (df['minutes'].fillna(0) / possible_minutes_per_season)
+    rolling_3season_mins_pct = minutes_pct_this_season.dropna().tail(3).mean() if len(minutes_pct_this_season.dropna()) >=1 else 0.0
+
+
     features = {
         'age': last_season['age'],
         'pos_DF': pos_DF,
         'pos_MF': pos_MF,
         'pos_FW': pos_FW,
-        'team_encoded': 0.5,
-        'season_start': 2025,
+        'team_encoded': 0.5, # Neutral value for new player
+        'season_start': 2025, # Assuming prediction for next typical season start
         'goals_per_90': last_season['goals_per_90'],
         'assists_per_90': last_season['assists_per_90'],
         'position_score': last_season['position_score'],
         'goals_per_90_weighted_recent': safe_avg(last_3['goals_per_90']),
         'assists_per_90_weighted_recent': safe_avg(last_3['assists_per_90']),
         'position_score_weighted_recent': safe_avg(last_3['position_score']),
-        'minutes_weighted_recent': safe_avg(last_3['minutes']),
-        'mins_per_appearance': minutes_adj / matches_adj,
-        'availability': matches_adj / df['matches'].max() if df['matches'].max() > 0 else 1,
+        'minutes_weighted_recent': safe_avg(last_3['minutes']), # This was duplicated, keeping one
+        'mins_per_appearance': minutes_adj_last_season / matches_adj,
+        'availability': (matches_adj / df['matches'].max()) if pd.notna(df['matches'].max()) and df['matches'].max() > 0 else 1.0,
         'seasons_since_debut': len(df),
-        'recent_form': df['position_score'].iloc[-3:].mean() if len(df) >= 3 else df['position_score'].mean(),
-        'team_strength': 0.5,
-        'injury_prone': int((minutes_adj / (matches_adj * 90)) < 0.6) if matches_adj > 0 else 0,
-        'mins_pct_possible': minutes_adj / (matches_adj * 90) if matches_adj > 0 else 1,
+        'recent_form': df['position_score'].dropna().tail(3).mean() if len(df['position_score'].dropna()) >=1 else df['position_score'].mean(), # Ensure mean of non-NaN
+        'team_strength': 0.5, # Neutral value
+        'injury_prone': int((minutes_adj_last_season / (matches_adj * 90)) < 0.6) if matches_adj > 0 else 0,
+        'mins_pct_possible': (minutes_adj_last_season / (matches_adj * 90)) if matches_adj > 0 else 1.0,
         'rolling_3season_mins': rolling_3season_mins,
-        'rolling_3season_mins_pct': rolling_3season_mins_pct,
-        'minutes_weighted_recent': safe_avg(last_3['minutes'])
+        'rolling_3season_mins_pct': rolling_3season_mins_pct
+        # 'minutes_weighted_recent' was listed twice, removed duplicate
     }
-    # Fill missing features with 0
-    for fname in feature_names:
+    # Fill missing features with 0, ensuring all expected features are present
+    for fname in feature_names: # feature_names should be loaded globally
         if fname not in features:
             features[fname] = 0.0
-    return pd.DataFrame([features])[feature_names]
+            
+    return pd.DataFrame([features])[feature_names] # Ensure column order matches model training
 
 def get_player_features_from_dataset(player_name):
     df = pd.read_csv(DATA_PATH, thousands=',', quotechar='"')
