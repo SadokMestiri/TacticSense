@@ -8,6 +8,7 @@ import Chat from "./components/Chat";
 import Header from "./components/Header";
 import Footer from "./components/Footer";
 import GPT from "./components/GPT";
+import PlayersList from "./components/PlayersList";
 
 
 
@@ -28,6 +29,7 @@ export default function App() {
           <Route path="/header" element={<Header />} />
           <Route path="/footer" element={<Footer />} />
           <Route path="/gpt" element={<GPT header={header} footer={footer}/>} />
+          <Route path="/players" element={<PlayersList header={header} footer={footer}/>} />
         </Routes>
       </div>
     

@@ -88,6 +88,9 @@ class PlayerProfile(db.Model):
     gk_handling = db.Column(db.Integer, nullable=True)
     gk_kicking = db.Column(db.Integer, nullable=True)
     gk_reflexes = db.Column(db.Integer, nullable=True)
+    photo = db.Column(db.String(255), nullable=True)
+    score = db.Column(db.Float, nullable=True)
+
     user = db.relationship('User', backref=db.backref('player_profile', uselist=False))
 
 class Coach_Profile(db.Model):
@@ -101,6 +104,7 @@ class Coach_Profile(db.Model):
     years_of_experience = db.Column(db.Integer, nullable=True)
     qualification = db.Column(db.String(120), nullable=True)
     availability = db.Column(db.Boolean, default=True)
+    photo = db.Column(db.String(255), nullable=True)
 
     user = db.relationship('User', backref=db.backref('coach_profile', uselist=False))
 
@@ -347,6 +351,7 @@ def register():
             player_profile = PlayerProfile(
                 user_id=new_user.id,
                 name=new_user.name,
+                photo=new_user.profile_image,
                 season='',
                 age=0,
                 nationality='',
@@ -358,7 +363,8 @@ def register():
                 club='',
                 market_value=0.0,
                 total_yellow_cards=0,
-                total_red_cards=0
+                total_red_cards=0,
+                score=0.0
             )
             db.session.add(player_profile)
 
@@ -367,6 +373,7 @@ def register():
             coach_profile = Coach_Profile(
                 user_id=new_user.id,
                 name=new_user.name,
+                photo=new_user.profile_image,
                 nationality=''
             )
             db.session.add(coach_profile)
@@ -585,3 +592,62 @@ app.app_context().push()
 if __name__ == '__main__':
     app.run(debug=True)
 
+@app.route('/get_players', methods=['GET'])
+def get_players():
+    try:
+        players = PlayerProfile.query.all()
+        players_data = []
+
+        for player in players:
+            profile_image = player.photo.replace("\\", "/") if player.photo else ""
+
+            players_data.append({
+                'id': player.id,
+                'name': player.name,
+                'age': player.age,
+                'position': player.position,
+                'club': player.club,
+                'photo': profile_image,
+                'score': player.score,
+            })
+
+        return jsonify(players_data), 200
+
+    except Exception as e:
+        print(f"Error fetching players: {e}")
+        return jsonify({'message': 'Error fetching players'}), 500
+    
+
+@app.route('/rate_player', methods=['POST'])
+def rate_player():
+    try:
+        data = request.get_json()
+        player_id = data.get('id')
+        new_score = data.get('score')
+
+        if player_id is None or new_score is None:
+            return jsonify({'message': 'Missing player_id or score'}), 400
+
+        player = PlayerProfile.query.get_or_404(player_id)
+
+        # Si aucune note n'existe déjà, initialise avec la nouvelle note
+        if player.score is None:
+            player.score = new_score
+        else:
+            # Calculer la nouvelle moyenne en fonction du score existant
+            current_score = player.score
+
+            # Supposons que le score précédent a déjà pris en compte le nombre de fois qu'il a été mis à jour
+            # Si tu veux un comportement différent, tu peux ajouter un compteur dans le front-end pour ajuster la logique
+            player.score = (current_score + new_score) / 2  # Exemple : calcul de la moyenne
+
+        db.session.commit()
+
+        return jsonify({
+            'message': 'Score updated successfully',
+            'average_score': player.score
+        }), 200
+
+    except Exception as e:
+        print(f"Error updating player score: {e}")
+        return jsonify({'message': 'Internal server error'}), 500

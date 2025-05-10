@@ -52,8 +52,8 @@ const Header = () => {
               </a>
             </li>
             <li>
-              <a href="#">
-                <img src="assets/images/network.png" alt="network" /> <span>My Network</span>
+              <a href="/players">
+                <img src="assets/images/network.png" alt="network" /> <span>Players</span>
               </a>
             </li>
             <li>
@@ -62,7 +62,7 @@ const Header = () => {
               </a>
             </li>
             <li>
-              <a href="#">
+              <a href="/gpt">
                 <img src="assets/images/message.png" alt="message" /> <span>Messaging</span>
               </a>
             </li>
