@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from "react-router-dom";
 import axios from 'axios';
 
+
 const Register = () => {
     const [username, setUsername] = useState('');
     const [name, setName] = useState('');
@@ -13,11 +14,11 @@ const Register = () => {
 
     const navigate = useNavigate();
 
+
     const handleRegister = async (e) => {
         e.preventDefault();
         setError(null);
         setSuccess(null);
-
         const formData = new FormData();
         formData.append('username', username);
         formData.append('email', email);
@@ -48,6 +49,7 @@ const Register = () => {
         setProfileImage(e.target.files[0]); 
         setSuccess('Profile image uploaded successfully!');
     };
+
 
     return (
         <div>

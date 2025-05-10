@@ -38,6 +38,8 @@ function Chat({ header }) {
   const [selectedUsers, setSelectedUsers] = useState([]);
   const [isCreatingGroup, setIsCreatingGroup] = useState(false);
   const [conversationId, setConversationId] = useState(null);
+  const [selectedUserId, setSelectedUserId] = useState("");
+
 
   const apiUrl = "http://localhost:5000";
   const token = Cookies.get('token');
@@ -74,9 +76,9 @@ function Chat({ header }) {
     }
   }; */
   const selectConversation = (conversation) => {
-    setConversationUser(conversation);
+    setConversationUser(conversation.other_user_id);
     setConversationId(conversation.id);
-    
+
     if (conversation.type === "group") {
       setIsGroupConversation(true);
     } else {
@@ -163,9 +165,9 @@ function Chat({ header }) {
   console.log(conversationId)
       // If it's a one-to-one conversation, add the receiver_id
       if (!isGroupConversation) {
-        messageData.receiver_id = conversationUser?.id; // Only for one-to-one
+        messageData.receiver_id = conversationUser; // Only for one-to-one
       }
-  
+  console.log(user.id,newMessage,conversationId,conversationUser)
       // Send the message to the backend
       await axios.post(`${apiUrl}/send_message`, messageData);
   
@@ -199,7 +201,26 @@ function Chat({ header }) {
     }
   };
   
+const handleCreateConversation = async () => {
+  if (!selectedUserId) return;
 
+  try {
+    const response = await axios.post(`${apiUrl}/create_conversation`, {
+      user1_id: user.id,
+      user2_id: selectedUserId,
+    });
+
+    const newConversation = response.data;
+    setConversations(prev => [...prev, newConversation]);
+    setConversationUser(selectedUserId);
+    setConversationId(newConversation.id);
+    setIsGroupConversation(false);
+    fetchMessages(newConversation.id, false);  // Fetch 1-to-1 messages
+    setSelectedUserId("");  // Reset dropdown
+  } catch (error) {
+    console.error("Error creating conversation:", error);
+  }
+};
   useEffect(() => {
     const fetchAllUsers = async () => {
       try {
@@ -301,6 +322,30 @@ function Chat({ header }) {
                   <MDBCol md="6" lg="5" xl="4" className="mb-4 mb-md-0">
                     <div className="p-3">
                       <PerfectScrollbar style={{ position: "relative", height: "400px" }}>
+                        <div className="mb-3">
+  <label htmlFor="userSelect" className="form-label">Start New Chat</label>
+  <div className="d-flex">
+    <select
+      id="userSelect"
+      className="form-select me-2"
+      value={selectedUserId}
+      onChange={(e) => setSelectedUserId(e.target.value)}
+    >
+      <option value="">Select User</option>
+      {allUsers
+        .filter((u) => u.id !== user.id)  // Exclude self
+        .map((u) => (
+          <option key={u.id} value={u.id}>
+            {u.name}
+          </option>
+        ))}
+    </select>
+    <button className="btn btn-success" onClick={handleCreateConversation}>
+      Chat
+    </button>
+  </div>
+</div>
+
                       <MDBTypography listUnStyled className="mb-0">
   {conversations.map((conv, index) => (
     <li
@@ -474,38 +519,39 @@ function Chat({ header }) {
             )}
 
             {/* Display reactions if they exist */}
-            {msg.reactions && isGroupConversation ? (
-              <div className="message-reactions d-flex flex-row mt-2">
-                {/* Aggregate reactions and display only one per reaction type */}
-                {Object.keys(msg.reactions).map((reactionName, index) => {
-                  const totalCount = msg.reactions[reactionName].count;
-                  const reactionIcon = reactions.find((r) => r.name === reactionName)?.icon;
+{msg.reactions ? (
+  <div className="message-reactions d-flex flex-row mt-2">
+    {/* Aggregate reactions and display only one per reaction type */}
+    {Object.keys(msg.reactions).map((reactionName, index) => {
+      const totalCount = msg.reactions[reactionName].count;
+      const reactionIcon = reactions.find((r) => r.name === reactionName)?.icon;
 
-                  // If the reaction icon is found, display it
-                  return reactionIcon ? (
-                    <div key={index}  style={{ marginRight: '5px',marginTop:"-50px" ,marginLeft:"10px"}}>
-                      {/* Display one icon per reaction type */}
-                      <img
-                        src={reactionIcon} // Use the corresponding icon path
-                        alt={reactionName}
-                        className="reaction-icon"
-                        style={{ width: '18px', height: '18px' }}
-                      />
-                      <span
-                        className="reaction-count"
-                        style={{ fontSize: '12px', marginLeft: '3px' }}
-                      >
-                        {totalCount} {/* Display the total count for this reaction */}
-                      </span>
-                    </div>
-                  ) : null; // If no icon is found, don't render anything
-                })}
-              </div>
-            ) : (
-              <div className="message-reactions d-flex flex-row mt-2">
-                {/* Optional: Loading or placeholder message */}
-              </div>
-            )}
+      // If the reaction icon is found, display it
+      return reactionIcon ? (
+        <div key={index} style={{ marginRight: '5px', marginTop: '-50px', marginLeft: '10px' }}>
+          {/* Display one icon per reaction type */}
+          <img
+            src={reactionIcon} // Use the corresponding icon path
+            alt={reactionName}
+            className="reaction-icon"
+            style={{ width: '18px', height: '18px' }}
+          />
+          <span
+            className="reaction-count"
+            style={{ fontSize: '12px', marginLeft: '3px' }}
+          >
+            {totalCount} {/* Display the total count for this reaction */}
+          </span>
+        </div>
+      ) : null;
+    })}
+  </div>
+) : (
+  <div className="message-reactions d-flex flex-row mt-2">
+    {/* Optional: Loading or placeholder message */}
+  </div>
+)}
+
           </div>
         </div>
       );

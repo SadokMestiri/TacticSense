@@ -15,6 +15,9 @@ import Footer from "./components/Footer";
 import JobApplications from "./components/JobApplications";
 import HashtagPage from "./components/HashtagPage";
 import PostJob from "./components/PostJob";
+import InjuryPredictor from "./components/InjuryPredictor";
+import StreakPopUp from "./components/StreakPopUp";
+
 
 
 
@@ -40,6 +43,9 @@ export default function App() {
       <Route path="/jobApplications" element={<JobApplications header={header} footer={footer} />} />
       <Route path="/hashtag" element={<HashtagPage header={header} footer={footer} />} />
       <Route path="/postJob" element={<PostJob header={header} footer={footer} />} />
+      <Route path="/injury" element={<InjuryPredictor header={header} footer={footer} />} />
+            <Route path="/streak" element={<StreakPopUp  />} />
+
     </Routes>
   </div>
     

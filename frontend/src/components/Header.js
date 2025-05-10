@@ -56,7 +56,7 @@ const Header = () => {
     <div>
       <nav className="navbar">
         <div className="navbar-left">
-          <NavLink to="/" className="meta-logo">
+          <NavLink to="/Home" className="meta-logo">
             <img src="assets/images/logo.png" alt="logo" />
           </NavLink>
           <div className="search-box">

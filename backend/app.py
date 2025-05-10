@@ -1,8 +1,12 @@
+import base64
 import os
-from flask import Flask, request, jsonify, send_from_directory, url_for, make_response
+import random
+from flask import Flask, Request, json, request, jsonify, send_from_directory, url_for, make_response
 from flask_mail import Message as MailMessage
 from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
+import numpy as np
+import requests
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
 from sqlalchemy import Enum
@@ -13,6 +17,13 @@ from flask_mail import Mail
 import re
 from flask_cors import CORS
 from datetime import date, timedelta
+import joblib
+import pandas as pd
+from futurehouse_client import FutureHouseClient, JobNames
+from futurehouse_client.models.app import TaskRequest
+from threading import Thread
+from web3 import Web3
+
 
 
 app = Flask(__name__,template_folder='templates')
@@ -25,11 +36,49 @@ app.config['MAIL_SERVER'] = 'smtp.gmail.com'
 app.config['MAIL_PORT'] = 465
 app.config['MAIL_USE_SSL'] = True
 app.config['MAIL_USERNAME'] = 'layouni.nourelhouda@gmail.com'
-app.config['MAIL_PASSWORD'] = 'kvni phac wprf smll'
+app.config['MAIL_PASSWORD'] = 'liqm qofg jseq mzty'
 mail = Mail(app)
 app.config['UPLOAD_FOLDER'] = 'uploads'
 app.config['ALLOWED_EXTENSIONS'] = {'png', 'jpg', 'jpeg', 'gif', 'mp4', 'mov', 'avi'}
 app.config['MAX_CONTENT_LENGTH'] = 100 * 1024 * 1024  
+
+w3 = Web3(Web3.HTTPProvider("https://sepolia.infura.io/v3/2264fb8767644f77889c230508451721"))
+
+with open('MetaCoinABI.json', 'r') as f:
+    abi = json.load(f)
+
+# Contract address
+contract_address = Web3.to_checksum_address("0x2dE8B83c77ecb2FB47c35702E3879E070F79C58d")
+owner_private_key="e8be4c05fe6f9bfa3fb7e64e75723d31d8a48dd2f327e1ff09e9dadecd3c3622"
+# Owner wallet (the deployer of MetaCoin)
+owner_address = w3.to_checksum_address("0x16c7cc09EBA8039EBE2d6d14B0dAA299F77C3FF1")
+contract = w3.eth.contract(address=contract_address, abi=abi)
+
+API_KEY = "R+mdo6B8CqEuCfg9VoS/OA.platformv01.eyJqdGkiOiJhNDJkYWIyOC1hZTMzLTQ5MjQtOTgwNC1mZjU5YmQ3YWZiNTIiLCJzdWIiOiJsQk5zNmI1RnVOYlQwVlJCaENrQ2pHTlo3aW8xIiwiaWF0IjoxNzQ2ODg1MTE2fQ.yKadXV4Xe+vVcfKDLg5Xg8y/oWX5WSdGJygS++XdX1k"
+client = FutureHouseClient(api_key=API_KEY)
+# Load model and encoder
+model = joblib.load('modeling/injury_type_model.pkl')
+label_encoder = joblib.load('modeling/injury_label_encoder.pkl')
+# Load preprocessing objects
+scaler = joblib.load('modeling/scaler.pkl')
+position_encoder = joblib.load('modeling/position_encoder.pkl')
+injury_encoder = joblib.load('modeling/injury_label_encoder.pkl')
+nationality_freq = joblib.load('modeling/nationality_freq.pkl')
+teamname_freq = joblib.load('modeling/teamname_freq.pkl')
+
+injury_group_map = {
+    0: "Ankle/Foot",
+    1: "Back/Spine",
+    2: "Calf/Shin",
+    3: "General/Misc",
+    4: "Groin/Hip",
+    5: "Head/Neck",
+    6: "Knee/Leg",
+    7: "Tendon",
+    8: "Thigh/Hamstring",
+    9: "Upper Body"
+}
+
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in app.config['ALLOWED_EXTENSIONS']
@@ -41,6 +90,8 @@ class User(db.Model):
     password = db.Column(db.String(200), nullable=False)
     name = db.Column(db.String(80), nullable=False)
     profile_image = db.Column(db.String(255), nullable=True) 
+    eth_address = db.Column(db.String(42), unique=True, nullable=False)
+    private_key = db.Column(db.String(256), unique=True, nullable=False)  
 
 
 class UserStreak(db.Model):
@@ -70,15 +121,15 @@ class JobHashtag(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     job_id = db.Column(db.Integer, db.ForeignKey('job.id'), nullable=False)
     hashtag_id = db.Column(db.Integer, db.ForeignKey('hashtags.id'), nullable=False)
-
-    job = db.relationship('Job', backref='job_hashtags', lazy=True)
-    hashtag = db.relationship('Hashtag', backref='job_hashtags', lazy=True)
+    job = db.relationship('Job', back_populates='hashtags')
+    hashtag = db.relationship('Hashtag', back_populates='jobs')
 
 
 class Hashtag(db.Model):
     __tablename__ = 'hashtags'
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), unique=True, nullable=False)
+    jobs = db.relationship('JobHashtag', back_populates='hashtag', overlaps="job_hashtags")
 
 
 class Post(db.Model):
@@ -200,11 +251,8 @@ class Job(db.Model):
     job_type = db.Column(db.String(50), nullable=False)  # Full-time, Part-time, etc.
     experience = db.Column(db.String(50), nullable=False)  # 1-2 years, 2-3 years, etc.
     category = db.Column(db.String(50), nullable=True)  # Category of job
-    hashtags = db.relationship(
-        'Hashtag',
-        secondary='job_hashtag',
-        backref=db.backref('jobs', lazy='dynamic')
-    ) 
+    hashtags = db.relationship('JobHashtag', back_populates='job', overlaps="hashtag,job_hashtags")
+ 
 
 class JobPost(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -703,20 +751,33 @@ def register():
         email = request.form['email']
         password = request.form['password']
         name = request.form['name']
-        
+
+        # Generate a new Ethereum address
+        account = w3.eth.account.create()  # Creates a new Ethereum account
+        eth_address = account.address  # The generated Ethereum address
+        private_key = account._private_key  # Private key as bytes, no need for .hex()
+
+        # Validate Ethereum address
+        if not Web3.is_address(eth_address):
+            return jsonify({"message": "Invalid Ethereum address"}), 400
+
+        # Check if username or email already exists
         if User.query.filter_by(username=username).first() or User.query.filter_by(email=email).first():
             return jsonify({'message': 'Username or email already exists'}), 409
 
+        # Handle profile image upload
         profile_image = request.files.get('profile_image')
         profile_image_path = None
         if profile_image and allowed_file(profile_image.filename):
             filename = secure_filename(profile_image.filename)
             profile_image_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-            profile_image.save(profile_image_path) 
+            profile_image.save(profile_image_path)
 
-        hashed_password = generate_password_hash(password, method='sha256')
+        # Hash password using scrypt method (more secure than sha256)
+        hashed_password = generate_password_hash(password, method='scrypt')
 
-        new_user = User(username=username, email=email, password=hashed_password, name=name, profile_image=profile_image_path)
+        # Create new user with encrypted private key
+        new_user = User(username=username, email=email, password=hashed_password, name=name, profile_image=profile_image_path, eth_address=eth_address, private_key=private_key)
 
         db.session.add(new_user)
         db.session.commit()
@@ -748,17 +809,18 @@ def login():
     password = data.get('password')
 
     user = User.query.filter_by(username=username).first()
-    
-    # Check if user exists and password matches
+
     if user and check_password_hash(user.password, password):
-        # Create JWT token with expiration of 24 hours
         token = jwt.encode({
             'public_id': user.id,
             'exp': datetime.utcnow() + timedelta(hours=1)
         }, app.config['SECRET_KEY'])
-        return jsonify({'token': str(token)}) ,200
+
+        return jsonify({'token': token}), 200
     else:
         return jsonify({'message': 'Invalid username or password'}), 401
+
+
     
 @app.route('/resetPassword', methods=['PUT'])
 def reset_password():
@@ -1122,6 +1184,7 @@ def get_conversations(user_id):
 
             all_conversations.append({
                 'id': conv.id,
+                'other_user_id':other_user.id,
                 'name': other_user.name,
                 'profile_image': other_user.profile_image,
                 'last_message': last_message_text,
@@ -1527,73 +1590,388 @@ def get_streak(user_id):
         "last_login_date": streak.last_login_date
     }) """
 
+def get_top_3_predictions(model, sample_df, group_map):
+    """Return top 3 predicted injury group labels (no probabilities)."""
+    try:
+        if hasattr(model, 'predict_proba'):
+            probs = model.predict_proba(sample_df)[0]
+        else:
+            preds = model.predict(sample_df)
+            if preds.ndim == 1:
+                probs = [1.0 if i == int(preds[0]) else 0.0 for i in range(len(group_map))]
+            else:
+                probs = preds[0]
+
+        probs = np.nan_to_num(probs, nan=0.0, posinf=0.0, neginf=0.0)
+
+        top3_idx = np.argsort(probs)[::-1][:3]
+        top3_labels = [group_map.get(i, f"Unknown ({i})") for i in top3_idx]
+
+        return top3_labels
+
+    except Exception as e:
+        print(f"Error in get_top_3_predictions: {e}")
+        return ["Prediction Error"]
+
+
+
+@app.post("/predict_injury_type")
+def predict_injury():
+    data = request.get_json()
+    df = pd.DataFrame([data])
+
+    # Convert data types
+    df['Age'] = pd.to_numeric(df['Age'], errors='coerce', downcast='integer')
+    df['total_minutes_played'] = pd.to_numeric(df['total_minutes_played'], errors='coerce', downcast='float')
+    df['matches_played'] = pd.to_numeric(df['matches_played'], errors='coerce', downcast='integer')
+    df['total_yellow_cards'] = pd.to_numeric(df['total_yellow_cards'], errors='coerce', downcast='integer')
+    df['total_red_cards'] = pd.to_numeric(df['total_red_cards'], errors='coerce', downcast='integer')
+
+    # Encoding
+    df['Nationality'] = df['Nationality'].map(nationality_freq)
+    df['Team_Name'] = df['Team_Name'].map(teamname_freq)
+    df['Position'] = position_encoder.transform(df['Position'])
+
+    # Fatigue level
+    season_length_weeks = 40
+    df['fatigue_level'] = (df['total_minutes_played'] / df['matches_played']) * (df['matches_played'] / season_length_weeks)
+    df['fatigue_level'] = (df['fatigue_level'] / df['fatigue_level'].max()) * 100
+    df['fatigue_level'] = df['fatigue_level'].round(2)
+
+    # Date handling
+    df['Date_of_Injury'] = pd.to_datetime(df['Date_of_Injury'], errors='coerce')
+    df['Date_of_return'] = pd.to_datetime(df['Date_of_return'], errors='coerce')
+    df['Days_until_return'] = (df['Date_of_return'] - df['Date_of_Injury']).dt.days
+
+    # Clean
+    df.dropna(subset=['total_minutes_played', 'matches_played', 'fatigue_level', 'Days_until_return'], inplace=True)
+    df['Season'] = df['Season'].apply(lambda x: int(x.split('/')[0]))
+    df = df[scaler.feature_names_in_]
+
+    # Scale
+    df_scaled = pd.DataFrame(scaler.transform(df), columns=scaler.feature_names_in_)
+    df_scaled['Injury_Grouped_Encoded'] = random.randint(0, 9)  # dummy value if needed
+
+    # Predict
+    top_3_predictions = get_top_3_predictions(model, df_scaled, injury_group_map)
+
+    return {"top_3_predicted_injury_groups": top_3_predictions}
+
+@app.route('/get_injury_info', methods=['POST'])
+def get_injury_info():
+    injury_type = request.json.get("injury_type")
+
+    prompt = f"Estimated recovery time for a '{injury_type}' injury for a football/soccer player. Shortest and fastest answer possible."
+
+    task_data = {
+        "name": JobNames.CROW,
+        "query": prompt,
+    }
+
+    # Run the task
+    task_responses = client.run_tasks_until_done(task_data)
+
+    # Check for success in any of the responses
+    for response in task_responses:
+        if hasattr(response, "has_successful_answer") and response.has_successful_answer:
+            formatted_result = {
+                "injury_type": injury_type,
+                "details": response.answer,
+            }
+            return jsonify(formatted_result)
+
+    # If none of the responses are successful
+    return jsonify({"error": "Failed to fetch data from FutureHouse"}), 500
+"""
+def send_async_email(app, msg):
+    with app.app_context():
+        mail.send(msg)
+
+def process_and_email(injury_type, recipient_email):
+    task_data = {
+        "name": JobNames.CROW,
+        "query": f"Estimated recovery time for {injury_type} injury for football/soccer player",
+    }
+
+    task_response = client.run_tasks_until_done(task_data,timeout=60)
+
+    if isinstance(task_response, list):
+        answer = task_response[0].answer
+    else:
+        answer = getattr(task_response, 'answer', "No valid response")
+
+    msg = MailMessage(subject=f"Recovery Info for {injury_type}",
+                  sender=app.config['MAIL_USERNAME'],
+                  recipients=[recipient_email],
+                  body=f"Here is the estimated recovery time:\n\n{answer}")
+
+    Thread(target=send_async_email, args=(app, msg)).start()
+
+@app.route('/get_injury_info', methods=['POST'])
+def get_injury_info():
+    data = request.get_json()
+    injury_type = data.get("injury_type")
+    user_email = data.get("email")
+
+    if not injury_type or not user_email:
+        return jsonify({"error": "Missing injury_type or email"}), 400
+
+    Thread(target=process_and_email, args=(injury_type, user_email)).start()
+
+    return jsonify({"message": "Processing started. You'll receive an email when it's ready."})"""
+
+#blockchain and streak
+# Check MetaCoins Balance
+@app.route('/check_balance/<int:user_id>', methods=['GET'])
+def check_balance(user_id):
+    try:
+        user = User.query.filter_by(id=user_id).first()
+
+        if user:
+            eth_address = user.eth_address  # Get user's Ethereum address
+            balance = contract.functions.balanceOf(eth_address).call()  # Fetch balance from smart contract
+
+            return jsonify({
+                "message": "Balance fetched successfully",
+                "balance": balance
+            }), 200
+        else:
+            return jsonify({"error": "User not found"}), 404
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+# Burn MetaCoins Route
+@app.route('/burn_metacoins', methods=['POST'])
+def burn_metacoins():
+    try:
+        data = request.get_json()
+        user_id = data.get("user_id")
+        burn_amount = data.get("amount")
+
+        if burn_amount <= 0:
+            return jsonify({"error": "Amount must be greater than zero"}), 400
+
+        user = User.query.filter_by(id=user_id).first()
+
+        if not user:
+            return jsonify({"error": "User not found"}), 404
+
+        user_address = user.eth_address
+        current_balance = contract.functions.balanceOf(user_address).call()
+
+        if current_balance < burn_amount:
+            return jsonify({"error": "Not enough MetaCoins to burn"}), 400
+
+        # Prepare transaction to call burnFrom(user_address, amount)
+        nonce = w3.eth.get_transaction_count(owner_address)
+        txn = contract.functions.burnFrom(user_address, burn_amount).build_transaction({
+            "chainId": 11155111,
+            "gas": 150000,
+            "gasPrice": w3.to_wei("10", "gwei"),
+            "nonce": nonce
+        })
+
+        signed_txn = w3.eth.account.sign_transaction(txn, private_key=owner_private_key)
+        tx_hash = w3.eth.send_raw_transaction(signed_txn.raw_transaction)
+        receipt = w3.eth.wait_for_transaction_receipt(tx_hash)
+
+        return jsonify({
+            "message": f"{burn_amount} MetaCoins burned from user successfully!",
+            "tx_hash": tx_hash.hex()
+        }), 200
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+# Updated Streak Route (Update only if it's the next day)
 @app.route('/get_streak/<int:user_id>', methods=['GET'])
 def get_and_update_streak(user_id):
-    # Get the current date
     current_date = date.today()
-
-    # Try to get the user's existing streak record
     user_streak = UserStreak.query.filter_by(user_id=user_id).first()
 
-    if user_streak:
-        # Get the user's last connection date
-        last_connection_date = user_streak.connection_dates[-1] if user_streak.connection_dates else None
+    try:
+        if user_streak:
+            last_connection_date = (
+                date.fromisoformat(user_streak.connection_dates[-1])
+                if user_streak.connection_dates else None
+            )
 
-        # Check if the last connection date exists and calculate if the streak is consecutive
-        if last_connection_date:
-            last_connection_date = date.fromisoformat(last_connection_date)
+            already_logged_in_today = (last_connection_date == current_date)
 
-            # Check if the last connection was the day before today (consecutive days)
+            if already_logged_in_today:
+                # No update, just return current state
+                return jsonify({
+                    "message": "Already logged in today",
+                    "current_streak": user_streak.current_streak,
+                    "highest_streak": user_streak.highest_streak,
+                    "score": user_streak.score,
+                    "connection_days": user_streak.connection_dates,
+                    "last_login_date": user_streak.last_login_date,
+                    "current_streak_day": user_streak.current_streak,
+                    "already_logged_in_today": True
+                }), 200
+
+            # If last login was yesterday, increment streak
             if last_connection_date == current_date - timedelta(days=1):
-                # Consecutive streak, increment current streak
                 user_streak.current_streak += 1
+                user_streak.score = user_streak.current_streak * 10
             else:
-                # Non-consecutive streak (user hasn't logged in for a while), reset current streak to 1
+                # Missed a day or no login history — reset streak
                 user_streak.current_streak = 1
+                user_streak.score = 10
 
-            # Update the highest streak if necessary
-            if user_streak.current_streak > user_streak.highest_streak:
-                user_streak.highest_streak = user_streak.current_streak
+            user_streak.connection_dates.append(current_date.isoformat())
+            user_streak.last_login_date = current_date.isoformat()
 
         else:
-            # If there is no last connection date, it's the user's first login, so set streak to 1
-            user_streak.current_streak = 1
+            # First-time login
+            user_streak = UserStreak(
+                user_id=user_id,
+                current_streak=1,
+                highest_streak=1,
+                score=10,
+                connection_dates=[current_date.isoformat()],
+                daily_points={},
+                last_login_date=current_date.isoformat()
+            )
+            db.session.add(user_streak)
 
-        # Update other fields
-        user_streak.score += 10  # Increment score by 10, for example
-        user_streak.connection_dates.append(current_date.isoformat())  # Append today's date
-        user_streak.last_login_date = current_date.isoformat()
+        # Update highest streak
+        if user_streak.current_streak > user_streak.highest_streak:
+            user_streak.highest_streak = user_streak.current_streak
 
-    else:
-        # If no streak exists, create a new streak record
-        user_streak = UserStreak(
-            user_id=user_id,
-            current_streak=1,  # First login, so streak is 1
-            highest_streak=1,  # First login, so highest streak is also 1
-            score=10,  # Initial score, can be customized
-            connection_dates=[current_date.isoformat()],  # Start with today's date
-            daily_points={current_date.isoformat(): 10},  # Points for the first day
-            last_login_date=current_date.isoformat()  # Set today's date as the last login
-        )
-        db.session.add(user_streak)
-
-    try:
         db.session.commit()
-        
-        # Return the updated streak data
+
         return jsonify({
+            "message": "Streak updated",
             "current_streak": user_streak.current_streak,
             "highest_streak": user_streak.highest_streak,
             "score": user_streak.score,
             "connection_days": user_streak.connection_dates,
-            "daily_points": user_streak.daily_points,
-            "last_login_date": user_streak.last_login_date
+            "last_login_date": user_streak.last_login_date,
+            "current_streak_day": user_streak.current_streak,
+            "already_logged_in_today": False
         }), 200
+
     except Exception as e:
         db.session.rollback()
         return jsonify({"error": str(e)}), 500
 
+    
 
+@app.route("/mint_tokens", methods=["POST"])
+def mint_tokens():
+    try:
+        data = request.get_json()
+        mint_amount = data.get("amount")
+
+        if not mint_amount:
+            return jsonify({"error": "Missing mint amount"}), 400
+
+        # Load contract owner's private key (from secure source)
+        if not owner_private_key:
+            return jsonify({"error": "Owner private key not configured"}), 500
+
+        # Mint tokens to the contract owner’s wallet (owner will later transfer if needed)
+        nonce = w3.eth.get_transaction_count(owner_address)
+
+        txn = contract.functions.ownerMintTokens(mint_amount).build_transaction({
+            "chainId": 11155111,  # Change if not on mainnet
+            "gas": 150000,
+            "gasPrice": w3.to_wei("10", "gwei"),
+            "nonce": nonce,
+            "value": 0  # Ensure no ETH is sent with the transaction
+        })
+
+        signed_txn = w3.eth.account.sign_transaction(txn, private_key=owner_private_key)
+        tx_hash = w3.eth.send_raw_transaction(signed_txn.raw_transaction)
+        receipt = w3.eth.wait_for_transaction_receipt(tx_hash)
+
+        return jsonify({
+            "message": f"Minted {mint_amount} tokens to owner wallet.",
+            "tx_hash": tx_hash.hex()
+        }), 200
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+
+
+@app.route('/add_metacoins_streak', methods=['POST'])
+def add_metacoins_streak():
+    try:
+        data = request.get_json()
+        user_id = data.get("user_id")
+
+        user = User.query.filter_by(id=user_id).first()
+        user_streak = UserStreak.query.filter_by(user_id=user_id).first()
+
+        if not user or not user_streak:
+            return jsonify({"error": "User or streak not found"}), 404
+
+        current_date = date.today()
+        last_connection_date = (
+            date.fromisoformat(user_streak.connection_dates[-1])
+            if user_streak.connection_dates else None
+        )
+
+        # Check if already rewarded today (optional: store last_reward_date to prevent double claim)
+        if last_connection_date == current_date:
+            # Reward allowed if it's the first login today
+            pass
+        elif last_connection_date == current_date - timedelta(days=1):
+            # Maintained streak, continue
+            pass
+        elif not last_connection_date:
+            # First ever login — allow reward
+            pass
+        else:
+            return jsonify({"message": "Streak not maintained. No MetaCoins added."}), 200
+
+        # Calculate reward
+        streak_meta_coins = user_streak.score // 10
+        if streak_meta_coins <= 0:
+            return jsonify({"message": "No MetaCoins to reward yet."}), 200
+
+        # Step 1: Mint to owner
+        owner_nonce = w3.eth.get_transaction_count(owner_address)
+        mint_txn = contract.functions.ownerMintTokens(streak_meta_coins).build_transaction({
+            "chainId": 11155111,
+            "gas": 150000,
+            "gasPrice": w3.to_wei("10", "gwei"),
+            "nonce": owner_nonce,
+        })
+        signed_mint_txn = w3.eth.account.sign_transaction(mint_txn, private_key=owner_private_key)
+        mint_tx_hash = w3.eth.send_raw_transaction(signed_mint_txn.raw_transaction)
+        mint_receipt = w3.eth.wait_for_transaction_receipt(mint_tx_hash)
+
+        # Step 2: Transfer to user
+        transfer_nonce = owner_nonce + 1
+        transfer_txn = contract.functions.transfer(user.eth_address, streak_meta_coins).build_transaction({
+            "chainId": 11155111,
+            "gas": 150000,
+            "gasPrice": w3.to_wei("10", "gwei"),
+            "nonce": transfer_nonce,
+        })
+        signed_transfer_txn = w3.eth.account.sign_transaction(transfer_txn, private_key=owner_private_key)
+        transfer_tx_hash = w3.eth.send_raw_transaction(signed_transfer_txn.raw_transaction)
+        transfer_receipt = w3.eth.wait_for_transaction_receipt(transfer_tx_hash)
+
+        return jsonify({
+            "message": f"{streak_meta_coins} MetaCoins rewarded successfully for streak!",
+            "mint_tx_hash": mint_tx_hash.hex(),
+            "transfer_tx_hash": transfer_tx_hash.hex()
+        }), 200
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+    
 app.app_context().push()
 if __name__ == '__main__':
     app.run(debug=True)

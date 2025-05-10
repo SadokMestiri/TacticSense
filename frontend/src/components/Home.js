@@ -15,6 +15,9 @@ const Home = ({ header , footer}) => {
   const [users, setUsers] = useState([]);
   const [error, setError] = useState(null);
   const [comments, setComments] = useState([]);
+  const [metaBalance, setMetaBalance] = useState(null);
+  const [metaCoinMessage, setMetaCoinMessage] = useState(false);
+  const [checkingBalance, setCheckingBalance] = useState(false);
   const [selectedPost, setSelectedPost] = useState(null); // For managing the selected post
   const [isCommentsVisible, setIsCommentsVisible] = useState(false); // To control visibility of the comments popup
   const [showReactions, setShowReactions] = useState(null);
@@ -258,7 +261,28 @@ console.log(user)
     }
   };
   
+  const checkBalance = async () => {
+    setCheckingBalance(true);
 
+    try {
+        const response = await axios.get(
+            `${process.env.REACT_APP_BASE_URL}/check_balance/${user.id}`,
+        );
+
+        if (response.status === 200 && response.data?.balance !== undefined) {
+            setMetaBalance(response.data.balance);
+        } else {
+            setMetaCoinMessage("Failed to retrieve MetaCoin balance.");
+        }
+    } catch (error) {
+        const errMsg = error.response?.data?.error || "Error checking balance.";
+        setMetaCoinMessage(errMsg);
+    } finally {
+        setCheckingBalance(false);
+    }
+};
+
+console.log(user)
   return (
     <div>
  {header}
@@ -269,7 +293,7 @@ console.log(user)
             <div className="sidebar-profile-info">
               <img  src={`${process.env.REACT_APP_BASE_URL}/${user.profile_image}`}   alt="profile" />
               <h1>{user.name}</h1>
-              <h3>Professional footballer</h3>
+              <h3>Doctor</h3>
               <ul>
                 <li>Your profile views <span>24K</span></li>
                 <li>Your post views <span>128K</span></li>
@@ -278,7 +302,10 @@ console.log(user)
             </div>
             <div className="sidebar-profile-link">
               <a href="#"><img src="assets/images/items.svg" alt="items" />My Items</a>
-              <a href="#"><img src="assets/images/premium.png" alt="premium" />Try Premium</a>
+<a href="#" onClick={checkBalance} style={{ width: "60px", cursor: "pointer" }}>
+    <img src="assets/images/metacoin.png" alt="metacoin" style={{ width: "50px"}} />
+    {checkingBalance ? "Checking..." : metaBalance !== null ? `Balance: ${metaBalance} MC` : "Check MetaCoin Balance"}
+</a>
             </div>
           </div>
 

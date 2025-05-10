@@ -1,0 +1,464 @@
+Player ID,Player,Nationality,Team Name,Position,Age,Season,FIFA rating,Injury,Date of Injury,Date of return,Recovery Time(days),total_minutes_played,matches_played,total_yellow_cards,total_red_cards,total_goals,total_assists,fatigue_level
+183318,Jamaal Lascelles,England,Newcastle,Center Back,26,2019/20,77,Knee injury,2019-11-09,2020-01-13,65.0,2498.0,30.0,4.0,0.0,1.0,1.0,48.28
+135343,Fabian Schär,Switzerland,Newcastle,Center Back,28,2019/20,79,Knee injury,2019-10-20,2019-11-24,35.0,2712.0,32.0,10.0,0.0,6.0,1.0,52.42
+135343,Fabian Schär,Switzerland,Newcastle,Center Back,28,2019/20,79,Hamstring strain,2020-01-02,2020-01-17,15.0,2712.0,32.0,10.0,0.0,6.0,1.0,52.42
+135343,Fabian Schär,Switzerland,Newcastle,Center Back,28,2019/20,79,Shoulder injury,2020-07-16,2020-09-28,74.0,2712.0,32.0,10.0,0.0,6.0,1.0,52.42
+170321,Paul Dummett,Wales,Newcastle,Center Back,28,2019/20,75,Groin injury,2019-12-22,2020-01-10,19.0,2032.0,27.0,3.0,0.0,0.0,0.0,39.27
+98240,Ciaran Clark,Ireland,Newcastle,Center Back,30,2019/20,75,Calf injury,2019-12-09,2020-01-10,32.0,991.0,12.0,2.0,0.0,3.0,0.0,19.15
+98240,Ciaran Clark,Ireland,Newcastle,Center Back,30,2019/20,75,Ankle injury,2020-02-16,2020-09-14,211.0,991.0,12.0,2.0,0.0,3.0,0.0,19.15
+255916,DeAndre Yedlin,United States,Newcastle,Right Back,26,2019/20,74,Groin problems,2019-04-28,2019-09-28,153.0,1656.0,21.0,4.0,0.0,1.0,1.0,32.01
+255916,DeAndre Yedlin,United States,Newcastle,Right Back,26,2019/20,74,Hip injury,2019-11-27,2019-12-10,13.0,1656.0,21.0,4.0,0.0,1.0,1.0,32.01
+255916,DeAndre Yedlin,United States,Newcastle,Right Back,26,2019/20,74,Hand injury,2020-01-05,2020-01-23,18.0,1656.0,21.0,4.0,0.0,1.0,1.0,32.01
+184528,Emil Krafth,Sweden,Newcastle,Right Back,25,2019/20,75,Ankle injury,2020-01-21,2020-06-20,151.0,2130.0,27.0,1.0,0.0,0.0,0.0,41.17
+184528,Emil Krafth,Sweden,Newcastle,Right Back,25,2019/20,75,Ankle injury,2020-07-21,2020-09-11,52.0,2130.0,27.0,1.0,0.0,0.0,0.0,41.17
+206225,Isaac Hayden,Jamaica,Newcastle,Defensive Midfielder,25,2019/20,78,Hamstring strain,2020-07-05,2020-07-25,20.0,3126.0,37.0,5.0,1.0,1.0,5.0,60.42
+346707,Sean Longstaff,England,Newcastle,Central Midfielder,22,2019/20,74,Ankle injury,2019-09-01,2019-09-28,27.0,1791.0,24.0,4.0,1.0,2.0,2.0,34.62
+346707,Sean Longstaff,England,Newcastle,Central Midfielder,22,2019/20,74,Hamstring injury,2020-07-01,2020-07-25,24.0,1791.0,24.0,4.0,1.0,2.0,2.0,34.62
+92469,Matt Ritchie,Scotland,Newcastle,Right Midfielder,30,2019/20,76,Ankle injury,2019-08-28,2020-01-03,128.0,2099.0,24.0,6.0,0.0,3.0,6.0,40.57
+272642,Allan Saint-Maximin,France,Newcastle,Left winger,23,2019/20,79,Hamstring strain,2019-09-22,2019-09-28,6.0,2400.0,30.0,0.0,0.0,4.0,3.0,46.39
+272999,Miguel Almirón,Paraguay,Newcastle,Right winger,26,2019/20,76,Hamstring injury,2019-12-09,2019-12-20,11.0,2352.0,29.0,3.0,0.0,1.0,1.0,45.46
+183318,Jamaal Lascelles,England,Newcastle,Center Back,27,2020/21,77,Hip injury,2020-09-28,2020-10-16,18.0,2197.0,25.0,6.0,0.0,0.0,0.0,42.46
+183318,Jamaal Lascelles,England,Newcastle,Center Back,27,2020/21,77,Muscle fatigue,2020-11-22,2021-01-17,56.0,2197.0,25.0,6.0,0.0,0.0,0.0,42.46
+183318,Jamaal Lascelles,England,Newcastle,Center Back,27,2020/21,77,Hamstring strain,2021-01-31,2021-02-14,14.0,2197.0,25.0,6.0,0.0,0.0,0.0,42.46
+183318,Jamaal Lascelles,England,Newcastle,Center Back,27,2020/21,77,Foot injury,2021-04-04,2021-06-01,58.0,2197.0,25.0,6.0,0.0,0.0,0.0,42.46
+135343,Fabian Schär,Switzerland,Newcastle,Center Back,29,2020/21,79,Virus,2020-11-29,2020-12-25,26.0,1456.0,21.0,2.0,0.0,0.0,0.0,28.14
+135343,Fabian Schär,Switzerland,Newcastle,Center Back,29,2020/21,79,Knee injury,2021-02-07,2021-04-25,77.0,1456.0,21.0,2.0,0.0,0.0,0.0,28.14
+98240,Ciaran Clark,Ireland,Newcastle,Center Back,31,2020/21,76,Calf injury,2021-01-19,2021-01-29,10.0,1167.0,14.0,2.0,0.0,1.0,0.0,22.56
+98240,Ciaran Clark,Ireland,Newcastle,Center Back,31,2020/21,76,Knock,2021-02-04,2021-02-14,10.0,1167.0,14.0,2.0,0.0,1.0,0.0,22.56
+206225,Isaac Hayden,Jamaica,Newcastle,Defensive Midfielder,26,2020/21,78,Coronavirus,2020-11-25,2020-12-11,16.0,2064.0,30.0,6.0,0.0,1.0,1.0,39.89
+206225,Isaac Hayden,Jamaica,Newcastle,Defensive Midfielder,26,2020/21,87,Knee injury,2021-03-20,2021-06-01,73.0,2064.0,30.0,6.0,0.0,1.0,1.0,39.89
+92469,Matt Ritchie,Scotland,Newcastle,Right Midfielder,31,2020/21,76,Shoulder injury,2020-09-27,2020-11-25,59.0,1772.0,25.0,4.0,0.0,2.0,2.0,34.25
+272642,Allan Saint-Maximin,France,Newcastle,Left winger,24,2020/21,79,Ankle injury,2020-09-21,2020-10-01,10.0,1945.0,26.0,0.0,0.0,4.0,7.0,37.59
+272642,Allan Saint-Maximin,France,Newcastle,Left winger,24,2020/21,79,Calf injury,2020-11-22,2021-01-22,61.0,1945.0,26.0,0.0,0.0,4.0,7.0,37.59
+272642,Allan Saint-Maximin,France,Newcastle,Left winger,24,2020/21,79,Groin injury,2021-02-28,2021-04-04,35.0,1945.0,26.0,0.0,0.0,4.0,7.0,37.59
+272999,Miguel Almirón,Paraguay,Newcastle,Right winger,27,2020/21,76,Knee injury,2021-02-28,2021-03-15,15.0,2666.0,37.0,3.0,0.0,8.0,2.0,51.53
+346018,Jamal Lewis,Northern Ireland,Newcastle,Left Back,23,2020/21,75,Knee problems,2020-12-31,2021-01-15,15.0,2586.0,32.0,6.0,0.0,1.0,0.0,49.98
+146795,Ryan Fraser,Scotland,Newcastle,Left winger,27,2020/21,77,Hamstring injury,2020-11-02,2020-12-15,43.0,1131.0,18.0,0.0,0.0,0.0,3.0,21.86
+146795,Ryan Fraser,Scotland,Newcastle,Left winger,27,2020/21,77,Groin injury,2021-04-01,2021-05-31,60.0,1131.0,18.0,0.0,0.0,0.0,3.0,21.86
+123682,Callum Wilson,England,Newcastle,Center Forward,29,2020/21,79,Hamstring strain,2020-11-07,2020-11-26,19.0,2559.0,31.0,7.0,0.0,12.0,5.0,49.46
+123682,Callum Wilson,England,Newcastle,Center Forward,29,2020/21,79,Hamstring injury,2021-02-07,2021-04-04,56.0,2559.0,31.0,7.0,0.0,12.0,5.0,49.46
+123682,Callum Wilson,England,Newcastle,Center Forward,29,2020/21,79,Hamstring injury,2021-05-08,2021-05-25,17.0,2559.0,31.0,7.0,0.0,12.0,5.0,49.46
+183318,Jamaal Lascelles,England,Newcastle,Center Back,28,2021/22,77,Ill,2022-02-11,2022-02-16,5.0,2350.0,27.0,9.0,0.0,3.0,0.0,45.42
+170321,Paul Dummett,Wales,Newcastle,Center Back,30,2021/22,75,Calf injury,2021-07-28,2022-01-01,157.0,1297.0,15.0,2.0,0.0,1.0,0.0,25.07
+333241,Joelinton,Brazil,Newcastle,Central Midfielder,25,2021/22,79,Knock,2022-03-07,2022-03-15,8.0,2391.0,36.0,5.0,0.0,4.0,1.0,46.21
+272642,Allan Saint-Maximin,France,Newcastle,Left winger,25,2021/22,79,Ill & knock,2022-02-14,2022-03-12,26.0,2605.0,36.0,3.0,0.0,6.0,6.0,50.35
+340329,Joe Willock,England,Newcastle,Central Midfielder,22,2021/22,75,Coronavirus,2021-12-21,2021-12-31,10.0,2112.0,33.0,0.0,0.0,8.0,0.0,40.82
+340329,Joe Willock,England,Newcastle,Central Midfielder,22,2021/22,75,Knee injury,2022-04-04,2022-04-10,6.0,2112.0,33.0,0.0,0.0,8.0,0.0,40.82
+340329,Joe Willock,England,Newcastle,Central Midfielder,22,2021/22,75,Knee injury,2022-05-01,2022-05-25,24.0,2112.0,33.0,0.0,0.0,8.0,0.0,40.82
+146795,Ryan Fraser,Scotland,Newcastle,Left winger,28,2021/22,77,Hamstring injury,2022-04-08,2022-05-09,31.0,1256.0,25.0,3.0,0.0,0.0,2.0,24.28
+123682,Callum Wilson,England,Newcastle,Center Forward,30,2021/22,78,Hamstring injury,2021-08-30,2021-10-17,48.0,2122.0,28.0,4.0,0.0,10.0,2.0,41.01
+123682,Callum Wilson,England,Newcastle,Center Forward,30,2021/22,78,Calf injury,2021-12-27,2022-05-01,125.0,2122.0,28.0,4.0,0.0,10.0,2.0,41.01
+95810,Kieran Trippier,England,Newcastle,Right Back,31,2021/22,81,Metatarsal fracture,2022-02-13,2022-05-01,77.0,2485.0,33.0,1.0,0.0,0.0,2.0,48.03
+135343,Fabian Schär,Switzerland,Newcastle,Center Back,31,2022/23,80,concussion,2023-02-27,2023-03-05,6.0,2886.0,33.0,6.0,0.0,3.0,1.0,55.78
+333241,Joelinton,Brazil,Newcastle,Central Midfielder,26,2022/23,80,Knock,2023-05-22,2023-05-31,9.0,2678.0,33.0,9.0,0.0,5.0,2.0,51.76
+346707,Sean Longstaff,England,Newcastle,Central Midfielder,25,2022/23,77,Outer ligament problems,2023-04-27,2023-05-20,23.0,1907.0,29.0,2.0,0.0,1.0,2.0,36.86
+272642,Allan Saint-Maximin,France,Newcastle,Left winger,26,2022/23,79,Hamstring injury,2022-08-29,2022-10-05,37.0,1688.0,26.0,4.0,0.0,2.0,5.0,32.62
+272642,Allan Saint-Maximin,France,Newcastle,Left winger,26,2022/23,79,Muscle injury,2022-10-14,2022-10-26,12.0,1688.0,26.0,4.0,0.0,2.0,5.0,32.62
+272642,Allan Saint-Maximin,France,Newcastle,Left winger,26,2022/23,79,Hamstring injury,2023-04-06,2023-05-05,29.0,1688.0,26.0,4.0,0.0,2.0,5.0,32.62
+272999,Miguel Almirón,Paraguay,Newcastle,Right winger,29,2022/23,78,Thigh problems,2023-03-15,2023-04-15,31.0,2204.0,32.0,1.0,0.0,10.0,1.0,42.6
+340329,Joe Willock,England,Newcastle,Central Midfielder,23,2022/23,76,Hamstring injury,2023-05-18,2023-06-05,18.0,2291.0,31.0,0.0,0.0,4.0,2.0,44.28
+123682,Callum Wilson,England,Newcastle,Center Forward,31,2022/23,79,Hamstring injury,2022-08-21,2022-09-25,35.0,1022.0,15.0,2.0,0.0,8.0,2.0,19.75
+520624,Bruno Guimarães,Brazil,Newcastle,Defensive Midfielder,25,2022/23,81,Hamstring injury,2022-08-25,2022-09-16,22.0,2483.0,34.0,6.0,0.0,8.0,5.0,47.99
+520624,Bruno Guimarães,Brazil,Newcastle,Defensive Midfielder,25,2022/23,81,Ankle injury,2023-02-01,2023-02-20,19.0,2483.0,34.0,6.0,0.0,8.0,5.0,47.99
+192080,Nick Pope,England,Newcastle,Goalkeeper,31,2022/23,83,Hand injury,2023-05-23,2023-06-20,28.0,3510.0,39.0,3.0,0.0,0.0,0.0,67.84
+503733,Anthony Gordon,England,Newcastle,Left winger,22,2022/23,77,Ankle injury,2023-03-10,2023-04-01,22.0,2979.0,40.0,11.0,0.0,7.0,2.0,57.58
+349066,Alexander Isak,Sweden,Newcastle,Center Forward,23,2022/23,80,Thigh problems,2022-09-20,2023-01-04,106.0,1755.0,25.0,4.0,0.0,6.0,1.0,33.92
+183318,Jamaal Lascelles,England,Newcastle,Center Back,30,2023/24,76,unknown injury,2023-12-23,2024-01-01,9.0,1868.0,24.0,5.0,0.0,1.0,0.0,36.1
+135343,Fabian Schär,Switzerland,Newcastle,Center Back,32,2023/24,82,Hamstring injury,2024-04-27,2024-05-15,18.0,3959.0,46.0,8.0,0.0,1.0,3.0,76.52
+333241,Joelinton,Brazil,Newcastle,Central Midfielder,27,2023/24,82,Hamstring injury,2023-09-13,2023-10-15,32.0,3085.0,39.0,14.0,0.0,7.0,3.0,59.63
+333241,Joelinton,Brazil,Newcastle,Central Midfielder,27,2023/24,82,Hamstring injury,2023-12-16,2023-12-25,9.0,3085.0,39.0,14.0,0.0,7.0,3.0,59.63
+333241,Joelinton,Brazil,Newcastle,Central Midfielder,27,2023/24,82,Groin surgery,2024-01-06,2024-05-03,118.0,3085.0,39.0,14.0,0.0,7.0,3.0,59.63
+346707,Sean Longstaff,England,Newcastle,Central Midfielder,26,2023/24,77,Ankle injury,2023-11-11,2023-12-08,27.0,2963.0,40.0,4.0,0.0,3.0,3.0,57.27
+272999,Miguel Almirón,Paraguay,Newcastle,Right winger,30,2023/24,79,Knee injury,2024-03-30,2024-05-03,34.0,3035.0,46.0,4.0,0.0,7.0,2.0,58.66
+340329,Joe Willock,England,Newcastle,Central Midfielder,24,2023/24,78,Hamstring injury,2023-08-01,2023-10-23,83.0,1639.0,25.0,2.0,0.0,2.0,4.0,31.68
+340329,Joe Willock,England,Newcastle,Central Midfielder,24,2023/24,78,Achilles tendon problems,2023-11-24,2024-02-23,91.0,1639.0,25.0,2.0,0.0,2.0,4.0,31.68
+340329,Joe Willock,England,Newcastle,Central Midfielder,24,2023/24,78,Achilles tendon problems,2024-04-06,2024-05-20,44.0,1639.0,25.0,2.0,0.0,2.0,4.0,31.68
+567576,Elliot Anderson,England,Newcastle,Central Midfielder,18,2023/24,74,Back injury,2023-10-23,2024-02-25,125.0,813.0,27.0,0.0,0.0,0.0,2.0,15.71
+123682,Callum Wilson,England,Newcastle,Center Forward,32,2023/24,82,Hamstring injury,2023-09-24,2023-10-07,13.0,2143.0,39.0,4.0,0.0,20.0,4.0,41.42
+123682,Callum Wilson,England,Newcastle,Center Forward,32,2023/24,82,Hamstring injury,2023-11-07,2023-12-08,31.0,2143.0,39.0,4.0,0.0,20.0,4.0,41.42
+123682,Callum Wilson,England,Newcastle,Center Forward,32,2023/24,82,Calf injury,2023-12-26,2024-02-01,37.0,2143.0,39.0,4.0,0.0,20.0,4.0,41.42
+123682,Callum Wilson,England,Newcastle,Center Forward,32,2023/24,82,Chest injury,2024-02-11,2024-04-15,64.0,2143.0,39.0,4.0,0.0,20.0,4.0,41.42
+123682,Callum Wilson,England,Newcastle,Center Forward,32,2023/24,82,Ill,2024-05-06,2024-05-17,11.0,2143.0,39.0,4.0,0.0,20.0,4.0,41.42
+134270,Dan Burn,England,Newcastle,Center Back,32,2023/24,78,Back injury,2023-11-04,2023-12-11,37.0,3216.0,41.0,5.0,0.0,4.0,0.0,62.16
+95810,Kieran Trippier,England,Newcastle,Right Back,33,2023/24,85,Groin injury,2023-12-26,2024-01-05,10.0,4010.0,48.0,6.0,0.0,0.0,11.0,77.5
+95810,Kieran Trippier,England,Newcastle,Right Back,33,2023/24,85,Calf injury,2024-03-02,2024-05-10,69.0,4010.0,48.0,6.0,0.0,0.0,11.0,77.5
+361093,Sven Botman,Netherlands,Newcastle,Center Back,24,2023/24,83,Ankle injury,2023-08-27,2023-09-15,19.0,2700.0,32.0,3.0,0.0,1.0,1.0,52.18
+361093,Sven Botman,Netherlands,Newcastle,Center Back,24,2023/24,83,Knee injury,2023-09-28,2023-12-15,78.0,2700.0,32.0,3.0,0.0,1.0,1.0,52.18
+361093,Sven Botman,Netherlands,Newcastle,Center Back,24,2023/24,83,Cruciate ligament surgery,2024-03-20,2024-12-02,257.0,2700.0,32.0,3.0,0.0,1.0,1.0,52.18
+922769,Lewis Miley,England,Newcastle,Central Midfielder,18,2023/24,70,Fever,2023-10-16,2023-11-01,16.0,928.0,14.0,0.0,0.0,1.0,2.0,17.94
+922769,Lewis Miley,England,Newcastle,Central Midfielder,18,2023/24,70,ack injury,2024-03-25,2024-05-20,56.0,928.0,14.0,0.0,0.0,1.0,2.0,17.94
+503733,Anthony Gordon,England,Newcastle,Left winger,23,2023/24,80,Ankle injury,2024-05-15,2024-05-27,12.0,2604.0,45.0,9.0,0.0,7.0,4.0,50.33
+349066,Alexander Isak,Sweden,Newcastle,Center Forward,24,2023/24,83,Groin injury,2023-10-25,2023-11-24,30.0,2665.0,40.0,3.0,0.0,18.0,2.0,51.51
+349066,Alexander Isak,Sweden,Newcastle,Center Forward,24,2023/24,83,Groin injury,2024-01-30,2024-02-23,24.0,2665.0,40.0,3.0,0.0,18.0,2.0,51.51
+503981,Tino Livramento,England,Newcastle,Right Back,21,2023/24,74,Ill,2024-01-12,2024-01-20,8.0,1174.0,21.0,1.0,0.0,0.0,1.0,22.69
+503981,Tino Livramento,England,Newcastle,Right Back,21,2023/24,74,Ankle injury,2024-03-11,2024-04-12,32.0,1174.0,21.0,1.0,0.0,0.0,1.0,22.69
+503981,Tino Livramento,England,Newcastle,Right Back,21,2023/24,74,Ankle injury,2024-05-14,2024-05-27,13.0,1174.0,21.0,1.0,0.0,0.0,1.0,22.69
+398065,Harvey Barnes,England,Newcastle,Left winger,26,2023/24,80,Foot injury,2023-09-24,2024-02-01,130.0,1833.0,28.0,4.0,0.0,8.0,3.0,35.43
+398065,Harvey Barnes,England,Newcastle,Left winger,26,2023/24,80,Hamstring injury,2024-03-02,2024-03-30,28.0,1833.0,28.0,4.0,0.0,8.0,3.0,35.43
+135343,Fabian Schär,Switzerland,Newcastle,Center Back,32,2023/24,82,concussion,2023-02-27,2023-03-05,6.0,3959.0,46.0,8.0,0.0,1.0,3.0,76.52
+192080,Nick Pope,England,Newcastle,Goalkeeper,32,2023/24,84,Shoulder injury,2023-12-02,2024-05-02,152.0,3528.0,40.0,3.0,1.0,0.0,0.0,68.19
+72476,Bernd Leno,Germany,Arsenal,Goalkeeper,28,2019/20,83,Ligament stretching,2020-06-21,2020-08-27,67.0,3420.0,38.0,2.0,0.0,0.0,0.0,66.1
+94005,Sead Kolasinac,Bosnia-Herzegovina,Arsenal,Center Back,27,2019/20,80,Hamstring injury,2019-11-17,2019-11-30,13.0,2902.0,40.0,10.0,0.0,0.0,8.0,56.09
+94005,Sead Kolasinac,Bosnia-Herzegovina,Arsenal,Center Back,27,2019/20,80,Arm injury,2020-02-24,2020-06-15,112.0,2902.0,40.0,10.0,0.0,0.0,8.0,56.09
+94005,Sead Kolasinac,Bosnia-Herzegovina,Arsenal,Center Back,27,2019/20,80,Muscle strain,2020-01-15,2020-02-15,31.0,2902.0,40.0,10.0,0.0,0.0,8.0,56.09
+94005,Sead Kolasinac,Bosnia-Herzegovina,Arsenal,Center Back,27,2019/20,90,Ankle injury,2019-12-16,2019-12-30,14.0,2902.0,40.0,10.0,0.0,0.0,8.0,56.09
+300716,Kieran Tierney,Scotland,Arsenal,Left Back,23,2019/20,75,Shoulder injury,2019-12-09,2020-03-14,96.0,1340.0,17.0,1.0,0.0,0.0,2.0,25.9
+300716,Kieran Tierney,Scotland,Arsenal,Left Back,23,2019/20,75,Groin injury,2020-09-13,2020-09-27,14.0,1340.0,17.0,1.0,0.0,0.0,2.0,25.9
+300716,Kieran Tierney,Scotland,Arsenal,Left Back,23,2019/20,75,Knee injury,2021-01-19,2021-02-16,28.0,1340.0,17.0,1.0,0.0,0.0,2.0,25.9
+300716,Kieran Tierney,Scotland,Arsenal,Left Back,23,2019/20,75,Knee injury,2021-04-03,2021-05-05,32.0,1340.0,17.0,1.0,0.0,0.0,2.0,25.9
+318077,Lucas Torreira,Uruguay,Arsenal,Defensive Midfielder,24,2019/20,83,Ankle injury,2020-03-03,2020-07-03,122.0,2796.0,46.0,6.0,1.0,1.0,1.0,54.04
+111455,Granit Xhaka,Switzerland,Arsenal,Defensive Midfielder,27,2019/20,83,Back injury,2019-08-12,2019-08-23,11.0,2984.0,35.0,10.0,0.0,2.0,5.0,57.67
+111455,Granit Xhaka,Switzerland,Arsenal,Defensive Midfielder,27,2019/20,83,concussion,2019-12-09,2019-12-17,8.0,2984.0,35.0,10.0,0.0,2.0,5.0,57.67
+111455,Granit Xhaka,Switzerland,Arsenal,Defensive Midfielder,27,2019/20,83,Ankle injury,2020-06-18,2020-06-24,6.0,2984.0,35.0,10.0,0.0,2.0,5.0,57.67
+465830,Mattéo Guendouzi,France,Arsenal,Central Midfielder,21,2019/20,74,Fitness,2020-06-25,2020-10-07,104.0,3087.0,45.0,12.0,0.0,0.0,2.0,59.66
+319745,Dani Ceballos,Spain,Arsenal,Central Midfielder,23,2019/20,80,Torn muscle bundle,2019-11-07,2019-12-31,54.0,1718.0,29.0,2.0,0.0,3.0,3.0,33.2
+655488,Gabriel Martinelli,Brazil,Arsenal,Left winger,19,2019/20,72,Hamstring injury,2019-12-23,2020-01-06,14.0,717.0,15.0,2.0,0.0,4.0,3.0,13.86
+343052,Nicolas Pépé,Cote d'Ivoire,Arsenal,Right winger,25,2019/20,81,Muscle fatigue,2020-07-02,2020-07-06,4.0,1632.0,19.0,1.0,0.0,10.0,6.0,31.54
+340325,Reiss Nelson,England,Arsenal,Right winger,20,2019/20,73,Hamstring injury,2020-01-09,2020-02-24,46.0,718.0,20.0,1.0,0.0,1.0,1.0,13.88
+93720,Alexandre Lacazette,France,Arsenal,Center Forward,29,2019/20,85,Ankle injury,2019-09-02,2019-10-20,48.0,3013.0,41.0,8.0,1.0,17.0,7.0,58.23
+111455,Granit Xhaka,Switzerland,Arsenal,Defensive Midfielder,28,2020/21,83,Ill,2021-04-01,2021-04-04,3.0,3282.0,41.0,10.0,1.0,2.0,1.0,63.43
+111455,Granit Xhaka,Switzerland,Arsenal,Defensive Midfielder,28,2020/21,83,Groin injury,2021-05-06,2021-05-16,10.0,3282.0,41.0,10.0,1.0,2.0,1.0,63.43
+319745,Dani Ceballos,Spain,Arsenal,Central Midfielder,24,2020/21,80,Calf injury,2021-01-15,2021-02-01,17.0,2486.0,39.0,4.0,0.0,1.0,1.0,48.05
+655488,Gabriel Martinelli,Brazil,Arsenal,Left winger,20,2020/21,72,Ankle injury,2021-01-09,2021-01-17,8.0,722.0,12.0,0.0,0.0,2.0,1.0,13.95
+433177,Bukayo Saka,England,Arsenal,Right winger,19,2020/21,72,Hip problems,2021-01-28,2021-01-31,3.0,2915.0,38.0,5.0,0.0,4.0,9.0,56.34
+93720,Alexandre Lacazette,France,Arsenal,Center Forward,29,2020/21,84,Dead leg,2021-04-18,2021-05-06,18.0,2532.0,39.0,7.0,0.0,12.0,6.0,48.94
+435338,Gabriel Magalhães,Brazil,Arsenal,Center Back,23,2020/21,80,Coronavirus,2020-12-26,2021-01-13,18.0,1862.0,21.0,5.0,0.0,3.0,0.0,35.99
+160438,Mohamed Elneny,Egypt,Arsenal,Defensive Midfielder,28,2020/21,76,Virus,2020-11-16,2020-11-28,12.0,2713.0,32.0,7.0,0.0,2.0,3.0,52.44
+316264,Martin Ødegaard,Norway,Arsenal,Attacking Midfielder,22,2020/21,75,Ankle injury,2021-04-05,2021-04-20,15.0,1856.0,28.0,1.0,0.0,3.0,4.0,35.87
+300716,Kieran Tierney,Scotland,Arsenal,Left Back,25,2021/22,79,Ankle problems,2021-10-21,2021-11-06,16.0,2565.0,31.0,2.0,0.0,3.0,6.0,49.57
+300716,Kieran Tierney,Scotland,Arsenal,Left Back,25,2021/22,79,Knee surgery,2022-03-31,2022-07-07,98.0,2565.0,31.0,2.0,0.0,3.0,6.0,49.57
+111455,Granit Xhaka,Switzerland,Arsenal,Defensive Midfielder,29,2021/22,83,Inner ligament injury,2021-09-27,2021-12-05,69.0,3128.0,37.0,8.0,1.0,0.0,3.0,60.46
+93720,Alexandre Lacazette,France,Arsenal,Center Forward,31,2021/22,84,Coronavirus,2022-04-14,2022-04-19,5.0,2162.0,39.0,1.0,0.0,13.0,6.0,41.79
+435338,Gabriel Magalhães,Brazil,Arsenal,Center Back,24,2021/22,80,Knee injury,2021-07-06,2021-08-25,50.0,2904.0,33.0,4.0,0.0,3.0,1.0,56.13
+335721,Ben White,England,Arsenal,Right Back,24,2021/22,76,Hamstring injury,2022-04-25,2022-05-15,20.0,3593.0,40.0,4.0,0.0,0.0,0.0,69.44
+331560,Takehiro Tomiyasu,Japan,Arsenal,Right Back,23,2021/22,78,Calf injury,2022-02-20,2022-04-21,60.0,2764.0,33.0,1.0,0.0,1.0,1.0,53.42
+655488,Gabriel Martinelli,Brazil,Arsenal,Left winger,22,2022/23,81,Ankle injury,2023-05-14,2023-06-01,18.0,2912.0,39.0,5.0,0.0,9.0,6.0,56.28
+340324,Eddie Nketiah,England,Arsenal,Center Forward,24,2022/23,75,Ankle injury,2023-03-02,2023-04-13,42.0,1719.0,39.0,3.0,0.0,9.0,2.0,33.22
+495666,William Saliba,France,Arsenal,Center Back,22,2022/23,82,Back injury,2023-03-16,2023-07-01,107.0,3316.0,37.0,7.0,0.0,2.0,1.0,64.09
+160438,Mohamed Elneny,Egypt,Arsenal,Defensive Midfielder,30,2022/23,77,Thigh problems,2022-08-27,2022-11-01,66.0,810.0,14.0,1.0,0.0,0.0,1.0,15.66
+160438,Mohamed Elneny,Egypt,Arsenal,Defensive Midfielder,30,2022/23,77,Knee injury,2023-01-14,2023-09-20,249.0,810.0,14.0,1.0,0.0,0.0,1.0,15.66
+331560,Takehiro Tomiyasu,Japan,Arsenal,Right Back,24,2022/23,79,muscular problems,2022-11-03,2022-11-15,12.0,1188.0,24.0,2.0,0.0,0.0,1.0,22.96
+331560,Takehiro Tomiyasu,Japan,Arsenal,Right Back,24,2022/23,79,Knee surgery,2023-03-16,2023-07-01,107.0,1188.0,24.0,2.0,0.0,0.0,1.0,22.96
+203853,Oleksandr Zinchenko,Ukraine,Arsenal,Left Back,26,2022/23,82,Knee problems and Calf injury,2022-08-26,2022-11-01,67.0,1668.0,26.0,1.0,0.0,0.0,4.0,32.24
+203853,Oleksandr Zinchenko,Ukraine,Arsenal,Left Back,26,2022/23,82,unknown injury,2023-04-14,2023-04-17,3.0,1668.0,26.0,1.0,0.0,0.0,4.0,32.24
+203853,Oleksandr Zinchenko,Ukraine,Arsenal,Left Back,26,2022/23,82,Calf muscle tear,2023-05-07,2023-08-18,103.0,1668.0,26.0,1.0,0.0,0.0,4.0,32.24
+363205,Gabriel Jesus,Brazil,Arsenal,Center Forward,26,2022/23,85,Knee injury,2022-12-02,2023-03-11,99.0,2681.0,39.0,9.0,0.0,13.0,10.0,51.82
+655488,Gabriel Martinelli,Brazil,Arsenal,Left winger,23,2023/24,83,Hamstring injury,2023-09-17,2023-10-07,20.0,3424.0,47.0,4.0,0.0,12.0,7.0,66.18
+655488,Gabriel Martinelli,Brazil,Arsenal,Left winger,23,2023/24,83,Foot injury,2024-03-05,2024-03-29,24.0,3424.0,47.0,4.0,0.0,12.0,7.0,66.18
+433177,Bukayo Saka,England,Arsenal,Right winger,22,2023/24,86,unknown injury,2024-03-21,2024-04-06,16.0,4246.0,52.0,4.0,0.0,17.0,16.0,82.06
+433177,Bukayo Saka,England,Arsenal,Right winger,22,2023/24,86,Thigh problems,2023-10-03,2023-10-21,18.0,4246.0,52.0,4.0,0.0,17.0,16.0,82.06
+316264,Martin Ødegaard,Norway,Arsenal,Attacking Midfielder,25,2023/24,88,Hip problems,2023-11-03,2023-11-22,19.0,3904.0,49.0,3.0,0.0,15.0,6.0,75.45
+335721,Ben White,England,Arsenal,Right Back,26,2023/24,82,Knee injury,2023-11-09,2023-11-20,11.0,4059.0,53.0,8.0,0.0,3.0,4.0,78.45
+331560,Takehiro Tomiyasu,Japan,Arsenal,Right Back,25,2023/24,78,Calf injury,2023-12-03,2024-03-20,108.0,1480.0,33.0,3.0,0.0,1.0,4.0,28.6
+203853,Oleksandr Zinchenko,Ukraine,Arsenal,Left Back,27,2023/24,80,Calf problems,2023-12-30,2024-01-18,19.0,3234.0,46.0,8.0,0.0,2.0,2.0,62.5
+363205,Gabriel Jesus,Brazil,Arsenal,Center Forward,27,2023/24,82,Hamstring injury,2023-10-24,2023-11-19,26.0,2181.0,34.0,7.0,0.0,13.0,4.0,42.15
+363205,Gabriel Jesus,Brazil,Arsenal,Center Forward,27,2023/24,82,Knee injury,2024-01-05,2024-01-18,13.0,2181.0,34.0,7.0,0.0,13.0,4.0,42.15
+253677,Tyrone Mings,England,Aston Villa,Center Back,28,2019/20,75,Muscle strain,2019-12-09,2019-12-31,22.0,1373.0,16.0,3.0,0.0,1.0,1.0,26.54
+183720,Anwar El Ghazi,Netherlands,Aston Villa,Right winger,24,2019/20,75,Knee injury,2019-12-02,2019-12-07,5.0,1323.0,19.0,2.0,0.0,3.0,4.0,25.57
+250478,Matt Targett,England,Aston Villa,Left Back,24,2019/20,75,Muscle strain,2020-06-28,2020-07-11,13.0,1736.0,23.0,4.0,0.0,3.0,3.0,33.55
+250478,Matt Targett,England,Aston Villa,Left Back,24,2019/20,75,Hamstring injury,2019-12-31,2020-01-17,17.0,1736.0,23.0,4.0,0.0,3.0,3.0,33.55
+250478,Matt Targett,England,Aston Villa,Left Back,24,2019/20,75,Hamstring injury,2019-08-29,2019-09-24,26.0,1736.0,23.0,4.0,0.0,3.0,3.0,33.55
+203460,Jack Grealish,England,Aston Villa,Left winger,24,2019/20,80,Calf injury,2019-10-27,2019-11-24,28.0,1614.0,18.0,5.0,0.0,5.0,5.0,31.19
+425334,Matty Cash,Poland,Aston Villa,Right Back,24,2020/21,77,Hamstring injury,2021-02-18,,,1135.0,13.0,5.0,0.0,0.0,2.0,21.94
+413403,Ezri Konsa,England,Aston Villa,Center Back,23,2020/21,77,bruise,2020-12-13,2020-12-25,12.0,2432.0,29.0,4.0,0.0,3.0,1.0,47.0
+131996,Bertrand Traoré,Burkina Faso,Aston Villa,Right winger,24,2020/21,76,Bruised ribs,2020-11-02,2020-11-20,18.0,882.0,20.0,3.0,0.0,3.0,2.0,17.05
+447661,Douglas Luiz,Brazil,Aston Villa,Central Midfielder,23,2020/21,76,Hamstring injury,2020-10-25,2020-11-25,31.0,2602.0,31.0,10.0,0.0,1.0,3.0,50.29
+234189,Mahmoud Trezeguet,Egypt,Aston Villa,Left winger,26,2020/21,75,Head injury,2020-12-01,2021-01-21,51.0,1694.0,27.0,0.0,0.0,3.0,2.0,32.74
+174094,Morgan Sanson,France,Aston Villa,Central Midfielder,26,2020/21,77,Knee problems,2021-04-09,2021-08-29,142.0,1846.0,25.0,4.0,0.0,4.0,5.0,35.68
+131978,Ross Barkley,England,Aston Villa,Central Midfielder,27,2020/21,78,Hamstring injury,2020-11-21,2021-01-19,59.0,1738.0,30.0,1.0,0.0,6.0,6.0,33.59
+111873,Emiliano Martínez,Argentina,Aston Villa,Goalkeeper,29,2021/22,84,Knee problems,2022-05-20,2022-05-29,9.0,3690.0,41.0,3.0,0.0,0.0,0.0,71.32
+707447,Emiliano Martínez,Uruguay,Aston Villa,Goalkeeper,29,2021/22,84,Knee problems,2022-05-20,2022-05-29,9.0,,,,,,,
+413403,Ezri Konsa,England,Aston Villa,Center Back,24,2021/22,79,Knee injury,2022-05-15,2022-07-10,56.0,3649.0,41.0,5.0,1.0,2.0,0.0,70.53
+126664,Lucas Digne,France,Aston Villa,Left Back,28,2021/22,84,Shoulder injury,2022-04-09,2022-04-25,16.0,3413.0,38.0,7.0,0.0,0.0,3.0,65.96
+126664,Lucas Digne,France,Aston Villa,Left Back,28,2021/22,84,Hamstring injury,2022-03-14,2022-03-21,7.0,3413.0,38.0,7.0,0.0,0.0,3.0,65.96
+387626,Leon Bailey,Jamaica,Aston Villa,Right winger,24,2021/22,81,Thigh problems,2021-12-05,2022-02-10,67.0,2054.0,31.0,6.0,0.0,7.0,6.0,39.7
+174094,Morgan Sanson,France,Aston Villa,Central Midfielder,27,2021/22,76,Knock,2022-04-10,2022-05-08,28.0,615.0,16.0,3.0,0.0,0.0,0.0,11.89
+174094,Morgan Sanson,France,Aston Villa,Central Midfielder,27,2021/22,76,Ill,2021-10-30,2021-11-06,7.0,615.0,16.0,3.0,0.0,0.0,0.0,11.89
+174094,Morgan Sanson,France,Aston Villa,Central Midfielder,27,2021/22,76,Coronavirus,2021-12-12,2021-12-25,13.0,615.0,16.0,3.0,0.0,0.0,0.0,11.89
+425334,Matty Cash,Poland,Aston Villa,Right Back,25,2022/23,79,Calf injury,2023-03-29,2023-05-03,35.0,2897.0,34.0,7.0,0.0,3.0,3.0,55.99
+425334,Matty Cash,Poland,Aston Villa,Right Back,25,2022/23,79,Tendon rupture,2022-09-03,2022-09-28,25.0,2897.0,34.0,7.0,0.0,3.0,3.0,55.99
+329145,Diego Carlos,Brazil,Aston Villa,Center Back,30,2022/23,82,Achilles tendon rupture,2022-08-11,2023-03-12,213.0,1924.0,23.0,2.0,0.0,1.0,0.0,37.19
+193116,John McGinn,Scotland,Aston Villa,Central Midfielder,28,2022/23,78,Hamstring strain,2023-01-01,2023-02-04,34.0,2945.0,36.0,8.0,0.0,0.0,2.0,56.92
+126664,Lucas Digne,France,Aston Villa,Left Back,29,2022/23,82,Shoulder injury,2023-01-14,2023-02-03,20.0,2176.0,27.0,4.0,0.0,1.0,4.0,42.06
+126664,Lucas Digne,France,Aston Villa,Left Back,29,2022/23,82,Ankle injury,2022-09-17,2022-10-27,40.0,2176.0,27.0,4.0,0.0,1.0,4.0,42.06
+193098,Álex Moreno,Spain,Aston Villa,Left Back,31,2022/23,80,Hamstring injury,2023-05-20,2023-09-15,118.0,3256.0,41.0,4.0,1.0,2.0,5.0,62.93
+394327,Boubacar Kamara,France,Aston Villa,Defensive Midfielder,23,2022/23,80,Ankle injury,2023-03-12,2023-03-18,6.0,2433.0,29.0,3.0,0.0,0.0,1.0,47.02
+394327,Boubacar Kamara,France,Aston Villa,Defensive Midfielder,23,2022/23,80,Knee injury,2022-09-15,2022-10-31,46.0,2433.0,29.0,3.0,0.0,0.0,1.0,47.02
+425334,Matty Cash,Poland,Aston Villa,Defensive Midfielder,26,2023/24,79,Calf injury,2024-05-12,2024-06-12,31.0,2277.0,34.0,6.0,0.0,3.0,2.0,44.01
+425334,Matty Cash,Poland,Aston Villa,Right Back,26,2023/24,79,Hamstring injury,2024-03-21,2024-04-12,22.0,2277.0,34.0,6.0,0.0,3.0,2.0,44.01
+425334,Matty Cash,Poland,Aston Villa,Right Back,26,2023/24,79,Ill,2023-12-29,2023-12-31,2.0,2277.0,34.0,6.0,0.0,3.0,2.0,44.01
+329145,Diego Carlos,Brazil,Aston Villa,Center Back,31,2023/24,81,Hamstring injury,2024-02-14,2024-03-05,20.0,1046.0,17.0,2.0,0.0,0.0,1.0,20.22
+413403,Ezri Konsa,England,Aston Villa,Center Back,26,2023/24,80,Knee injury,2024-02-04,2024-03-01,26.0,3942.0,45.0,10.0,0.0,0.0,0.0,76.19
+249565,Youri Tielemans,Belgium,Aston Villa,Central Midfielder,27,2023/24,81,Groin injury,2024-04-27,2024-06-10,44.0,1986.0,35.0,3.0,0.0,0.0,4.0,38.38
+249565,Youri Tielemans,Belgium,Aston Villa,Central Midfielder,27,2023/24,81,Calf injury,2023-12-13,2024-01-12,30.0,1986.0,35.0,3.0,0.0,0.0,4.0,38.38
+126664,Lucas Digne,France,Aston Villa,Left Back,30,2023/24,79,Hamstring injury,2023-12-26,2024-02-06,42.0,2268.0,38.0,10.0,0.0,0.0,5.0,43.83
+399776,Pau Torres,Spain,Aston Villa,Center Back,27,2023/24,82,Ankle injury,2024-01-05,2024-02-04,30.0,3646.0,42.0,7.0,0.0,3.0,1.0,70.47
+399776,Pau Torres,Spain,Aston Villa,Center Back,27,2023/24,82,unknown injury,2023-12-18,2023-12-23,5.0,3646.0,42.0,7.0,0.0,3.0,1.0,70.47
+193098,Álex Moreno,Spain,Aston Villa,Left Back,31,2023/24,80,minor knock,2024-04-15,2024-05-31,46.0,1690.0,27.0,3.0,0.0,1.0,3.0,32.66
+649317,Jhon Durán,Colombia,Aston Villa,Center Forward,20,2023/24,68,unknown injury,2023-08-11,2023-08-13,2.0,402.0,28.0,5.0,0.0,3.0,0.0,7.77
+649317,Jhon Durán,Colombia,Aston Villa,Center Forward,20,2023/24,68,infection,2023-10-21,2023-10-23,2.0,402.0,28.0,5.0,0.0,3.0,0.0,7.77
+649317,Jhon Durán,Colombia,Aston Villa,Center Forward,20,2023/24,68,infection,2023-10-28,2023-11-06,9.0,402.0,28.0,5.0,0.0,3.0,0.0,7.77
+649317,Jhon Durán,Colombia,Aston Villa,Center Forward,20,2023/24,68,Hamstring injury,2024-01-25,2024-03-08,43.0,402.0,28.0,5.0,0.0,3.0,0.0,7.77
+503743,Morgan Rogers,England,Aston Villa,Attacking Midfielder,21,2023/24,67,Hamstring injury,2024-05-06,2024-06-01,26.0,361.0,5.0,2.0,0.0,4.0,3.0,6.98
+387626,Leon Bailey,Jamaica,Aston Villa,Right winger,26,2023/24,80,Ill,2024-05-18,2024-05-31,13.0,2209.0,40.0,3.0,0.0,9.0,8.0,42.69
+503749,Jacob Ramsey,England,Aston Villa,Attacking Midfielder,23,2023/24,78,Metatarsal fracture,2023-07-02,2023-09-20,80.0,2123.0,31.0,3.0,0.0,5.0,5.0,41.03
+503749,Jacob Ramsey,England,Aston Villa,Attacking Midfielder,23,2023/24,78,Foot injury,2023-10-04,2023-11-24,51.0,2123.0,31.0,3.0,0.0,5.0,5.0,41.03
+503749,Jacob Ramsey,England,Aston Villa,Attacking Midfielder,23,2023/24,78,Hamstring injury,2024-01-13,2024-01-29,16.0,2123.0,31.0,3.0,0.0,5.0,5.0,41.03
+503749,Jacob Ramsey,England,Aston Villa,Attacking Midfielder,23,2023/24,78,Toe injury,2024-03-03,,,2123.0,31.0,3.0,0.0,5.0,5.0,41.03
+394327,Boubacar Kamara,France,Aston Villa,Defensive Midfielder,24,2023/24,80,Knee injury,2024-02-11,,,2534.0,33.0,8.0,1.0,1.0,2.0,48.98
+80444,Philippe Coutinho,Brazil,Aston Villa,Attacking Midfielder,32,2023/24,79,Hamstring injury,2023-08-20,2023-09-25,36.0,298.0,10.0,1.0,0.0,1.0,0.0,5.76
+177907,Harry Maguire,England,Man United,Center Back,27,2020/21,80,Ankle injury,2021-05-09,2021-06-13,35.0,4444.0,49.0,12.0,0.0,4.0,3.0,85.89
+177907,Harry Maguire,England,Man United,Center Back,28,2021/22,80,Calf injury,2021-09-25,2021-10-15,20.0,4339.0,49.0,16.0,0.0,2.0,1.0,83.86
+177907,Harry Maguire,England,Man United,Center Back,28,2021/22,80,Chest injury,2022-01-01,2022-01-14,13.0,4339.0,49.0,16.0,0.0,2.0,1.0,83.86
+177907,Harry Maguire,England,Man United,Center Back,28,2021/22,80,Knee problems,2022-04-26,2022-05-03,7.0,4339.0,49.0,16.0,0.0,2.0,1.0,83.86
+177907,Harry Maguire,England,Man United,Center Back,29,2022/23,80,Hamstring injury,2022-09-26,2022-10-25,29.0,1850.0,27.0,7.0,0.0,1.0,0.0,35.76
+286384,Eric Bailly,Cote d'Ivoire,Man United,Center Back,26,2019/20,77,Knee surgery,2019-07-25,2020-01-10,169.0,395.0,7.0,0.0,0.0,0.0,0.0,7.63
+286384,Eric Bailly,Cote d'Ivoire,Man United,Center Back,26,2019/20,77,Neck injury,2020-07-20,2020-07-25,5.0,395.0,7.0,0.0,0.0,0.0,0.0,7.63
+286384,Eric Bailly,Cote d'Ivoire,Man United,Center Back,27,2020/21,77,Muscle injury,2020-10-18,2020-12-01,44.0,997.0,15.0,3.0,0.0,0.0,0.0,19.27
+286384,Eric Bailly,Cote d'Ivoire,Man United,Center Back,27,2020/21,77,Knock,2021-01-21,2021-03-25,63.0,997.0,15.0,3.0,0.0,0.0,0.0,19.27
+286384,Eric Bailly,Cote d'Ivoire,Man United,Center Back,27,2020/21,77,Coronavirus,2021-03-31,2021-04-20,20.0,997.0,15.0,3.0,0.0,0.0,0.0,19.27
+286384,Eric Bailly,Cote d'Ivoire,Man United,Center Back,28,2021/22,77,Ankle injury,2022-02-03,2022-02-16,13.0,1556.0,20.0,4.0,0.0,0.0,1.0,30.07
+342046,Axel Tuanzebe,DR Congo,Man United,Center Back,22,2019/20,73,Hip injury,2019-10-19,2019-11-23,35.0,457.0,8.0,0.0,0.0,0.0,0.0,8.83
+342046,Axel Tuanzebe,DR Congo,Man United,Center Back,22,2019/20,73,Hamstring strain,2019-12-18,2020-03-05,78.0,457.0,8.0,0.0,0.0,0.0,0.0,8.83
+342046,Axel Tuanzebe,DR Congo,Man United,Center Back,23,2020/21,73,Ankle injury,2020-06-18,2020-10-19,123.0,248.0,7.0,3.0,0.0,0.0,0.0,4.79
+342046,Axel Tuanzebe,DR Congo,Man United,Center Back,24,2022/23,73,unknown injury,2022-07-13,2023-01-23,194.0,130.0,2.0,1.0,0.0,0.0,0.0,2.51
+183288,Luke Shaw,England,Man United,Left Back,24,2019/20,83,Hamstring injury,2019-08-24,2019-10-07,44.0,2478.0,31.0,10.0,0.0,0.0,5.0,47.89
+183288,Luke Shaw,England,Man United,Left Back,24,2019/20,83,Muscle injury,2019-10-18,2019-11-27,40.0,2478.0,31.0,10.0,0.0,0.0,5.0,47.89
+183288,Luke Shaw,England,Man United,Left Back,25,2020/21,83,Ankle injury,2020-07-14,2020-09-11,59.0,2930.0,35.0,10.0,0.0,1.0,4.0,56.63
+183288,Luke Shaw,England,Man United,Left Back,25,2020/21,83,Hamstring injury,2020-11-07,2020-12-07,30.0,2930.0,35.0,10.0,0.0,1.0,4.0,56.63
+183288,Luke Shaw,England,Man United,Left Back,26,2021/22,83,Head injury,2021-11-20,2021-12-07,17.0,3739.0,47.0,13.0,0.0,1.0,7.0,72.27
+183288,Luke Shaw,England,Man United,Left Back,26,2021/22,83,Hamstring injury,2022-01-18,2022-01-31,13.0,3739.0,47.0,13.0,0.0,1.0,7.0,72.27
+183288,Luke Shaw,England,Man United,Left Back,26,2021/22,83,Coronavirus,2022-03-02,2022-03-16,14.0,3739.0,47.0,13.0,0.0,1.0,7.0,72.27
+183288,Luke Shaw,England,Man United,Left Back,26,2021/22,83,Leg injury,2022-04-02,2022-05-13,41.0,3739.0,47.0,13.0,0.0,1.0,7.0,72.27
+183288,Luke Shaw,England,Man United,Left Back,27,2022/23,83,unknown injury,2023-04-06,2023-04-19,13.0,1964.0,27.0,10.0,0.0,0.0,4.0,37.96
+477758,Aaron Wan-Bissaka,England,Man United,Right Back,22,2019/20,80,Tonsillitis,2019-09-27,2019-10-19,22.0,3201.0,36.0,7.0,0.0,0.0,3.0,61.87
+477758,Aaron Wan-Bissaka,England,Man United,Right Back,23,2021/22,80,Hand injury,2021-11-29,2021-12-04,5.0,4541.0,52.0,7.0,1.0,1.0,5.0,87.77
+477758,Aaron Wan-Bissaka,England,Man United,Right Back,23,2021/22,80,Ill,2022-01-14,2022-01-23,9.0,4541.0,52.0,7.0,1.0,1.0,5.0,87.77
+477758,Aaron Wan-Bissaka,England,Man United,Right Back,24,2022/23,80,Back problems,2022-09-12,2022-10-25,43.0,742.0,10.0,0.0,0.0,0.0,0.0,14.34
+74683,Nemanja Matic,Serbia,Man United,Defensive Midfielder,31,2019/20,80,unknown injury,2019-10-20,2019-12-11,52.0,1819.0,22.0,5.0,0.0,0.0,0.0,35.16
+74683,Nemanja Matic,Serbia,Man United,Defensive Midfielder,32,2021/22,80,Shin injury,2022-02-10,2022-02-18,8.0,1795.0,38.0,3.0,0.0,0.0,3.0,34.69
+191614,Fred,Brazil,Man United,Central Midfielder,27,2021/22,79,Coronavirus,2022-02-07,2022-02-14,7.0,3761.0,49.0,8.0,0.0,3.0,4.0,72.69
+191614,Fred,Brazil,Man United,Central Midfielder,27,2021/22,79,Hip flexor problems,2022-04-09,2022-04-30,21.0,3761.0,49.0,8.0,0.0,3.0,4.0,72.69
+240306,Bruno Fernandes,Portugal,Man United,Attacking Midfielder,25,2021/22,88,Ill,2022-03-12,2022-03-14,2.0,4576.0,56.0,8.0,0.0,19.0,17.0,88.44
+258923,Marcus Rashford,England,Man United,Left winger,22,2019/20,85,Back injury,2020-01-16,2020-06-05,141.0,3758.0,48.0,5.0,0.0,20.0,9.0,72.63
+258923,Marcus Rashford,England,Man United,Left winger,23,2021/22,85,Shoulder injury,2021-07-14,2021-10-15,93.0,3058.0,45.0,3.0,0.0,10.0,10.0,59.1
+258923,Marcus Rashford,England,Man United,Left winger,24,2021/22,85,Dead leg,2022-01-13,2022-01-17,4.0,3058.0,45.0,3.0,0.0,10.0,10.0,59.1
+258923,Marcus Rashford,England,Man United,Left winger,24,2021/22,85,bronchitis,2022-05-04,2022-05-19,15.0,3058.0,45.0,3.0,0.0,10.0,10.0,59.1
+258923,Marcus Rashford,England,Man United,Left winger,24,2022/23,85,Muscle injury,2023-04-08,2023-04-19,11.0,2386.0,39.0,4.0,0.0,11.0,5.0,46.12
+258923,Marcus Rashford,England,Man United,Left winger,25,2022/23,85,Leg injury,2023-05-11,2023-05-24,13.0,2386.0,39.0,4.0,0.0,11.0,5.0,46.12
+532826,Mason Greenwood,England,Man United,Right winger,18,2019/20,78,Tonsillitis,2019-09-20,2019-09-23,3.0,920.0,24.0,0.0,0.0,7.0,2.0,17.78
+532826,Mason Greenwood,England,Man United,Right winger,19,2020/21,78,bruise,2020-10-17,2020-11-23,37.0,2320.0,40.0,1.0,0.0,11.0,3.0,44.84
+532826,Mason Greenwood,England,Man United,Right winger,20,2021/22,78,Coronavirus,2021-11-19,2021-11-27,8.0,3502.0,52.0,3.0,0.0,14.0,5.0,67.68
+319301,Daniel James,Wales,Man United,Right winger,22,2019/20,77,Knock,2020-02-28,2020-03-07,8.0,1672.0,21.0,3.0,0.0,3.0,6.0,32.32
+319301,Daniel James,Wales,Man United,Right winger,23,2020/21,77,unknown injury,2021-04-30,2021-05-21,21.0,1461.0,28.0,3.0,0.0,3.0,0.0,28.24
+182877,Anthony Martial,France,Man United,Center Forward,24,2019/20,79,Hamstring strain,2019-08-25,2019-10-20,56.0,2214.0,34.0,2.0,0.0,12.0,5.0,42.79
+182877,Anthony Martial,France,Man United,Center Forward,25,2020/21,79,Torn knee ligaments,2021-03-29,2021-08-02,126.0,3204.0,43.0,0.0,1.0,16.0,15.0,61.93
+182877,Anthony Martial,France,Man United,Center Forward,26,2021/22,79,Fitness,2021-10-15,2021-10-29,14.0,1412.0,27.0,0.0,0.0,4.0,2.0,27.29
+182877,Anthony Martial,France,Man United,Center Forward,26,2021/22,79,Knee injury,2021-12-04,2021-12-13,9.0,1412.0,27.0,0.0,0.0,4.0,2.0,27.29
+182877,Anthony Martial,France,Man United,Center Forward,27,2022/23,79,Achilles tendon irritation,2022-08-23,2022-09-26,34.0,1058.0,21.0,1.0,0.0,5.0,3.0,20.45
+182877,Anthony Martial,France,Man United,Center Forward,27,2022/23,79,Back injury,2022-10-10,2022-10-31,21.0,1058.0,21.0,1.0,0.0,5.0,3.0,20.45
+182877,Anthony Martial,France,Man United,Center Forward,27,2022/23,79,Hip injury,2023-02-02,2023-03-08,34.0,1058.0,21.0,1.0,0.0,5.0,3.0,20.45
+48280,Edinson Cavani,Uruguay,Man United,Center Forward,34,2020/21,81,Knock,2020-12-06,2020-12-18,12.0,869.0,20.0,2.0,0.0,5.0,4.0,16.8
+48280,Edinson Cavani,Uruguay,Man United,Center Forward,34,2020/21,81,Muscle injury,2021-02-15,2021-03-01,14.0,869.0,20.0,2.0,0.0,5.0,4.0,16.8
+48280,Edinson Cavani,Uruguay,Man United,Center Forward,34,2020/21,81,Knock,2021-03-05,2021-03-21,16.0,869.0,20.0,2.0,0.0,5.0,4.0,16.8
+48280,Edinson Cavani,Uruguay,Man United,Center Forward,35,2021/22,81,Tendon irritation,2021-11-04,2021-12-22,48.0,1998.0,35.0,5.0,0.0,15.0,4.0,38.62
+48280,Edinson Cavani,Uruguay,Man United,Center Forward,35,2021/22,81,Groin problems,2022-02-11,2022-03-07,24.0,1998.0,35.0,5.0,0.0,15.0,4.0,38.62
+48280,Edinson Cavani,Uruguay,Man United,Center Forward,35,2021/22,81,Calf injury,2022-04-01,2022-04-30,29.0,1998.0,35.0,5.0,0.0,15.0,4.0,38.62
+69633,Christian Eriksen,Denmark,Man United,Central Midfielder,33,2022/23,83,Ankle injury,2023-01-29,2023-04-06,67.0,2542.0,32.0,3.0,0.0,2.0,11.0,49.13
+106987,Marcel Sabitzer,Austria,Man United,Central Midfielder,32,2022/23,81,unknown injury,2023-03-06,2023-03-14,8.0,1602.0,40.0,6.0,0.0,2.0,2.0,30.96
+106987,Marcel Sabitzer,Austria,Man United,Central Midfielder,32,2022/23,81,Groin problems,2023-04-16,2023-04-19,3.0,1602.0,40.0,6.0,0.0,2.0,2.0,30.96
+106987,Marcel Sabitzer,Austria,Man United,Central Midfielder,32,2022/23,81,Meniscus injury,2023-05-10,2023-06-15,36.0,1602.0,40.0,6.0,0.0,2.0,2.0,30.96
+401173,Jadon Sancho,England,Man United,Left winger,19,2021/22,82,Tonsillitis,2022-04-26,2022-05-08,12.0,2697.0,40.0,1.0,0.0,14.0,12.0,52.13
+401173,Jadon Sancho,England,Man United,Left winger,20,2022/23,82,depression,2022-12-26,2023-01-31,36.0,2229.0,31.0,0.0,0.0,6.0,4.0,43.08
+262749,David Raya,Spain,Brentford,Goalkeeper,26,2021/22,80,Knee injury,2021-10-25,2022-02-04,102.0,810.0,9.0,0.0,0.0,0.0,0.0,15.66
+328658,Kristoffer Ajer,Norway,Brentford,Center Back,24,2021/22,76,Hamstring injury,2022-07-09,2022-08-31,53.0,1904.0,22.0,1.0,0.0,0.0,0.0,36.8
+328658,Kristoffer Ajer,Norway,Brentford,Center Back,26,2023/24,76,Foot injury,2023-12-02,2024-01-16,45.0,1167.0,17.0,4.0,0.0,0.0,1.0,22.56
+328658,Kristoffer Ajer,Norway,Brentford,Center Back,26,2023/24,76,Calf strain,2024-04-06,2024-04-20,14.0,1167.0,17.0,4.0,0.0,0.0,1.0,22.56
+442248,Ethan Pinnock,Jamaica,Brentford,Center Back,29,2023/24,79,Ankle injury,2024-02-10,2024-04-13,63.0,3690.0,41.0,0.0,0.0,4.0,0.0,71.32
+339556,Rico Henry,England,Brentford,Left Back,24,2023/24,75,Knee injury,2023-09-16,2024-10-05,385.0,2131.0,26.0,5.0,0.0,0.0,2.0,41.19
+270171,Vitaly Janelt,Germany,Brentford,Defensive Midfielder ,24,2022/23,76,Knee injury,2023-03-15,2023-04-06,22.0,2544.0,37.0,2.0,0.0,5.0,2.0,49.17
+69633,Christian Eriksen,Denmark,Brentford,Central Midfielder,30,2021/22,81,Fitness,2022-01-31,2022-02-25,25.0,1320.0,22.0,2.0,0.0,4.0,0.0,25.51
+319859,Mathias Jensen,Denmark,Brentford,Central Midfielder,26,2021/22,77,Leg injury,2021-07-07,2021-08-31,55.0,656.0,12.0,0.0,0.0,0.0,1.0,12.68
+340321,Josh Dasilva,England,Brentford,Central Midfielder,23,2023/24,73,Hamstring injury,2023-08-19,2024-01-04,138.0,701.0,21.0,0.0,0.0,1.0,1.0,13.55
+340321,Josh Dasilva,England,Brentford,Central Midfielder,23,2023/24,73,Ankle injury,2023-12-06,2024-03-30,115.0,701.0,21.0,0.0,0.0,1.0,1.0,13.55
+340321,Josh Dasilva,England,Brentford,Central Midfielder,23,2023/24,73,Knee surgery,2024-02-05,2025-03-15,404.0,701.0,21.0,0.0,0.0,1.0,1.0,13.55
+421637,Frank Onyeka,Nigeria,Brentford,Central Midfielder,24,2021/22,73,Ankle injury,2022-03-25,2022-05-16,52.0,1710.0,27.0,6.0,0.0,0.0,0.0,33.05
+421637,Frank Onyeka,Nigeria,Brentford,Central Midfielder,25,2022/23,73,Thigh problems,2023-03-25,2023-04-09,15.0,620.0,16.0,1.0,0.0,0.0,1.0,11.98
+413039,Bryan Mbeumo,Cameroon,Brentford,Right winger,22,2023/24,80,Ankle injury,2023-12-07,2024-03-12,96.0,3062.0,38.0,2.0,0.0,13.0,10.0,59.18
+388165,Yoane Wissa,DR Congo,Brentford,Center Forward,25,2023/24,79,Ankle injury,2024-09-14,2024-11-30,77.0,2681.0,43.0,6.0,0.0,8.0,3.0,51.82
+591949,Aaron Hickey,Scotland,Brentford,Right Back,21,2022/23,76,Ankle injury,2022-10-10,2022-12-31,82.0,2057.0,26.0,7.0,0.0,1.0,1.0,39.76
+591949,Aaron Hickey,Scotland,Brentford,Right Back,22,2023/24,76,Hamstring injury,2023-11-02,2025-04-02,517.0,2059.0,28.0,8.0,0.0,0.0,1.0,39.8
+473050,Kevin Schade,Germany,Brentford,Left winger,21,2023/24,72,Adductor injury,2023-09-23,2024-04-10,200.0,1070.0,25.0,2.0,0.0,1.0,1.0,20.68
+540941,Mikkel Damsgaard,Denmark,Brentford,Left winger,22,2023/24,73,Knee surgery,2023-09-29,2023-12-05,67.0,1033.0,25.0,2.0,0.0,0.0,0.0,19.97
+540941,Mikkel Damsgaard,Denmark,Brentford,Left winger,22,2023/24,73,Adductor pain,2023-08-26,2023-09-27,32.0,1033.0,25.0,2.0,0.0,0.0,0.0,19.97
+644401,Keane Lewis-Potter,England,Brentford,Left winger,22,2022/23,73,Knee injury,2023-03-05,2023-05-02,58.0,285.0,7.0,0.0,0.0,0.0,1.0,5.51
+644401,Keane Lewis-Potter,England,Brentford,Left winger,22,2022/23,73,Fitness,2022-10-11,2022-10-31,20.0,285.0,7.0,0.0,0.0,0.0,1.0,5.51
+644401,Keane Lewis-Potter,England,Brentford,Left winger,22,2022/23,73,Ligament injury,2022-09-05,2022-10-10,35.0,285.0,7.0,0.0,0.0,0.0,1.0,5.51
+125714,Mark Flekken,Netherlands,Brentford,Goalkeeper,31,2023/24,79,cold,2023-10-03,2023-10-19,16.0,3735.0,42.0,1.0,0.0,0.0,0.0,72.19
+469050,Nathan Collins,Ireland,Brentford,Center Back,23,2023/24,75,Injury to the ankle,2023-11-18,2023-12-15,27.0,2072.0,30.0,2.0,0.0,1.0,1.0,40.05
+469050,Nathan Collins,Ireland,Brentford,Center Back,23,2023/24,75,unknown injury,2024-05-17,2024-06-26,40.0,2072.0,30.0,2.0,0.0,1.0,1.0,40.05
+378710,Richarlison,Brazil,Tottenham,Center Forward,27,2021/22,81,Calf injury,,2022-11-08,,3135.0,37.0,8.0,0.0,11.0,2.0,60.59
+378710,Richarlison,Brazil,Tottenham,Center Forward,28,2022/23,81,Hamstring injury,2022-12-09,,,2626.0,36.0,5.0,0.0,10.0,6.0,50.75
+378710,Richarlison,Brazil,Tottenham,Center Forward,28,2022/23,81,Groin Surgery,,2023-12-03,,2626.0,36.0,5.0,0.0,10.0,6.0,50.75
+192765,Ben Davies,Wales,Tottenham,Center Back,27,2019/20,79,Groin Surgery,,,,1410.0,24.0,1.0,0.0,0.0,1.0,27.25
+192765,Ben Davies,Wales,Tottenham,Center Back,27,2019/20,79,Ankle sprain,2019-08-08,,,1410.0,24.0,1.0,0.0,0.0,1.0,27.25
+192765,Ben Davies,Wales,Tottenham,Center Back,28,2020/21,79,Shin injury,,,,2558.0,33.0,6.0,0.0,0.0,4.0,49.44
+192765,Ben Davies,Wales,Tottenham,Center Back,30,2022/23,76,Shin injury,,2022-10-03,,3460.0,42.0,5.0,0.0,3.0,1.0,66.87
+406638,Oliver Skipp,England,Tottenham,Defensive Midfielder,19,2019/20,67,Hip injury,2019-11-09,2019-12-04,25.0,335.0,11.0,1.0,0.0,0.0,2.0,6.47
+406638,Oliver Skipp,England,Tottenham,Defensive Midfielder,22,2021/22,77,Inflammation bone,2022-02-05,,,1184.0,17.0,5.0,0.0,0.0,0.0,22.88
+406638,Oliver Skipp,England,Tottenham,Defensive Midfielder,22,2022/23,77,Foot injury,,,,373.0,12.0,2.0,0.0,0.0,0.0,7.21
+132098,Harry Kane,England,Tottenham,Center Forward,26,2019/20,89,Ill,2019-11-01,2019-11-04,3.0,3128.0,36.0,4.0,0.0,23.0,3.0,60.46
+132098,Harry Kane,England,Tottenham,Center Forward,27,2019/20,89,Torn thigh muscle,2020-01-02,2020-03-09,67.0,3128.0,36.0,4.0,0.0,23.0,3.0,60.46
+132098,Harry Kane,England,Tottenham,Center Forward,27,2019/20,89,Fitness,2020-03-09,2020-04-01,23.0,3128.0,36.0,4.0,0.0,23.0,3.0,60.46
+132098,Harry Kane,England,Tottenham,Center Forward,28,2020/21,89,Ankle sprain,,2021-02-05,,2532.0,31.0,3.0,0.0,22.0,13.0,48.94
+132098,Harry Kane,England,Tottenham,Center Forward,28,2020/21,89,Ankle sprain,,,,2532.0,31.0,3.0,0.0,22.0,13.0,48.94
+175722,Eric Dier,England,Tottenham,Center Back,25,2019/20,79,Hip injury,,,,1335.0,23.0,6.0,0.0,1.0,1.0,25.8
+175722,Eric Dier,England,Tottenham,Center Back,26,2020/21,79,Muscle injury,,,,2666.0,33.0,2.0,0.0,0.0,1.0,51.53
+175722,Eric Dier,England,Tottenham,Center Back,28,2021/22,80,Thigh Problems,2022-01-03,,,3192.0,36.0,3.0,0.0,0.0,0.0,61.69
+175722,Eric Dier,England,Tottenham,Center Back,28,2021/22,80,Thigh Problems,2022-02-04,,,3192.0,36.0,3.0,0.0,0.0,0.0,61.69
+392775,Ryan Sessegnon,England,Tottenham,Left Back,21,2021/22,74,Bruise,2021-09-01,,,1167.0,19.0,2.0,0.0,0.0,1.0,22.56
+392775,Ryan Sessegnon,England,Tottenham,Left Back,21,2021/22,74,Muscle injury,,2022-01-07,,1167.0,19.0,2.0,0.0,0.0,1.0,22.56
+392775,Ryan Sessegnon,England,Tottenham,Left Back,22,2021/22,75,Hamstring injury,2022-03-07,2022-04-07,31.0,1167.0,19.0,2.0,0.0,0.0,1.0,22.56
+392775,Ryan Sessegnon,England,Tottenham,Left Back,23,2022/23,76,Hamstring injury,,,,1873.0,29.0,6.0,0.0,2.0,2.0,36.2
+476344,Emerson Royal,Brazil,Tottenham,Right Back,22,2021/22,78,Unknown surgery,2021-12-03,,,3366.0,42.0,7.0,0.0,2.0,5.0,65.06
+476344,Emerson Royal,Brazil,Tottenham,Right Back,24,2022/23,78,Knee injury,,2023-05-01,,2601.0,39.0,4.0,1.0,1.0,1.0,50.27
+171679,Matt Doherty,Ireland,Tottenham,Right Back,28,2020/21,74,Coronavirus,,,,3332.0,39.0,3.0,0.0,2.0,5.0,64.4
+171679,Matt Doherty,Ireland,Tottenham,Right Back,29,2020/21,81,Unknown injury,,,,3332.0,39.0,3.0,0.0,2.0,5.0,64.4
+171679,Matt Doherty,Ireland,Tottenham,Right Back,29,2020/21,81,Muscle injury,2021-04-01,,,3332.0,39.0,3.0,0.0,2.0,5.0,64.4
+171679,Matt Doherty,Ireland,Tottenham,Right Back,29,2021/22,81,Unknown injury,,,,1254.0,20.0,4.0,0.0,0.0,3.0,24.24
+171679,Matt Doherty,Ireland,Tottenham,Right Midfielder,30,2021/22,77,Internal ligament tear,,,,1254.0,20.0,4.0,0.0,0.0,3.0,24.24
+348795,Giovani Lo Celso,Argentina,Tottenham,Central Midfielder ,23,2019/20,82,Hip injury,2019-09-07,,,2546.0,38.0,7.0,0.0,9.0,4.0,49.21
+348795,Giovani Lo Celso,Argentina,Tottenham,Central Midfielder ,24,2020/21,82,Hamstring injury,,,,2616.0,43.0,10.0,0.0,6.0,4.0,50.56
+348795,Giovani Lo Celso,Argentina,Tottenham,Central Midfielder ,24,2020/21,82,Muscle Strain,2020-10-02,,,2616.0,43.0,10.0,0.0,6.0,4.0,50.56
+348795,Giovani Lo Celso,Argentina,Tottenham,Central Midfielder ,26,2021/22,88,Quarantine,2021-09-09,,,955.0,17.0,2.0,0.0,0.0,0.0,18.46
+348795,Giovani Lo Celso,Argentina,Tottenham,Central Midfielder ,25,2021/22,88,Knee injury,,,,955.0,17.0,2.0,0.0,0.0,0.0,18.46
+348795,Giovani Lo Celso,Argentina,Tottenham,Central Midfielder ,25,2021/22,88,Shin injury,,,,955.0,17.0,2.0,0.0,0.0,0.0,18.46
+348795,Giovani Lo Celso,Argentina,Tottenham,Central Midfielder ,27,2023/24,81,Hamstring injury,,2023-10-05,,1056.0,25.0,3.0,0.0,3.0,5.0,20.41
+348795,Giovani Lo Celso,Argentina,Tottenham,Central Midfielder ,27,2023/24,81,Unknown injury,,,,1056.0,25.0,3.0,0.0,3.0,5.0,20.41
+348795,Giovani Lo Celso,Argentina,Tottenham,Central Midfielder ,28,2023/24,80,Muscle Strain,2024-01-06,,,1056.0,25.0,3.0,0.0,3.0,5.0,20.41
+348795,Giovani Lo Celso,Argentina,Tottenham,Central Midfielder ,28,2023/24,80,Knee injury,,,,1056.0,25.0,3.0,0.0,3.0,5.0,20.41
+537382,Bryan Gil,Spain,Tottenham,Left winger,20,2021/22,66,Hamstring injury,,,,1718.0,28.0,6.0,0.0,4.0,5.0,33.2
+537382,Bryan Gil,Spain,Tottenham,Left winger,20,2021/22,73,Coronavirus,2021-12-06,,,1718.0,28.0,6.0,0.0,4.0,5.0,33.2
+537382,Bryan Gil,Spain,Tottenham,Left winger,21,2022/23,77,Knock,,,,1134.0,24.0,3.0,0.0,0.0,1.0,21.92
+537382,Bryan Gil,Spain,Tottenham,Left winger,22,2023/24,77,Inflammation of pubic bone,2023-08-02,2023-10-05,64.0,1773.0,37.0,7.0,0.0,2.0,4.0,34.27
+537382,Bryan Gil,Spain,Tottenham,Left winger,22,2020/21,66,Knock,2020-11-06,,,1416.0,24.0,4.0,0.0,1.0,0.0,27.37
+192080,Nick Pope,England,Burnley,Goalkeeper,28,2020/21,82,head injury,2020-11-27,2020-12-04,7.0,2880.0,32.0,1.0,0.0,0.0,0.0,55.66
+192080,Nick Pope,England,Burnley,Goalkeeper,28,2020/21,82,knee surgery,2021-05-12,2021-06-30,49.0,2880.0,32.0,1.0,0.0,0.0,0.0,55.66
+192080,Nick Pope,England,Burnley,Goalkeeper,29,2021/22,82,Coronavirus,2021-12-29,2022-01-06,8.0,2970.0,33.0,1.0,0.0,0.0,0.0,57.4
+173504,James Tarkowski,England,Burnley,Center Back,27,2020/21,81,toe injury,2020-09-16,2020-09-29,13.0,2970.0,33.0,8.0,0.0,1.0,1.0,57.4
+293569,Josh Brownhill,England,Burnley,Central Midfielder,24,2020/21,76,ankle injury,2021-01-28,2021-02-12,15.0,2156.0,25.0,3.0,0.0,0.0,0.0,41.67
+293569,Josh Brownhill,England,Burnley,Central Midfielder,26,2021/22,75,Coronavirus,2021-12-13,2022-01-06,24.0,2753.0,34.0,5.0,0.0,0.0,1.0,53.21
+128229,Robbie Brady,Ireland,Burnley,Left Midfielder,28,2020/21,74,chest injury,2020-09-21,2020-10-02,11.0,786.0,16.0,2.0,0.0,1.0,1.0,15.19
+128229,Robbie Brady,Ireland,Burnley,Left Midfielder,28,2020/21,74,hamstring injury,2020-11-24,2020-12-04,10.0,786.0,16.0,2.0,0.0,1.0,1.0,15.19
+128229,Robbie Brady,Ireland,Burnley,Left Midfielder,28,2020/21,74,hamstring injury,2020-12-22,2020-12-28,6.0,786.0,16.0,2.0,0.0,1.0,1.0,15.19
+128229,Robbie Brady,Ireland,Burnley,Left Midfielder,29,2020/21,74,calf injury,2021-02-01,2021-02-12,11.0,786.0,16.0,2.0,0.0,1.0,1.0,15.19
+584769,Dwight McNeil,England,Burnley,Left winger,21,2020/21,77,groin injury,2020-12-22,2021-01-11,20.0,2797.0,32.0,3.0,0.0,1.0,3.0,54.06
+89231,Jóhann Berg Gudmundsson,Iceland,Burnley,Right winger,28,2019/20,77,calf strain,2019-08-26,2019-09-27,32.0,876.0,20.0,0.0,0.0,2.0,2.0,16.93
+89231,Jóhann Berg Gudmundsson,Iceland,Burnley,Right winger,29,2019/20,77,hamstring strain,2019-10-13,2019-12-25,73.0,876.0,20.0,0.0,0.0,2.0,2.0,16.93
+89231,Jóhann Berg Gudmundsson,Iceland,Burnley,Right winger,29,2019/20,77,hamstring strain,2020-01-05,2020-07-04,181.0,876.0,20.0,0.0,0.0,2.0,2.0,16.93
+89231,Jóhann Berg Gudmundsson,Iceland,Burnley,Right winger,29,2020/21,77,knee injury,2020-09-18,2020-10-02,14.0,553.0,11.0,0.0,0.0,0.0,1.0,10.69
+89231,Jóhann Berg Gudmundsson,Iceland,Burnley,Right winger,30,2020/21,77,hamstring strain,2020-10-28,2020-11-05,8.0,553.0,11.0,0.0,0.0,0.0,1.0,10.69
+89231,Jóhann Berg Gudmundsson,Iceland,Burnley,Right winger,30,2020/21,77,hamstring strain,2020-11-29,2021-01-11,43.0,553.0,11.0,0.0,0.0,0.0,1.0,10.69
+89231,Jóhann Berg Gudmundsson,Iceland,Burnley,Right winger,30,2020/21,77,groin strain,2021-02-18,2021-03-04,14.0,553.0,11.0,0.0,0.0,0.0,1.0,10.69
+89231,Jóhann Berg Gudmundsson,Iceland,Burnley,Right winger,31,2021/22,73,appendectomy and calf injury,2022-01-24,2022-08-21,209.0,2426.0,37.0,4.0,0.0,2.0,1.0,46.89
+89231,Jóhann Berg Gudmundsson,Iceland,Burnley,Right winger,32,2023/24,72,muscle injury,2023-09-23,2023-10-22,29.0,849.0,14.0,2.0,0.0,0.0,2.0,16.41
+101500,Matej Vydra,Czech Republic,Burnley,Center Forward,27,2019/20,73,hip injury,2019-11-03,2019-12-03,30.0,283.0,12.0,0.0,0.0,0.0,3.0,5.47
+101500,Matej Vydra,Czech Republic,Burnley,Center Forward,28,2020/21,74,back injury,2020-12-18,2020-01-11,-342.0,937.0,24.0,0.0,0.0,2.0,0.0,18.11
+101500,Matej Vydra,Czech Republic,Burnley,Center Forward,28,2020/21,74,hamstring injury,2021-02-10,2021-02-18,8.0,937.0,24.0,0.0,0.0,2.0,0.0,18.11
+101500,Matej Vydra,Czech Republic,Burnley,Center Forward,29,2021/22,73,groin surgery and elbow injury,2022-02-03,2022-02-28,25.0,1752.0,37.0,0.0,0.0,5.0,3.0,33.86
+121267,Connor Roberts,Wales,Burnley,Right Back,26,2021/22,75,infection,2021-12-08,2022-01-09,32.0,,,,,,,
+214666,Connor Roberts,Wales,Burnley,Right Back,26,2021/22,75,infection,2021-12-08,2022-01-09,32.0,15.0,1.0,0.0,0.0,0.0,0.0,0.29
+234781,Maxwel Cornet,Cote d'Ivoire,Burnley,Left winger,25,2021/22,75,hamstring injury,2021-12-04,2021-12-31,27.0,1875.0,30.0,4.0,0.0,6.0,3.0,36.24
+234781,Maxwel Cornet,Cote d'Ivoire,Burnley,Left winger,25,2021/22,75,knee problems,2022-04-22,2022-05-05,13.0,1875.0,30.0,4.0,0.0,6.0,3.0,36.24
+403898,Jordan Beyer,Germany,Burnley,Center Back,23,2023/24,75,meniscus injury,2023-10-04,2023-10-30,26.0,1570.0,19.0,7.0,0.0,0.0,1.0,30.34
+403898,Jordan Beyer,Germany,Burnley,Center Back,23,2023/24,75,knee injury,2024-01-08,,,1570.0,19.0,7.0,0.0,0.0,1.0,30.34
+392179,Hjalmar Ekdal,Sweden,Burnley,Center Back,23,2023/24,73,knee injury,2023-08-30,2023-11-18,80.0,164.0,4.0,2.0,0.0,0.0,0.0,3.17
+381963,Mike Trésor,Belgium,Burnley,Left winger,24,2023/24,78,hamstring injury,2023-08-10,2023-09-17,38.0,2205.0,36.0,1.0,0.0,4.0,9.0,42.62
+745461,Luca Koleosho,Italy,Burnley,Right winger,19,2023/24,68,knee injury,2023-12-06,2024-06-17,194.0,1039.0,18.0,0.0,0.0,2.0,1.0,20.08
+467623,Lyle Foster,South Africa,Burnley,Center Forward,23,2023/24,69,depression,2023-11-09,2023-12-10,31.0,1506.0,20.0,0.0,1.0,4.0,5.0,29.11
+620598,Ameen Al-Dakhil,Belgium,Burnley,Center Back,21,2023/24,72,muscle injury,2024-02-08,2024-09-23,228.0,1478.0,19.0,3.0,0.0,0.0,0.0,28.57
+468249,Vitinho,Brazil,Burnley,Right Back,24,2023/24,71,knee injury,2023-08-30,2023-09-25,26.0,1322.0,17.0,1.0,0.0,0.0,0.0,25.55
+670965,Vitinho,Brazil,Burnley,Right Back,24,2023/24,71,knee injury,2023-08-30,2023-09-25,26.0,,,,,,,
+130164,Jordan Pickford,England,Everton,Goalkeeper,26,2020/21,80,chest injury,2021-01-28,2021-02-18,21.0,2880.0,32.0,3.0,0.0,0.0,0.0,55.66
+130164,Jordan Pickford,England,Everton,Goalkeeper,27,2021/22,81,shoulder injury,2021-09-13,2021-09-27,14.0,3013.0,34.0,1.0,0.0,0.0,0.0,58.23
+130164,Jordan Pickford,England,Everton,Goalkeeper,28,2022/23,82,thigh problems,2022-09-09,2022-09-27,18.0,3330.0,37.0,3.0,0.0,0.0,1.0,64.36
+118534,Michael Keane,England,Everton,Center Back,27,2019/20,79,neck injury,2020-01-17,2020-01-20,3.0,2899.0,34.0,2.0,0.0,1.0,0.0,56.03
+289446,Yerry Mina,Colombia,Everton,Center Back,25,2019/20,79,knee injury,2019-10-20,2019-11-02,13.0,1871.0,24.0,1.0,0.0,0.0,0.0,36.16
+289446,Yerry Mina,Colombia,Everton,Center Back,25,2019/20,79,bruise,2019-12-06,2019-12-14,8.0,1871.0,24.0,1.0,0.0,0.0,0.0,36.16
+289446,Yerry Mina,Colombia,Everton,Center Back,25,2019/20,79,muscle injury,2020-06-02,2020-06-30,28.0,1871.0,24.0,1.0,0.0,0.0,0.0,36.16
+289446,Yerry Mina,Colombia,Everton,Center Back,25,2019/20,79,muscle injury,2020-07-13,2020-09-12,61.0,1871.0,24.0,1.0,0.0,0.0,0.0,36.16
+289446,Yerry Mina,Colombia,Everton,Center Back,26,2020/21,79,calf injury,2021-02-18,2021-03-12,22.0,2002.0,25.0,3.0,0.0,4.0,1.0,38.69
+289446,Yerry Mina,Colombia,Everton,Center Back,27,2021/22,79,thigh problems,2021-10-22,2021-11-30,39.0,1611.0,22.0,3.0,0.0,1.0,0.0,31.14
+289446,Yerry Mina,Colombia,Everton,Center Back,27,2021/22,79,hamstring injury,2022-02-08,2022-04-11,62.0,1611.0,22.0,3.0,0.0,1.0,0.0,31.14
+289446,Yerry Mina,Colombia,Everton,Center Back,27,2022/23,76,ankle injury,2022-08-06,2022-10-31,86.0,581.0,9.0,3.0,0.0,2.0,0.0,11.23
+348623,Mason Holgate,Jamaica,Everton,Center Back,22,2019/20,77,calf injury,2020-07-07,2020-07-15,8.0,1099.0,15.0,2.0,0.0,0.0,2.0,21.24
+348623,Mason Holgate,Jamaica,Everton,Center Back,22,2020/21,77,ankle injury,2020-09-18,2020-11-06,49.0,1668.0,21.0,5.0,0.0,1.0,1.0,32.24
+348623,Mason Holgate,Jamaica,Everton,Center Back,24,2022/23,75,knee injury,2022-08-27,2022-10-16,50.0,2117.0,24.0,7.0,0.0,3.0,1.0,40.92
+126664,Lucas Digne,France,Everton,Left Back,26,2019/20,83,calf injury,2020-02-09,2020-03-07,27.0,3156.0,37.0,5.0,1.0,1.0,5.0,61.0
+126664,Lucas Digne,France,Everton,Left Back,27,2020/21,84,ankle injury,2020-11-26,2021-01-11,46.0,2208.0,25.0,5.0,1.0,0.0,8.0,42.67
+68390,Séamus Coleman,Ireland,Everton,Right Back,30,2019/20,78,hamstring injury,2019-11-24,2019-12-14,20.0,2134.0,26.0,5.0,0.0,1.0,3.0,41.24
+68390,Séamus Coleman,Ireland,Everton,Right Back,30,2019/20,78,hamstring strain,2020-03-02,2020-06-14,104.0,2134.0,26.0,5.0,0.0,1.0,3.0,41.24
+68390,Séamus Coleman,Ireland,Everton,Right Back,31,2020/21,79,muscle injury,2020-10-17,2020-12-18,62.0,1491.0,24.0,0.0,0.0,0.0,1.0,28.82
+68390,Séamus Coleman,Ireland,Everton,Right Back,31,2021/22,78,hamstring injury,2021-09-17,2021-10-15,28.0,2667.0,34.0,2.0,0.0,0.0,3.0,51.55
+68390,Séamus Coleman,Ireland,Everton,Right Back,33,2022/23,75,knee injury,2023-05-01,2023-11-23,206.0,2429.0,30.0,2.0,0.0,1.0,0.0,46.95
+182894,Jean-Philippe Gbamin,Cote d'Ivoire,Everton,Defensive Midfielder,24,2019/20,79,"hamstring injury, archilles tendon rupture and inner ligament injury",2019-08-18,2021-06-30,682.0,1509.0,18.0,3.0,0.0,0.0,2.0,29.17
+221025,André Gomes,Portugal,Everton,Central Midfielder,26,2019/20,80,bruised ribs,2019-09-02,2019-10-04,32.0,1704.0,25.0,8.0,0.0,1.0,1.0,32.93
+670710,André Gomes,Portugal,Everton,Central Midfielder,26,2019/20,80,bruised ribs,2019-09-02,2019-10-04,32.0,,,,,,,
+221025,André Gomes,Portugal,Everton,Central Midfielder,26,2019/20,80,ankle injury,2019-11-04,2020-02-21,109.0,1704.0,25.0,8.0,0.0,1.0,1.0,32.93
+670710,André Gomes,Portugal,Everton,Central Midfielder,26,2019/20,80,ankle injury,2019-11-04,2020-02-21,109.0,,,,,,,
+221025,André Gomes,Portugal,Everton,Central Midfielder,27,2020/21,79,bruise,2020-09-27,2020-10-16,19.0,1397.0,21.0,5.0,0.0,0.0,1.0,27.0
+670710,André Gomes,Portugal,Everton,Central Midfielder,27,2020/21,79,bruise,2020-09-27,2020-10-16,19.0,,,,,,,
+221025,André Gomes,Portugal,Everton,Central Midfielder,28,2021/22,76,calf injury,2021-09-21,2021-12-05,75.0,1592.0,27.0,3.0,0.0,0.0,3.0,30.77
+670710,André Gomes,Portugal,Everton,Central Midfielder,28,2021/22,76,calf injury,2021-09-21,2021-12-05,75.0,,,,,,,
+221025,André Gomes,Portugal,Everton,Central Midfielder,29,2023/24,77,fitness,2023-08-13,2023-12-03,112.0,1159.0,19.0,6.0,0.0,4.0,2.0,22.4
+670710,André Gomes,Portugal,Everton,Central Midfielder,29,2023/24,77,fitness,2023-08-13,2023-12-03,112.0,,,,,,,
+316776,Tom Davies,Wales,Everton,Central Midfielder,21,2019/20,75,ill,2020-01-30,2020-02-04,5.0,,,,,,,
+316776,Tom Davies,Wales,Everton,Central Midfielder,22,2020/21,75,bruise,2020-10-28,2020-11-04,7.0,,,,,,,
+316776,Tom Davies,Wales,Everton,Central Midfielder,23,2021/22,75,knee injury,2021-11-19,2022-06-30,223.0,,,,,,,
+90466,Gylfi Sigurdsson,Iceland,Everton,Attacking Midfielder,30,2019/20,80,knock,2019-12-08,2019-12-20,12.0,3100.0,39.0,2.0,0.0,6.0,5.0,59.91
+90466,Gylfi Sigurdsson,Iceland,Everton,Attacking Midfielder,30,2019/20,80,groin injury,2020-01-12,2020-01-31,19.0,3100.0,39.0,2.0,0.0,6.0,5.0,59.91
+242631,Alex Iwobi,Nigeria,Everton,Left winger,23,2019/20,77,hamstring injury,2019-12-23,2020-01-27,35.0,2551.0,43.0,0.0,0.0,5.0,3.0,49.3
+242631,Alex Iwobi,Nigeria,Everton,Left winger,25,2021/22,76,calf injury,2021-10-01,2021-10-13,12.0,1608.0,32.0,0.0,0.0,2.0,1.0,31.08
+242631,Alex Iwobi,Nigeria,Everton,Left winger,27,2023/24,76,hamstring injury,2023-08-20,2023-09-15,26.0,3372.0,43.0,3.0,0.0,5.0,4.0,65.17
+503733,Anthony Gordon,England,Everton,Left winger,21,2022/23,74,ill,2022-12-29,2023-01-04,6.0,2979.0,40.0,11.0,0.0,7.0,2.0,57.58
+378710,Richarlison,Brazil,Everton,Center Forward,22,2019/20,81,knee injury,2020-01-12,2020-01-30,18.0,3029.0,39.0,7.0,0.0,11.0,3.0,58.54
+378710,Richarlison,Brazil,Everton,Center Forward,23,2020/21,81,head injury,2020-12-05,2020-12-31,26.0,2353.0,28.0,6.0,1.0,9.0,3.0,45.48
+378710,Richarlison,Brazil,Everton,Center Forward,24,2021/22,81,knee injury,2021-09-13,2021-10-22,39.0,3135.0,37.0,8.0,0.0,11.0,2.0,60.59
+378710,Richarlison,Brazil,Everton,Center Forward,24,2021/22,81,calf injury,2021-12-12,2022-01-12,31.0,3135.0,37.0,8.0,0.0,11.0,2.0,60.59
+364135,Moise Kean,Italy,Everton,Center Forward,20,2019/20,75,knee injury,2020-07-17,2020-07-25,8.0,1081.0,30.0,2.0,0.0,7.0,1.0,20.89
+306024,Dominic Calvert-Lewin,England,Everton,Center Forward,23,2020/21,80,muscle injury,2021-01-02,2021-01-26,24.0,2917.0,34.0,9.0,0.0,16.0,2.0,56.38
+306024,Dominic Calvert-Lewin,England,Everton,Center Forward,23,2020/21,80,hamstring injury,2021-02-11,2021-02-19,8.0,2917.0,34.0,9.0,0.0,16.0,2.0,56.38
+306024,Dominic Calvert-Lewin,England,Everton,Center Forward,24,2021/22,81,broken toe,2021-08-28,2021-12-31,125.0,2008.0,24.0,0.0,0.0,10.0,4.0,38.81
+306024,Dominic Calvert-Lewin,England,Everton,Center Forward,25,2021/22,81,hamstring injury,2022-04-12,2022-04-30,18.0,2008.0,24.0,0.0,0.0,10.0,4.0,38.81
+306024,Dominic Calvert-Lewin,England,Everton,Center Forward,25,2022/23,78,knee injury,2022-08-04,2022-10-03,60.0,1492.0,22.0,3.0,0.0,3.0,2.0,28.84
+306024,Dominic Calvert-Lewin,England,Everton,Center Forward,25,2022/23,78,hamstring injury,2022-11-05,2022-12-28,53.0,1492.0,22.0,3.0,0.0,3.0,2.0,28.84
+306024,Dominic Calvert-Lewin,England,Everton,Center Forward,25,2022/23,78,hamstring injury,2023-02-04,2023-04-20,75.0,1492.0,22.0,3.0,0.0,3.0,2.0,28.84
+306024,Dominic Calvert-Lewin,England,Everton,Center Forward,26,2022/23,78,hamstring injury,2023-05-20,2023-06-20,31.0,1492.0,22.0,3.0,0.0,3.0,2.0,28.84
+306024,Dominic Calvert-Lewin,England,Everton,Center Forward,26,2023/24,77,fitness and broken cheekbone,2023-08-01,2023-09-14,44.0,2071.0,30.0,3.0,0.0,5.0,2.0,40.03
+306024,Dominic Calvert-Lewin,England,Everton,Center Forward,27,2023/24,77,ill,2024-04-25,2024-05-01,6.0,2071.0,30.0,3.0,0.0,5.0,2.0,40.03
+45671,Cenk Tosun,Türkiye,Everton,Center Forward,28,2019/20,77,groin injury,2019-10-18,2019-10-27,9.0,796.0,18.0,3.0,0.0,3.0,1.0,15.38
+45671,Cenk Tosun,Türkiye,Everton,Center Forward,28,2019/20,77,cruciate ligament surgery,2020-03-02,2020-10-26,238.0,796.0,18.0,3.0,0.0,3.0,1.0,15.38
+343475,Ben Godfrey,England,Everton,Center Back,22,2020/21,75,hamstring injury,2020-10-26,2020-11-06,11.0,2175.0,24.0,4.0,1.0,0.0,0.0,42.04
+343475,Ben Godfrey,England,Everton,Center Back,24,2022/23,76,broken fibula,2022-08-06,2022-11-05,91.0,1156.0,15.0,4.0,0.0,0.0,0.0,22.34
+343475,Ben Godfrey,England,Everton,Center Back,25,2022/23,76,adductor injury,2023-04-30,2023-05-30,30.0,1156.0,15.0,4.0,0.0,0.0,0.0,22.34
+127187,Abdoulaye Doucouré,Mali,Everton,Central Midfielder,28,2020/21,79,foot injury,2021-03-04,2021-05-07,64.0,2784.0,33.0,8.0,0.0,4.0,4.0,53.81
+127187,Abdoulaye Doucouré,Mali,Everton,Central Midfielder,28,2021/22,79,stress reaction of the bone,2021-10-17,2021-11-28,42.0,2619.0,30.0,6.0,0.0,4.0,5.0,50.62
+127187,Abdoulaye Doucouré,Mali,Everton,Central Midfielder,29,2022/23,77,hamstring injury,2022-08-13,2022-10-03,51.0,1785.0,29.0,2.0,0.0,0.0,0.0,34.5
+127187,Abdoulaye Doucouré,Mali,Everton,Central Midfielder,30,2023/24,77,thigh problems,2023-12-17,2024-01-12,26.0,2940.0,37.0,11.0,1.0,11.0,4.0,56.82
+88103,James Rodríguez,Colombia,Everton,Attacking Midfielder,29,2020/21,82,groin injury,2020-10-26,2020-11-06,11.0,1152.0,15.0,1.0,0.0,3.0,4.0,22.27
+88103,James Rodríguez,Colombia,Everton,Attacking Midfielder,29,2020/21,82,calf strain,2020-12-06,2020-12-31,25.0,1152.0,15.0,1.0,0.0,3.0,4.0,22.27
+88103,James Rodríguez,Colombia,Everton,Attacking Midfielder,29,2020/21,82,calf injury,2021-02-22,2021-04-01,38.0,1152.0,15.0,1.0,0.0,3.0,4.0,22.27
+88103,James Rodríguez,Colombia,Everton,Attacking Midfielder,29,2020/21,82,calf injury,2021-05-01,2021-05-14,13.0,1152.0,15.0,1.0,0.0,3.0,4.0,22.27
+404842,Vitaliy Mykolenko,Ukraine,Everton,Left Back,22,2021/22,76,Coronavirus,2022-02-07,2022-02-16,9.0,3443.0,40.0,4.0,0.0,2.0,5.0,66.54
+404842,Vitaliy Mykolenko,Ukraine,Everton,Left Back,22,2022/23,76,muscle fatigue,2023-05-13,2023-06-05,23.0,2774.0,33.0,3.0,0.0,1.0,0.0,53.61
+404842,Vitaliy Mykolenko,Ukraine,Everton,Left Back,24,2023/24,75,groin injury,2023-12-15,2023-12-22,7.0,2829.0,36.0,2.0,0.0,2.0,0.0,54.68
+404842,Vitaliy Mykolenko,Ukraine,Everton,Left Back,24,2023/24,75,cold,2024-03-28,2024-04-01,4.0,2829.0,36.0,2.0,0.0,2.0,0.0,54.68
+404842,Vitaliy Mykolenko,Ukraine,Everton,Left Back,24,2023/24,75,ankle injury,2024-04-25,2024-06-04,40.0,2829.0,36.0,2.0,0.0,2.0,0.0,54.68
+424015,Nathan Patterson,Scotland,Everton,Right Back,19,2022/23,69,ankle injury,2022-09-21,2022-10-26,35.0,970.0,13.0,3.0,0.0,0.0,0.0,18.75
+424015,Nathan Patterson,Scotland,Everton,Right Back,20,2023/24,72,hamstring injury,2024-04-15,2024-06-11,57.0,1533.0,29.0,6.0,0.0,0.0,2.0,29.63
+288255,Donny van de Beek,Netherlands,Everton,Central Midfielder,24,2021/22,80,thigh problems,2022-03-31,2022-05-16,46.0,968.0,27.0,2.0,0.0,1.0,1.0,18.71
+485706,Amadou Onana,Belgium,Everton,Defensive Midfielder,21,2022/23,75,leg injury,2023-04-14,2023-04-24,10.0,2241.0,35.0,5.0,0.0,1.0,1.0,43.31
+485706,Amadou Onana,Belgium,Everton,Defensive Midfielder,22,2023/24,77,calf injury,2023-11-11,2023-12-08,27.0,3022.0,38.0,7.0,0.0,3.0,2.0,58.41
+505219,James Garner,England,Everton,Defensive Midfielder,21,2022/23,72,back injury,2022-11-12,2023-02-09,89.0,495.0,10.0,2.0,0.0,0.0,2.0,9.57
+584769,Dwight McNeil,England,Everton,Left winger,23,2023/24,76,ankle injury,2023-07-29,2023-09-01,34.0,3294.0,41.0,5.0,0.0,7.0,7.0,63.66
+417346,Jack Harrison,England,Everton,Right winger,26,2023/24,76,hip injury,2023-07-01,2023-09-21,82.0,3253.0,42.0,0.0,0.0,7.0,10.0,62.87

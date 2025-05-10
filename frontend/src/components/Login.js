@@ -1,9 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from "react-router-dom";
 import axios from 'axios';
 import { FaEye, FaEyeSlash } from 'react-icons/fa';
 import Cookies from 'js-cookie';
 import jwt_decode from 'jwt-decode';
+import './streak.css';
+import StreakPopUp from "./StreakPopUp";
 
 const Login = () => {
     const [username, setUsername] = useState('');
@@ -13,86 +15,87 @@ const Login = () => {
     const [showStreakPopup, setShowStreakPopup] = useState(false);
     const [userStreakData, setUserStreakData] = useState(null);  // To store user streak data
     const [loading, setLoading] = useState(false);  // To track the loading state
+    const [mintingLoading, setMintingLoading] = useState(false);  // To track minting state
+    const [metaCoinMessage, setMetaCoinMessage] = useState('');  // For success/failure message
 
     const navigate = useNavigate();
     const baseUrl = process.env.REACT_APP_BASE_URL || "http://127.0.0.1:5000";
 
     const handleLogin = async (e) => {
-        e.preventDefault();
-        setError(null);
-        setLoading(true);
-    
-        try {
-            // Attempt to log the user in
-            const response = await axios.post(
-                `${baseUrl}/login`, 
-                { username, password },
-                { headers: { "Content-Type": "application/json" } }
-            );
-    
-            if (response.status === 200) {
-                const { token } = response.data;
-                const decodedToken = jwt_decode(token);
-                const userId = decodedToken?.public_id;
-    
-                // Store token and user data in cookies (will be overwritten if they already exist)
-                Cookies.set('token', token, { expires: 10 });
-    
-                // Fetch the user's streak (this will also update it if necessary)
-                const streakResponse = await axios.get(`${baseUrl}/get_streak/${userId}`);
-                
-                // Check if the streak response contains error
-                if (streakResponse.status === 200) {
-                    // Set the updated streak data
-                    setUserStreakData(streakResponse.data);
-                    
-                    // Store user data in cookies
-                    const userResponse = await axios.get(`${baseUrl}/get_user/${userId}`);
-                    const user = userResponse.data;
-                    Cookies.set('user', JSON.stringify(user), { expires: 1 });
-    
-                    // Show the streak popup (after both fetching and updating streak)
-                    setShowStreakPopup(true);
-                } else {
-                    setError('Failed to fetch streak data');
-                }
-            }
-        } catch (error) {
-            setError(error.response?.data?.message || 'Invalid username or password');
-        } finally {
-            setLoading(false);
-        }
-    };       
-    
-    
+    e.preventDefault();
+    setError(null);
+    setLoading(true);
+    setMetaCoinMessage('');
 
-    // Close the popup and navigate to home
-    const closePopup = () => {
-        setShowStreakPopup(false);
-    
-        // After closing the popup, now set token and user info, then navigate to home
-        const token = Cookies.get('token');
-        if (token) {
+    try {
+        const response = await axios.post(`${baseUrl}/login`, {
+            username,
+            password
+        });
+
+        if (response.status === 200) {
+            const { token } = response.data;
             const decodedToken = jwt_decode(token);
             const userId = decodedToken?.public_id;
-    
-            // Fetch user details from server after closing popup
-            axios.get(`${baseUrl}/get_user/${userId}`).then((userResponse) => {
-                const user = userResponse.data;
-    
-                // Set user data and token in cookies after closing the popup
-                Cookies.set('user', JSON.stringify(user), { expires: 1 });
-    
-                // Navigate to the Home page after setting the cookies
-                navigate('/Home');
-            }).catch((err) => {
-                console.error('Error fetching user data:', err);
-            });
+
+            Cookies.set('token', token, { expires: 10 });
+
+            // Fetch user data
+            const userResponse = await axios.get(`${baseUrl}/get_user/${userId}`);
+            const user = userResponse.data;
+            Cookies.set('user', JSON.stringify(user), { expires: 1 });
+
+            // Get streak
+            const streakResponse = await axios.get(`${baseUrl}/get_streak/${userId}`);
+            const streakData = streakResponse.data;
+            setUserStreakData(streakData);
+
+            if (!streakData.already_logged_in_today) {
+                // First login of the day, show popup and mint MetaCoins
+                await handleMintAndStreakMetaCoins(userId, streakData.current_streak);
+                setShowStreakPopup(true);
+            } else {
+                // Not first login today, go straight to home
+                navigate("/Home");
+            }
         } else {
-            console.log('No token found');
+            setError('Login failed');
+        }
+    } catch (error) {
+        setError(error.response?.data?.message || 'Login error');
+    } finally {
+        setLoading(false);
+    }
+};
+
+
+    // Handle minting and adding MetaCoins
+    const handleMintAndStreakMetaCoins = async (userId, currentStreak) => {
+        try {
+            const addMetaCoinsResponse = await axios.post(
+                `${baseUrl}/add_metacoins_streak`,
+                { user_id: userId },
+                { headers: { "Content-Type": "application/json" } }
+            );
+
+            if (addMetaCoinsResponse.status === 200) {
+                setMetaCoinMessage(`MetaCoins added for maintaining streak.`);
+            } else {
+                const errMsg = addMetaCoinsResponse.data?.error || "Failed to add MetaCoins.";
+                setError(errMsg);
+                navigate("/Home");
+            }
+        } catch (error) {
+            const errMsg = error.response?.data?.error || "An unexpected error occurred during MetaCoin minting.";
+            setError(errMsg);
+            setMetaCoinMessage(errMsg);
+            navigate("/Home");
+        } finally {
+            setMintingLoading(false);
         }
     };
-    
+
+
 
     return (
         <div id="page-container">
@@ -143,24 +146,31 @@ const Login = () => {
                             <button type="submit" className="btn btn-primary btn-block" disabled={loading}>Sign in</button>
                         </form>
                         <div className="m-t-20">
-                            <a href="/Reset">Forgot password?</a>
+                           Forgot password? <a href="/Reset">Click here to reset</a>
+                        </div>
+                         <div className="m-t-20">
+                            Don't have an account yet?<a href="/Register"> Sign up now</a>
                         </div>
                     </div>
                 </div>
             </div>
 
-            {/* Streak popup */}
-            {showStreakPopup && userStreakData && (
-                <div className="popup">
-                    <div className="popup-content">
-                        <h4>Congratulations!</h4>
-                        <p>Your current streak is {userStreakData.current_streak} days.</p>
-                        <p>Your highest streak is {userStreakData.highest_streak} days.</p>
-                        <p>Your total score is {userStreakData.score} points.</p>
-                        <button onClick={closePopup}>Close</button>
-                    </div>
-                </div>
-            )}
+            {/* Show MetaCoin messages */}
+{showStreakPopup && userStreakData && (
+  <div >
+    <StreakPopUp
+      currentStreak={userStreakData.current_streak}
+      day={userStreakData.current_streak_day}
+    />
+  </div>
+)}
+
+
+{metaCoinMessage && (
+    <div className="alert alert-info">{metaCoinMessage}</div>
+)}
+
+
         </div>
     );
 };
