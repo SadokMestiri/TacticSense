@@ -28,7 +28,7 @@
 }
 
 .sidebar-profile-box img {
-  border-radius: 50%;
+  border-radius: 100%;
   width: 100px;
   height: 100px;
   object-fit: cover;
@@ -73,7 +73,9 @@
 .main-content h2 {
   font-size: 1.5rem;
   margin-bottom: 10px;
+  margin-top: 10px;
   color: #333; /* Darker color for better contrast */
+  font-weight: bold;
 }
 
 .main-content label {
@@ -184,4 +186,55 @@
   width: 20px; /* Adjust the width */
   height: 20px; /* Adjust the height */
   object-fit: contain; /* Ensure the image scales proportionally */
+}
+
+.reaction-slider {
+  position: relative;
+  margin-top: 20px;
+}
+
+.slider-container {
+  position: relative;
+  width: 100%;
+}
+
+.slider {
+  width: 100%;
+  margin: 10px 0;
+  appearance: none;
+  height: 8px;
+  background: #ddd;
+  border-radius: 5px;
+  outline: none;
+}
+
+.slider::-webkit-slider-thumb {
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  background: #007bff;
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+.slider::-moz-range-thumb {
+  width: 20px;
+  height: 20px;
+  background: #007bff;
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+.slider-value {
+  position: absolute;
+  top: -25px;
+  left: 50%;
+  transform: translateX(50%);
+  background: #007bff;
+  color: #fff;
+  padding: 2px 8px;
+  border-radius: 5px;
+  font-size: 12px;
+  font-weight: bold;
+  white-space: nowrap;
 }

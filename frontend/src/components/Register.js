@@ -7,6 +7,7 @@ const Register = () => {
     const [name, setName] = useState('');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const [role, setRole] = useState('');
     const [error, setError] = useState(null);
     const [success, setSuccess] = useState(null);
     const [profileImage, setProfileImage] = useState(null);
@@ -23,6 +24,7 @@ const Register = () => {
         formData.append('email', email);
         formData.append('password', password);
         formData.append('name', name);
+        formData.append('role', role);
 
         if (profileImage) {
             formData.append('profile_image', profileImage);
@@ -88,14 +90,24 @@ const Register = () => {
                                     onChange={(e) => setName(e.target.value)}
                                     required
                                 />
-                            </div>
+                                </div>
+                                <div className="form-group m-b-20">
+                                    <input
+                                        type="text"
+                                        className="form-control form-control-lg"
+                                        placeholder="Username"
+                                        value={username}
+                                        onChange={(e) => setUsername(e.target.value)}
+                                        required
+                                    />
+                                </div>
                             <div className="form-group m-b-20">
                                 <input
                                     type="text"
                                     className="form-control form-control-lg"
-                                    placeholder="Username"
-                                    value={username}
-                                    onChange={(e) => setUsername(e.target.value)}
+                                    placeholder="Role"
+                                    value={role}
+                                    onChange={(e) => setRole(e.target.value)}
                                     required
                                 />
                             </div>

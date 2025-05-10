@@ -28,7 +28,7 @@ const Login = () => {
             if (response.status === 200) {
                 const { token } = response.data;
                 const decodedToken = jwt_decode(token);
-                const userId = decodedToken?.public_id;
+                const userId = decodedToken?.user_id;
                 
                 // Fetch user details using the userId
                 const userResponse = await axios.get(`${baseUrl}/get_user/${userId}`);

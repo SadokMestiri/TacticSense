@@ -2,6 +2,7 @@
 
 import Home from "./components/Home";
 import Profile from "./components/Profile";
+import Profile_View from "./components/Profile_View";
 import {Routes, Route } from "react-router-dom";
 import Login from "./components/Login";
 import Register from "./components/Register";
@@ -28,6 +29,7 @@ export default function App() {
       <Route path="/Home" element={<Home header={header} />} />
       <Route path="/Chat" element={<Chat header={header}/>} />
       <Route path="/Profile" element={<Profile header={header}/>} />
+      <Route path="/Profile_View" element={<Profile_View header={header}/>} />
       <Route path="/Register" element={<Register/>} />
       <Route path="/header" element={<Header />} />
       <Route path="/footer" element={<Footer />} />

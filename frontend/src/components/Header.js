@@ -118,8 +118,12 @@ const Header = () => {
                   <div className="desc">{"Professional footballer"}</div>
                 </div>
               </div>
-              <a href="/Profile" className="profile-btn">See your profile</a>
-              <a href="#" className="logout-btn" onClick={handleLogout}>Logout</a>
+              {user.role === "Player" ? (
+                <a href="/Profile" className="profile-btn">See your profile</a>
+              ) : (
+                <a href="/Profile_View" className="profile-btn">See your profile</a>
+              )}
+              <a href="/login" className="logout-btn" onClick={handleLogout}>Logout</a>
             </div>
           )}
         </div>
