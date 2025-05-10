@@ -368,13 +368,13 @@ const Profile = () => {
                 >
                   Previous
                 </button>
-                {uploadedVideos[skill]?.length < 3 && uploadedVideos[skill]?.[currentPage[skill] || 0] && (
+                {(uploadedVideos[skill]?.length < 3 ) && uploadedVideos[skill]?.[currentPage[skill] || 0] && (
                   <button
                     className="upload-placeholder"
                     onClick={() =>
                       document.getElementById(`upload-${skill}`).click()
                     }
-                    disabled={(currentPage[skill] || 0) === 0}
+                    //disabled={(currentPage[skill] || 0) === 0}
                     style={{
                       background: 'none',
                       border: 'none',
@@ -856,12 +856,20 @@ const Profile = () => {
       <div className="container">
         <div className="left-sidebar">
           <div className="sidebar-profile-box">
-            <img src="assets/images/cover-pic.jpg" alt="cover" width="100%" />
+            <img src="assets/images/cover-pic.jpg" alt="cover" className="cover-image" />
             <div className="sidebar-profile-info">
               <div className="profile-image-wrapper">
-                <img src={`${process.env.REACT_APP_BASE_URL}/${profileImage}`} alt="profile" className="profile-image" />
+                <img
+                  src={`${process.env.REACT_APP_BASE_URL}/${profileImage}`}
+                  alt="profile"
+                  className="profile-image"
+                />
                 <label htmlFor="profile-image-upload" className="edit-icon">
-                  <img src="assets/images/edit-icon.png" alt="edit" className="edit-icon-image" />
+                  <img
+                    src="assets/images/edit-icon.png"
+                    alt="edit"
+                    className="edit-icon-image"
+                  />
                 </label>
                 <input
                   type="file"
@@ -871,12 +879,18 @@ const Profile = () => {
                   onChange={handleImageChange}
                 />
               </div>
-              <h1>{name}</h1>
-              <h3>{username}</h3>
-              <ul>
-                <li>Profile views <span>10K</span></li>
-                <li>Post views <span>50K</span></li>
-                <li>Connections <span>5K</span></li>
+              <h1 className="profile-name">{name}</h1>
+              <h3 className="profile-username">{username}</h3>
+              <ul className="profile-stats">
+                <li>
+                  Profile views <span className="stat-value">10K</span>
+                </li>
+                <li>
+                  Post views <span className="stat-value">50K</span>
+                </li>
+                <li>
+                  Connections <span className="stat-value">5K</span>
+                </li>
               </ul>
             </div>
           </div>

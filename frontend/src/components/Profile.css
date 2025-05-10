@@ -1,5 +1,26 @@
 /* Profile Page Styles */
 
+body {
+  font-family: 'Arial', sans-serif;
+  background-color: #f4f4f9;
+  margin: 0;
+  padding: 0;
+}
+
+.profile-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+  background: #fff;
+  border-radius: 10px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+h2, h3 {
+  color: #333;
+  margin-bottom: 10px;
+}
+
 .container {
   display: flex;
   flex-direction: row;
@@ -8,7 +29,15 @@
   background-color: transparent; /* Removed gray background */
 }
 
-.left-sidebar, .right-sidebar {
+.left-sidebar {
+  width: 25%;
+  background-color: #f9f9f9;
+  padding: 20px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  border-radius: 10px;
+}
+
+.right-sidebar {
   width: 20%;
   padding: 15px;
   border-radius: 8px;
@@ -22,37 +51,88 @@
   background-color: #fff; /* Matches the rest of the site */
 }
 
+/* Sidebar Profile Box */
 .sidebar-profile-box {
+  position: relative;
   text-align: center;
-  margin-bottom: 20px;
+  background-color: #fff;
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 
-.sidebar-profile-box img {
-  border-radius: 100%;
+.cover-image {
+  width: 100%;
+  height: 120px;
+  object-fit: cover;
+}
+
+.sidebar-profile-info {
+  padding: 20px;
+}
+
+.profile-image-wrapper {
+  position: relative;
+  display: inline-block;
+  margin-top: -50px;
+}
+
+.profile-image {
   width: 100px;
   height: 100px;
+  border-radius: 50%;
+  border: 3px solid #fff;
   object-fit: cover;
-  margin-bottom: 10px;
 }
 
-.sidebar-profile-info h1 {
+.edit-icon {
+  position: absolute;
+  bottom: 0px; /* Adjusted for better positioning */
+  right: 0px; /* Adjusted for better positioning */
+  background-color: #fff; /* Added background for better visibility */
+  border-radius: 50%;
+  display: flex; /* Center the icon */
+  align-items: center; /* Center the icon vertically */
+  justify-content: center; /* Center the icon horizontally */
+  width: 30px; /* Adjusted size */
+  height: 30px; /* Adjusted size */
+  cursor: pointer;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Optional shadow for better appearance */
+}
+
+.edit-icon-image {
+  width: 16px; /* Adjusted size for better fit */
+  height: 16px; /* Adjusted size for better fit */
+  object-fit: contain; /* Ensure the image scales proportionally */
+}
+
+.profile-name {
   font-size: 1.5rem;
-  margin: 10px 0;
+  font-weight: bold;
+  margin: 10px 0 5px;
 }
 
-.sidebar-profile-info h3 {
+.profile-username {
   font-size: 1rem;
   color: #666;
+  margin-bottom: 15px;
 }
 
-.sidebar-profile-info ul {
+.profile-stats {
   list-style: none;
   padding: 0;
+  margin: 0;
 }
 
-.sidebar-profile-info ul li {
-  margin: 5px 0;
+.profile-stats li {
   font-size: 0.9rem;
+  color: #333;
+  margin: 5px 0;
+}
+
+.stat-value {
+  font-weight: bold;
+  color: #007bff;
 }
 
 .sidebar-news h3 {
@@ -104,37 +184,6 @@
   margin-left: 20px;
 }
 
-.profile-image-wrapper {
-  position: relative;
-  display: inline-block;
-}
-
-.profile-image {
-  width: 120px;
-  height: 120px;
-  border-radius: 50%;
-  object-fit: cover;
-}
-
-.edit-icon {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  border-radius: 50%;
-  padding: 10px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.edit-icon img {
-  width: 30px;
-  height: 30px;
-  background-color: transparent;
-}
-
 .update-profile-btn {
   background-color: #0d8020;
   color: white;
@@ -152,9 +201,38 @@
 
 .uploaded-videos {
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
   position: relative;
+}
+
+.upload-placeholder {
+  background: #007bff;
+  color: #fff;
+  border: none;
+  padding: 10px 15px;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background 0.3s;
+}
+
+.upload-placeholder:hover {
+  background: #0056b3;
+}
+
+.remove-placeholder {
+  background: #ff4d4d;
+  color: #fff;
+  border: none;
+  padding: 10px 15px;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background 0.3s;
+}
+
+.remove-placeholder:hover {
+  background: #cc0000;
 }
 
 .pagination-button.left {
@@ -237,4 +315,117 @@
   font-size: 12px;
   font-weight: bold;
   white-space: nowrap;
+}
+
+/* Header Section */
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px;
+  background-color: #007bff;
+  color: #fff;
+  border-radius: 10px 10px 0 0;
+}
+
+.header img {
+  border-radius: 50%;
+  width: 80px;
+  height: 80px;
+  object-fit: cover;
+}
+
+.header h1 {
+  font-size: 24px;
+  margin: 0;
+}
+
+/* Tabs Section */
+.tabs {
+  display: flex;
+  justify-content: space-around;
+  margin: 20px 0;
+  border-bottom: 2px solid #ddd;
+}
+
+.tabs button {
+  background: none;
+  border: none;
+  padding: 10px 20px;
+  cursor: pointer;
+  font-size: 16px;
+  color: #007bff;
+  border-bottom: 2px solid transparent;
+  transition: all 0.3s;
+}
+
+.tabs button.active {
+  border-bottom: 2px solid #007bff;
+  font-weight: bold;
+}
+
+/* Skills Section */
+.skills-section {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  justify-content: space-between;
+}
+
+.skill-container {
+  flex: 1 1 calc(100% - 20px);
+  background: #f9f9f9;
+  border: 1px solid #ddd;
+  border-radius: 10px;
+  padding: 15px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  transition: transform 0.3s;
+}
+
+.skill-container:hover {
+  transform: translateY(-5px);
+}
+
+.skill-container h3 {
+  font-size: 18px;
+  margin-bottom: 10px;
+}
+
+/* Video Controls */
+button {
+  background: #007bff;
+  color: #fff;
+  border: none;
+  padding: 10px 15px;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background 0.3s;
+}
+
+button:hover {
+  background: #0056b3;
+}
+
+/* Rating Section */
+.rating {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-top: 10px;
+}
+
+.rating span {
+  font-size: 20px;
+  color: #FFD700;
+  margin: 0 5px;
+}
+
+/* Footer Section */
+.footer {
+  text-align: center;
+  padding: 10px;
+  background: #007bff;
+  color: #fff;
+  border-radius: 0 0 10px 10px;
+  margin-top: 20px;
 }
