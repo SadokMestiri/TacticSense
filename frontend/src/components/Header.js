@@ -7,6 +7,10 @@ const Header = () => {
   const user_id = localStorage.getItem('user_id');
   const [error, setError] = useState(null);
   const [user, setUser] = useState({});
+  const [notifications, setNotifications] = useState([]);
+  const [showNotifPanel, setShowNotifPanel] = useState(false);
+  const [playerId, setPlayerId] = useState(null);
+
 
   const toggleDropdown = () => {
     console.log('toggleDropdown invoked');
@@ -31,6 +35,42 @@ const Header = () => {
   useEffect(() => {
     fetchUser();
   }, [user_id]);
+
+  useEffect(() => {
+    const fetchPlayerId = async () => {
+      try {
+        const response = await axios.get(`${process.env.REACT_APP_BASE_URL}/player_id/${user_id}`);
+        setPlayerId(response.data.player_id);
+      } catch (error) {
+        console.error("Erreur lors de la récupération du player ID:", error);
+      }
+    };
+
+    if (user_id) {
+      fetchPlayerId();
+    }
+  }, [user_id]);
+
+  useEffect(() => {
+        const fetchNotifications = async () => {
+            if (!playerId) return;
+            try {
+                const response = await axios.get(`${process.env.REACT_APP_BASE_URL}/notifications/${playerId}`);
+                console.log("Notifications reçues:", response.data);
+                setNotifications(response.data);
+            } catch (error) {
+                console.error("Error fetching notifications:", error);
+            }
+        };
+
+        if (playerId) {
+            console.log("Fetching notifications for player ID:", playerId);
+            fetchNotifications();
+        }
+    }, [playerId]);
+
+
+  const unreadCount = notifications.filter(n => !n.is_read).length;
 
   return (
     <div>
@@ -66,9 +106,13 @@ const Header = () => {
                 <img src="assets/images/message.png" alt="message" /> <span>Messaging</span>
               </a>
             </li>
-            <li>
-              <a href="#">
-                <img src="assets/images/notification.png" alt="notification" /> <span>Notifications</span>
+            <li className="notif-icon-wrapper">
+              <a href="/notifications" className="notif-icon-link">
+                <img src="assets/images/notification.png" alt="notification" />
+                {unreadCount > 0 && (
+                  <span className="notif-badge">{unreadCount}</span>
+                )}
+                <span>Notifications</span>
               </a>
             </li>
           </ul>

@@ -123,3 +123,71 @@
     margin-right: 70px;
     margin-top: -15px; /* Adjust the value as needed to move the image to the left */
   }
+
+
+.notif-panel {
+  position: fixed;
+  top: 60px;
+  right: 0;
+  width: 300px;
+  max-height: 90vh;
+  overflow-y: auto;
+  background-color: #fff;
+  border-left: 1px solid #ccc;
+  padding: 20px;
+  box-shadow: -2px 0 5px rgba(0,0,0,0.1);
+  z-index: 1000;
+}
+
+.notif-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px;
+  border-bottom: 1px solid #ddd;
+}
+
+.notif-text {
+  flex: 1;
+}
+
+.notif-dot {
+  width: 10px;
+  height: 10px;
+  background-color: #1877f2; /* bleu Facebook */
+  border-radius: 50%;
+} 
+
+.notif-item p {
+  margin: 0;
+  font-size: 14px;
+}
+
+.notif-item small {
+  color: #666;
+  font-size: 12px;
+}
+
+.notif-icon-wrapper {
+  position: relative;
+}
+
+.notif-icon-link {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.notif-badge {
+  position: absolute;
+  top: -5px;
+  left: 18px; /* ajuste selon l’icône */
+  background-color: #d93025; /* rouge */
+  color: white;
+  border-radius: 50%;
+  padding: 2px 6px;
+  font-size: 12px;
+  font-weight: bold;
+  line-height: 1;
+}
+

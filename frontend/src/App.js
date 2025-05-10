@@ -1,7 +1,8 @@
-
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 import Home from "./components/Home";
-import {Routes, Route } from "react-router-dom";
+import { Routes, Route } from "react-router-dom";
 import Login from "./components/Login";
 import Register from "./components/Register";
 import Chat from "./components/Chat";
@@ -9,14 +10,13 @@ import Header from "./components/Header";
 import Footer from "./components/Footer";
 import GPT from "./components/GPT";
 import PlayersList from "./components/PlayersList";
-
-
+import Notifications from "./components/Notifications";
 
 
 export default function App() {
 
-  const header = (<Header/>);
-  const footer = (<Footer/>);
+  const header = (<Header />);
+  const footer = (<Footer />);
 
   return (
 
@@ -30,8 +30,10 @@ export default function App() {
           <Route path="/footer" element={<Footer />} />
           <Route path="/gpt" element={<GPT header={header} footer={footer}/>} />
           <Route path="/players" element={<PlayersList header={header} footer={footer}/>} />
+          <Route path="/notifications" element={<Notifications header={header} footer={footer}/>} />
         </Routes>
+        <ToastContainer />
       </div>
-    
+
   );
 }

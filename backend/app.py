@@ -7,7 +7,7 @@ from werkzeug.utils import secure_filename
 from datetime import datetime
 from sqlalchemy import Enum
 from flask_mail import Mail, Message 
-
+from datetime import datetime
 
 app = Flask(__name__,template_folder='templates')
 app.config['SQLALCHEMY_DATABASE_URI'] = "postgresql://postgres:0000@localhost/metascout"
@@ -43,6 +43,13 @@ class User(db.Model):
         self.name = name
         self.profile_image = profile_image
         self.role = role
+
+class Club(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    club_name = db.Column(db.String(100), nullable=False)
+    competition = db.Column(db.String(100), nullable=True)
+    squad_size = db.Column(db.Integer, nullable=True)
+    country = db.Column(db.String(100), nullable=True)
 
 class PlayerProfile(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -239,6 +246,31 @@ class Conversation(db.Model):
     user2_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     last_message_time = db.Column(db.DateTime, default=db.func.current_timestamp())
 
+class PlayerRating(db.Model):
+    __tablename__ = 'player_rating'
+    id = db.Column(db.Integer, primary_key=True)
+    
+    coach_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    player_id = db.Column(db.Integer, db.ForeignKey('player_profile.id'), nullable=False)
+    
+    score = db.Column(db.Float, nullable=False)
+
+    # Un coach peut noter un joueur une seule fois
+    __table_args__ = (db.UniqueConstraint('coach_id', 'player_id', name='unique_rating'),)
+
+    coach = db.relationship('User', backref='given_ratings')
+    player = db.relationship('PlayerProfile', backref='received_ratings')
+
+class Notification(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    player_id = db.Column(db.Integer, db.ForeignKey('player_profile.id'))
+    coach_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    message = db.Column(db.String(255))
+    is_read = db.Column(db.Boolean, default=False)
+    timestamp = db.Column(db.DateTime, default=datetime.utcnow)
+
+    player = db.relationship('PlayerProfile', backref='notifications')
+    coach = db.relationship('User', backref='sent_notifications')
 
 @app.route('/')
 def hello():
@@ -623,31 +655,75 @@ def rate_player():
     try:
         data = request.get_json()
         player_id = data.get('id')
-        new_score = data.get('score')
+        score = data.get('score')
 
-        if player_id is None or new_score is None:
-            return jsonify({'message': 'Missing player_id or score'}), 400
+        user_id = data.get('user_id')
+        coach = User.query.get(user_id)
 
-        player = PlayerProfile.query.get_or_404(player_id)
+        print("Coach ID:", user_id, "role:", coach.role)
+        
+        if coach.role != "Coach":
+            return jsonify({'message': 'Only coaches can rate players'}), 403
 
-        # Si aucune note n'existe déjà, initialise avec la nouvelle note
-        if player.score is None:
-            player.score = new_score
-        else:
-            # Calculer la nouvelle moyenne en fonction du score existant
-            current_score = player.score
+        # Empêcher une double notation
+        existing_rating = PlayerRating.query.filter_by(coach_id=user_id, player_id=player_id).first()
+        if existing_rating:
+            return jsonify({'message': 'You already rated this player'}), 400
 
-            # Supposons que le score précédent a déjà pris en compte le nombre de fois qu'il a été mis à jour
-            # Si tu veux un comportement différent, tu peux ajouter un compteur dans le front-end pour ajuster la logique
-            player.score = (current_score + new_score) / 2  # Exemple : calcul de la moyenne
+        # Ajouter la note
+        new_rating = PlayerRating(coach_id=user_id, player_id=player_id, score=score)
+        db.session.add(new_rating)
+
+        # Recalcul de la moyenne
+        all_ratings = PlayerRating.query.filter_by(player_id=player_id).all()
+        average = round(sum(r.score for r in all_ratings) / len(all_ratings), 2)
+
+        player = PlayerProfile.query.get(player_id)
+        player.score = average
+
+         # Création de la notification pour le joueur
+        notification_message = f"Coach {coach.name} has rated you {score}/5."
+        notification = Notification(
+            player_id=player_id,
+            coach_id=user_id,
+            message=notification_message,
+            timestamp=datetime.utcnow()  # Timestamp actuel
+        )
+        db.session.add(notification)
 
         db.session.commit()
-
-        return jsonify({
-            'message': 'Score updated successfully',
-            'average_score': player.score
-        }), 200
+        
+        return jsonify({'message': 'Score added', 'average_score': average}), 200
 
     except Exception as e:
-        print(f"Error updating player score: {e}")
+        print(f"Error rating player: {e}")
         return jsonify({'message': 'Internal server error'}), 500
+    
+@app.route('/player_id/<int:user_id>', methods=['GET'])
+def get_player_id(user_id):
+    player = PlayerProfile.query.filter_by(user_id=user_id).first()
+    if player:
+        return jsonify({'player_id': player.id})
+    return jsonify({'message': 'Player not found'}), 404
+
+@app.route('/notifications/<int:player_id>', methods=['GET'])
+def get_notifications(player_id):
+    notifications = Notification.query.filter_by(player_id=player_id).order_by(Notification.timestamp.desc()).all()
+    notif_list = [{
+        'id': n.id,
+        'message': n.message,
+        'timestamp': n.timestamp.isoformat(),
+        'is_read': n.is_read,
+        'coach_image': n.coach.profile_image if n.coach else None
+    } for n in notifications]
+
+    return jsonify(notif_list), 200
+
+@app.route('/notifications/read/<int:notif_id>', methods=['POST'])
+def mark_notification_read(notif_id):
+    notif = Notification.query.get(notif_id)
+    if notif:
+        notif.is_read = True
+        db.session.commit()
+        return jsonify({'message': 'Notification marked as read'}), 200
+    return jsonify({'message': 'Notification not found'}), 404

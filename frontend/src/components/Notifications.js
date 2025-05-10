@@ -1,29 +1,29 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import axios from 'axios';
-import StarRatings from 'react-star-ratings';
-import { toast } from "react-toastify";
-import './PlayersList.css';
+import './Notifications.css';
 
-const PlayersList = ({ header, footer }) => {
+const Notifications = ({ header, footer }) => {
     const user_id = localStorage.getItem('user_id');
     const [user, setUser] = useState({});
-    const [userImages, setUserImages] = useState({});
     const [users, setUsers] = useState([]);
     const [error, setError] = useState(null);
     const [isActivityOpen, setIsActivityOpen] = useState(false);
-    const [players, setPlayers] = useState([]);
+    const [notifications, setNotifications] = useState([]);
+    const [playerId, setPlayerId] = useState(null);
 
-    const fetchPlayers = async () => {
-        try {
-            const response = await axios.get(`${process.env.REACT_APP_BASE_URL}/get_players`);
-            setPlayers(response.data);
-        } catch (error) {
-            setError(error.response?.data?.message || 'Error fetching players');
-        }
-    };
     useEffect(() => {
-        fetchUser();
-        fetchPlayers();
+        const fetchPlayerId = async () => {
+            try {
+                const response = await axios.get(`${process.env.REACT_APP_BASE_URL}/player_id/${user_id}`);
+                setPlayerId(response.data.player_id);
+            } catch (error) {
+                console.error("Erreur lors de la récupération du player ID:", error);
+            }
+        };
+
+        if (user_id) {
+            fetchPlayerId();
+        }
     }, [user_id]);
 
 
@@ -52,44 +52,37 @@ const PlayersList = ({ header, footer }) => {
         fetchUser();
     }, [user_id]);
 
-    const handleRatingChange = async (playerId, rating) => {
-        try {
-            const response = await fetch("http://127.0.0.1:5000/rate_player", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify({ id: playerId, score: rating, user_id: user_id }),
-            });
-
-            const data = await response.json();
-            if (response.ok) {
-                console.log("Score mis à jour :", data.average_score);
-                setPlayers(prevPlayers =>
-                    prevPlayers.map(player =>
-                        player.id === playerId
-                            ? { ...player, score: data.average_score }
-                            : player
-                    )
-                );
-                toast.success("✅ Score ajouté avec succès !", {
-                    position: "top-center"
-                });
-            } else {
-                console.error("Erreur backend :", data.message);
-                toast.warning(`⚠️ ${data.message || "Erreur lors de l'envoi du score."}`, {
-                    position: "top-center"
-                });
+    useEffect(() => {
+        const fetchNotifications = async () => {
+            if (!playerId) return;
+            try {
+                const response = await axios.get(`${process.env.REACT_APP_BASE_URL}/notifications/${playerId}`);
+                console.log("Notifications reçues:", response.data);
+                setNotifications(response.data);
+            } catch (error) {
+                console.error("Error fetching notifications:", error);
             }
-        } catch (err) {
-            alert("Erreur de connexion au serveur.");
-            toast.error("❌ Erreur de connexion au serveur.", {
-                position: "top-center"
-            });
+        };
 
+        if (playerId) {
+            console.log("Fetching notifications for player ID:", playerId);
+            fetchNotifications();
+        }
+    }, [playerId]);
+
+    const handleNotificationClick = async (notifId) => {
+        try {
+            await axios.post(`${process.env.REACT_APP_BASE_URL}/notifications/read/${notifId}`);
+            // Marquer comme lue localement
+            setNotifications((prevNotifs) =>
+                prevNotifs.map((notif) =>
+                    notif.id === notifId ? { ...notif, is_read: true } : notif
+                )
+            );
+        } catch (error) {
+            console.error("Erreur lors du marquage de la notification comme lue:", error);
         }
     };
-
 
     return (
         <div>
@@ -145,45 +138,31 @@ const PlayersList = ({ header, footer }) => {
                     <p id="showMoreLink" >Show more <b>+</b></p>
                 </div>
                 <div className="main-content">
-                    <h2>Registered Players</h2>
-                    <div className="players-list">
-                        {players.length > 0 ? (
-                            players.map(player => (
-                                <div key={player.id} className="player-card">
-                                    <img src={`${process.env.REACT_APP_BASE_URL}/${player.photo}`} alt={player.name} />
-                                    <div className="player-info">
-                                        <h3>{player.name}</h3>
-                                        <div style={{ display: "flex", gap: "20px" }}>
-                                            <div style={{ marginRight: "150px" }}>
-                                                <p>Age: {player.age}</p>
-                                                <p>Position: {player.position}</p>
-                                            </div>
-                                            <div>
-                                                <p>Club: {player.club}</p>
-                                                <p>Score: {player.score !== null ? player.score.toFixed(2) : "N/A"}</p>
-                                            </div>
-                                        </div>
-
-                                        <div className="rating">
-                                            <StarRatings
-                                                rating={player.score || 0}
-                                                starRatedColor="gold"
-                                                starHoverColor="orange"
-                                                changeRating={(newRating) => handleRatingChange(player.id, newRating)}
-                                                numberOfStars={5}
-                                                name={`rating-${player.id}`}
-                                                starDimension="24px"
-                                                starSpacing="2px"
-                                            />
-
-                                        </div>
-                                    </div>
+                    <div className="notifications-page">
+                        <h2>Notifications</h2>
+                        {notifications.map((notif) => (
+                            <div
+                                key={notif.id}
+                                className="notif-item"
+                                onClick={() => handleNotificationClick(notif.id)}
+                                style={{ cursor: 'pointer' }}
+                            >
+                                <div className="notif-coach-img">
+                                    {notif.coach_image ? (
+                                        <img src={`${process.env.REACT_APP_BASE_URL}/${notif.coach_image}`} alt="Coach" />
+                                    ) : (
+                                        <img src="/assets/images/default-profile.png" alt="Default Coach" />
+                                    )}
                                 </div>
-                            ))
-                        ) : (
-                            <p>No players found.</p>
-                        )}
+                                <div className="notif-text">
+                                    <p>{notif.message}</p>
+                                    <small>{notif.timestamp ? new Date(notif.timestamp).toLocaleString() : "N/A"}</small>
+                                </div>
+                                {!notif.is_read && <div className="notif-dot" />}
+                            </div>
+                        ))}
                     </div>
+
                 </div>
 
 
@@ -235,4 +214,5 @@ const PlayersList = ({ header, footer }) => {
         </div>
     );
 };
-export default PlayersList;
+
+export default Notifications;

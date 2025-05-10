@@ -1,0 +1,38 @@
+.notifications-page {
+  background: #fff;
+  padding: 20px;
+  border-radius: 8px;
+}
+
+.notif-item {
+    display: flex;
+    align-items: center;
+    margin-bottom: 15px;
+    background: #f9f9f9;
+    padding: 10px;
+    border-radius: 8px;
+}
+
+.notif-text p {
+  margin: 0;
+  font-weight: 500;
+}
+
+.notif-text small {
+  color: #888;
+}
+
+.notif-dot {
+  width: 10px;
+  height: 10px;
+  background: red;
+  border-radius: 50%;
+}
+
+.notif-coach-img img {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    object-fit: cover;
+    margin-right: 15px;
+}
