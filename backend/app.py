@@ -119,6 +119,10 @@ class Conversation(db.Model):
 
 def process_new_player_data(career_stats):
     df = pd.DataFrame(career_stats)
+    # Convert relevant columns to numeric
+    for col in ['goals', 'assists', 'minutes', 'matches', 'age']:
+        if col in df.columns:
+            df[col] = pd.to_numeric(df[col], errors='coerce').fillna(0)
     df['position'] = df['position'].str.upper().str.strip()
     valid_positions = ['DF', 'MF', 'FW']
     df['position'] = df['position'].apply(lambda x: x if x in valid_positions else 'FW')
@@ -712,16 +716,24 @@ def predict_player(player_name):
     features_imputed = imputer.transform(features_df)
     perf_pred = performance_model.predict(features_imputed)[0]
     longevity_prob = longevity_model.predict_proba(features_imputed)[0][1]
+
+    # Clip negative predictions to zero
+    goals = max(0, float(perf_pred[0]))
+    assists = max(0, float(perf_pred[1]))
+    matches = max(0, float(perf_pred[2]))
+    minutes = max(0, float(perf_pred[3]))
+
     return jsonify({
         "player_name": player_name,
         "predictions": {
-            "goals": float(perf_pred[0]),
-            "assists": float(perf_pred[1]),
-            "matches": float(perf_pred[2]),
-            "minutes": float(perf_pred[3])
+            "goals": goals,
+            "assists": assists,
+            "matches": matches,
+            "minutes": minutes
         },
         "probability_playing_next_season": float(longevity_prob)
     })
+
 @app.route('/predict/new_player', methods=['POST'])
 def predict_new_player():
     data = request.json
@@ -731,13 +743,20 @@ def predict_new_player():
     features_imputed = imputer.transform(features_df)
     perf_pred = performance_model.predict(features_imputed)[0]
     longevity_prob = longevity_model.predict_proba(features_imputed)[0][1]
+
+    # Clip negative predictions to zero
+    goals = max(0, float(perf_pred[0]))
+    assists = max(0, float(perf_pred[1]))
+    matches = max(0, float(perf_pred[2]))
+    minutes = max(0, float(perf_pred[3]))
+
     return jsonify({
         "player_name": data.get('name', 'New Player'),
         "predictions": {
-            "goals": float(perf_pred[0]),
-            "assists": float(perf_pred[1]),
-            "matches": float(perf_pred[2]),
-            "minutes": float(perf_pred[3])
+            "goals": goals,
+            "assists": assists,
+            "matches": matches,
+            "minutes": minutes
         },
         "probability_playing_next_season": float(longevity_prob)
     })
@@ -763,13 +782,29 @@ def get_players():
 @app.route('/player/<name>/career', methods=['GET'])
 def player_career(name):
     import pandas as pd
-    df = pd.read_csv(DATA_PATH)
+    df = pd.read_csv(DATA_PATH,  thousands=',', quotechar='"')
     df.columns = df.columns.str.strip()
     player_df = df[df['player_name'] == name]
     if player_df.empty:
         return jsonify({"error": "Player not found"}), 404
+
+    # Filter out rows where 'season' is NaN
+    player_df = player_df[player_df['season'].notna()]
+
+    # Handle missing values and convert data types
+    player_df['age'] = player_df['age'].fillna(0).astype(int)
+    player_df['team'] = player_df['team'].fillna('Unknown')
+
     player_df = player_df.sort_values('season')
+    # Extract info after handling missing values
     info = player_df.iloc[-1][['player_name', 'age', 'position', 'team']].to_dict()
+
+
+    player_df['goals'] = pd.to_numeric(player_df['goals'], errors='coerce').fillna(0)
+    player_df['assists'] = pd.to_numeric(player_df['assists'], errors='coerce').fillna(0)
+    player_df['minutes'] = player_df['minutes'].astype(str).str.replace(',', '').astype(float).fillna(0).astype(int)
+    player_df['mp'] = pd.to_numeric(player_df['mp'], errors='coerce').fillna(0)
+
     career = player_df[['season', 'goals', 'assists', 'minutes', 'mp']].to_dict(orient='records')
     return jsonify({'info': info, 'career': career})
 

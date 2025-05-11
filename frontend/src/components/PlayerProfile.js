@@ -12,31 +12,51 @@ const PlayerProfile = () => {
   const [probability, setProbability] = useState(null);
 
   useEffect(() => {
-    axios.get(`http://localhost:5000/player/${encodeURIComponent(name)}/career`)
+        axios.get(`http://localhost:5000/player/${encodeURIComponent(name)}/career`)
       .then(res => {
-        setInfo(res.data.info);
+        if (res.data.info) {
+          // Handle NaN values in info
+          const infoData = {
+            ...res.data.info,
+            age: isNaN(res.data.info.age) ? 'Unknown' : res.data.info.age,
+            team: res.data.info.team === null || res.data.info.team === undefined ? 'Unknown' : res.data.info.team,
+          };
+          setInfo(infoData);
+        } else {
+          setInfo({}); // setting to empty object to avoid null errors later
+        }
+
         // Clean and merge career data
-        const cleaned = res.data.career.map(season => ({
-          ...season,
-          minutes: Number(String(season.minutes).replace(/,/g, '')),
-          goals: Number(season.goals),
-          assists: Number(season.assists),
-          mp: Number(season.mp)
-        }));
-        // Merge duplicate seasons
-        const merged = [];
-        cleaned.forEach(season => {
-          const existing = merged.find(s => s.season === season.season);
-          if (existing) {
-            existing.goals += season.goals;
-            existing.assists += season.assists;
-            existing.minutes += season.minutes;
-            existing.mp += season.mp;
-          } else {
-            merged.push({ ...season });
-          }
-        });
-        setCareer(merged);
+        if (res.data.career && Array.isArray(res.data.career)) {
+          // Filter out the last element with NaN values
+          const filteredCareer = res.data.career.filter(season =>
+            season.season !== null && season.season !== undefined
+          );
+
+          const cleaned = filteredCareer.map(season => ({
+            ...season,
+            minutes: Number(String(season.minutes).replace(/,/g, '')),
+            goals: Number(season.goals),
+            assists: Number(season.assists),
+            mp: Number(season.mp)
+          }));
+          // Merge duplicate seasons
+          const merged = [];
+          cleaned.forEach(season => {
+            const existing = merged.find(s => s.season === season.season);
+            if (existing) {
+              existing.goals += season.goals;
+              existing.assists += season.assists;
+              existing.minutes += season.minutes;
+              existing.mp += season.mp;
+            } else {
+              merged.push({ ...season });
+            }
+          });
+          setCareer(merged);
+        } else {
+          setCareer([]); // Initialize career to an empty array if data is missing
+        }
         setPredicted(false); // Reset prediction state on player change
       });
   }, [name]);
@@ -63,7 +83,7 @@ const PlayerProfile = () => {
       </button>  
       <div className="profile-header">
         <div className="profile-avatar">
-          {info.player_name ? info.player_name[0] : info.name[0]}
+          {info && (info.player_name ? info.player_name[0] : (info.name ? info.name[0] : ''))}
         </div>
         <div className="profile-info">
           <h2>{info.player_name || info.name}</h2>
@@ -165,7 +185,7 @@ const PlayerProfile = () => {
         }}>
             Probability of playing next season:&nbsp;
             <span style={{color: '#e91e63', fontWeight: 700}}>
-            {(probability * 100).toFixed(1)}%
+            {((probability || 0) * 100).toFixed(1)}%
             </span>
         </div>
         )}
