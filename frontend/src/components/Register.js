@@ -10,29 +10,67 @@ const Register = () => {
     const [password, setPassword] = useState('');
     const [error, setError] = useState(null);
     const [success, setSuccess] = useState(null);
-    const [profileImage, setProfileImage] = useState(null); 
+    const [profileImage, setProfileImage] = useState(null);
+    const [role, setRole] = useState('');
+    const [verificationFile, setVerificationFile] = useState(null);
 
     const navigate = useNavigate();
+
+    const validateRoleDocument = async () => {
+        const formData = new FormData();
+        formData.append('file', verificationFile);
+        formData.append('role', role);
+
+        try {
+            const res = await axios.post(`${process.env.REACT_APP_BASE_URL}/verify_document`, formData);
+            return res.data.valid;
+        } catch (err) {
+            console.error(err);
+            return false;
+        }
+    };
+
 
 
     const handleRegister = async (e) => {
         e.preventDefault();
         setError(null);
         setSuccess(null);
+
+        if (!role) {
+            setError("Please select a role.");
+            return;
+        }
+
+        if (!verificationFile) {
+            setError("Please upload a verification document.");
+            return;
+        }
+
+        const isValid = await validateRoleDocument();
+        
+        if (!isValid) {
+            setError("The uploaded document does not match the selected role.");
+            return;
+        }
+
         const formData = new FormData();
         formData.append('username', username);
         formData.append('email', email);
         formData.append('password', password);
         formData.append('name', name);
 
+
         if (profileImage) {
             formData.append('profile_image', profileImage);
         }
+        formData.append('role', role);
+        formData.append('verification_file', verificationFile);
 
         try {
             const response = await axios.post(`${process.env.REACT_APP_BASE_URL}/register`, formData, {
                 headers: {
-                    'Content-Type': 'multipart/form-data', 
+                    'Content-Type': 'multipart/form-data',
                 }
             });
 
@@ -41,12 +79,13 @@ const Register = () => {
                 setTimeout(() => navigate('/'), 2000);
             }
         } catch (error) {
-            setError(error.response?.data?.message || 'An error occurred. Please try again.');
+            setError(error.response?.data?.message || 'An error occured.');
+            console.log(error);
         }
     };
 
     const handleProfileImageChange = (e) => {
-        setProfileImage(e.target.files[0]); 
+        setProfileImage(e.target.files[0]);
         setSuccess('Profile image uploaded successfully!');
     };
 
@@ -55,7 +94,7 @@ const Register = () => {
         <div>
             <div id="page-loader" className="fade show"><span className="spinner"></span></div>
             <div className="login-cover">
-                <div className="login-cover-image" style={{backgroundImage: "url(assets/img/login-bg/register-bg.jpg)"}} data-id="login-cover-image"></div>
+                <div className="login-cover-image" style={{ backgroundImage: "url(assets/img/login-bg/register-bg.jpg)" }} data-id="login-cover-image"></div>
                 <div className="login-cover-bg"></div>
             </div>
             <div id="page-container" className="fade">
@@ -111,25 +150,58 @@ const Register = () => {
                                     required
                                 />
                             </div>
+                            <div className="form-group m-b-20">
+                                <select
+                                    className="form-control form-control-lg"
+                                    value={role}
+                                    onChange={(e) => setRole(e.target.value)}
+                                    required
+                                >
+                                    <option value="" disabled>Select Role</option>
+                                    <option value="Player">Player</option>
+                                    <option value="Coach">Coach</option>
+                                    <option value="Agent">Agent</option>
+                                    <option value="Manager">Manager</option>
+                                    <option value="Club">Club</option>
+                                    <option value="Staff">Staff</option>
+                                    <option value="Scout">Scout</option>
+                                </select>
+                            </div>
 
                             {/* Profile image upload */}
                             <div className="form-group m-b-20">
-    <label htmlFor="profile-image-upload" className="upload-label">
-        <div className="file-upload-area">
-            <i className="fa fa-cloud-upload-alt"></i> {/* Cloud Icon */}
-            <p>Upload Profile Picture</p>
-        </div>
-    </label>
-    <input
-        type="file"
-        id="profile-image-upload"
-        className="file-upload-input"
-        onChange={handleProfileImageChange}
-        accept="image/*"
-        style={{ display: 'none' }}
-    />
-</div>
+                                <label htmlFor="profile-image-upload" className="upload-label">
+                                    <div className="file-upload-area">
+                                        <i className="fa fa-cloud-upload-alt"></i> {/* Cloud Icon */}
+                                        <p>Upload Profile Picture</p>
+                                    </div>
+                                </label>
+                                <input
+                                    type="file"
+                                    id="profile-image-upload"
+                                    className="file-upload-input"
+                                    onChange={handleProfileImageChange}
+                                    accept="image/*"
+                                    style={{ display: 'none' }}
+                                />
+                            </div>
 
+                            <div className="form-group m-b-20">
+                                <label htmlFor="verification-file-upload" className="upload-label">
+                                    <div className="file-upload-area">
+                                        <i className="fa fa-file-upload"></i>
+                                        <p>Upload Verification Document (must mention your role)</p>
+                                    </div>
+                                </label>
+                                <input
+                                    type="file"
+                                    id="verification-file-upload"
+                                    className="file-upload-input"
+                                    onChange={(e) => setVerificationFile(e.target.files[0])}
+                                    accept="image/*,.pdf"
+                                    style={{ display: 'none' }}
+                                />
+                            </div>
 
                             {error && <p className="text-danger">{error}</p>}
                             {success && <p className="text-success">{success}</p>}
@@ -146,6 +218,8 @@ const Register = () => {
             </div>
         </div>
     );
+
+
 };
 
 export default Register;

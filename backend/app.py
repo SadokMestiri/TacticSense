@@ -1,6 +1,7 @@
 import base64
 import os
 import random
+import traceback
 from flask import Flask, Request, json, request, jsonify, send_from_directory, url_for, make_response
 from flask_mail import Message as MailMessage
 from flask_sqlalchemy import SQLAlchemy
@@ -23,8 +24,10 @@ from futurehouse_client import FutureHouseClient, JobNames
 from futurehouse_client.models.app import TaskRequest
 from threading import Thread
 from web3 import Web3
-
-
+from pdf2image import convert_from_bytes
+import fitz 
+import pytesseract
+from PIL import Image
 
 app = Flask(__name__,template_folder='templates')
 CORS(app, origins=["http://localhost:3000"])
@@ -94,6 +97,155 @@ class User(db.Model):
     private_key = db.Column(db.String(256), unique=True, nullable=False)
     role = db.Column(db.String(50), nullable=False)  
 
+    def __init__(self,username, email, password ,name, profile_image, role):
+        self.username = username
+        self.email = email
+        self.password = password
+        self.name = name
+        self.profile_image = profile_image
+        self.role = role
+
+class Club(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    club_name = db.Column(db.String(100), nullable=False)
+    competition = db.Column(db.String(100), nullable=True)
+    squad_size = db.Column(db.Integer, nullable=True)
+    country = db.Column(db.String(100), nullable=True)
+
+class PlayerProfile(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), unique=True, nullable=False)
+
+    # Infos générales
+    name = db.Column(db.String(20), nullable=True)
+    season = db.Column(db.String(20), nullable=True)
+    age = db.Column(db.Integer, nullable=True)
+    nationality = db.Column(db.String(50), nullable=True)
+    position = db.Column(db.String(50), nullable=True)
+    matches = db.Column(db.Integer, nullable=True)
+    minutes = db.Column(db.Integer, nullable=True)
+    goals = db.Column(db.Integer, nullable=True)
+    assists = db.Column(db.Integer, nullable=True)
+    club = db.Column(db.String(100), nullable=True)
+    market_value = db.Column(db.Float, nullable=True)
+
+    total_yellow_cards = db.Column(db.Integer, nullable=True)
+    total_red_cards = db.Column(db.Integer, nullable=True)
+
+    # Métriques
+    performance_metrics = db.Column(db.Float, nullable=True)
+    media_sentiment = db.Column(db.Float, nullable=True)
+
+    # Attributs joueur
+    aggression = db.Column(db.Integer, nullable=True)
+    reactions = db.Column(db.Integer, nullable=True)
+    long_pass = db.Column(db.Integer, nullable=True)
+    stamina = db.Column(db.Integer, nullable=True)
+    strength = db.Column(db.Integer, nullable=True)
+    sprint_speed = db.Column(db.Integer, nullable=True)
+    agility = db.Column(db.Integer, nullable=True)
+    jumping = db.Column(db.Integer, nullable=True)
+    heading = db.Column(db.Integer, nullable=True)
+    free_kick_accuracy = db.Column(db.Integer, nullable=True)
+    volleys = db.Column(db.Integer, nullable=True)
+
+    # Gardien
+    gk_positioning = db.Column(db.Integer, nullable=True)
+    gk_diving = db.Column(db.Integer, nullable=True)
+    gk_handling = db.Column(db.Integer, nullable=True)
+    gk_kicking = db.Column(db.Integer, nullable=True)
+    gk_reflexes = db.Column(db.Integer, nullable=True)
+    photo = db.Column(db.String(255), nullable=True)
+    score = db.Column(db.Float, nullable=True)
+
+    user = db.relationship('User', backref=db.backref('player_profile', uselist=False))
+
+class Coach_Profile(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), unique=True, nullable=False)
+    name = db.Column(db.String(80), unique=True, nullable=False)
+
+    nationality = db.Column(db.String(80), nullable=True)
+    date_of_appointment = db.Column(db.Date, nullable=True)
+    date_of_end_contract = db.Column(db.Date, nullable=True)
+    years_of_experience = db.Column(db.Integer, nullable=True)
+    qualification = db.Column(db.String(120), nullable=True)
+    availability = db.Column(db.Boolean, default=True)
+    photo = db.Column(db.String(255), nullable=True)
+
+    user = db.relationship('User', backref=db.backref('coach_profile', uselist=False))
+
+class Agent_Profile(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), unique=True, nullable=False)
+    name = db.Column(db.String(80), unique=True, nullable=False)
+
+    nationality = db.Column(db.String(80), nullable=True)
+    date_of_appointment = db.Column(db.Date, nullable=True)
+    date_of_end_contract = db.Column(db.Date, nullable=True)
+    years_of_experience = db.Column(db.Integer, nullable=True)
+    qualification = db.Column(db.String(120), nullable=True)
+    availability = db.Column(db.Boolean, default=True)
+
+    user = db.relationship('User', backref=db.backref('agent_profile', uselist=False))
+
+class Staff_Profile(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), unique=True, nullable=False)
+    name = db.Column(db.String(80), unique=True, nullable=False)
+
+    nationality = db.Column(db.String(80), nullable=True)
+    date_of_appointment = db.Column(db.Date, nullable=True)
+    date_of_end_contract = db.Column(db.Date, nullable=True)
+    years_of_experience = db.Column(db.Integer, nullable=True)
+    qualification = db.Column(db.String(120), nullable=True)
+    availability = db.Column(db.Boolean, default=True)
+
+    user = db.relationship('User', backref=db.backref('staff_profile', uselist=False))
+
+class Scout_Profile(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), unique=True, nullable=False)
+    name = db.Column(db.String(80), unique=True, nullable=False)
+
+    nationality = db.Column(db.String(80), nullable=True)
+    date_of_appointment = db.Column(db.Date, nullable=True)
+    date_of_end_contract = db.Column(db.Date, nullable=True)
+    years_of_experience = db.Column(db.Integer, nullable=True)
+    qualification = db.Column(db.String(120), nullable=True)
+    availability = db.Column(db.Boolean, default=True)
+
+    user = db.relationship('User', backref=db.backref('scout_profile', uselist=False))
+
+class Manager_Profile(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), unique=True, nullable=False)
+    name = db.Column(db.String(80), unique=True, nullable=False)
+
+    nationality = db.Column(db.String(80), nullable=True)
+    date_of_appointment = db.Column(db.Date, nullable=True)
+    date_of_end_contract = db.Column(db.Date, nullable=True)
+    years_of_experience = db.Column(db.Integer, nullable=True)
+    qualification = db.Column(db.String(120), nullable=True)
+    availability = db.Column(db.Boolean, default=True)
+
+    total_matches = db.Column(db.Integer, nullable=True)
+    wins = db.Column(db.Integer, nullable=True)
+    draws = db.Column(db.Integer, nullable=True)
+    losses = db.Column(db.Integer, nullable=True)
+    ppg = db.Column(db.Float, nullable=True)  # Points per game
+
+    user = db.relationship('User', backref=db.backref('manager_profile', uselist=False))
+
+class Play(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    username = db.Column(db.String(80), unique=True, nullable=False)
+    email = db.Column(db.String(120), unique=True, nullable=False)
+    password = db.Column(db.String(200), nullable=False)
+    name = db.Column(db.String(80), nullable=False)
+    profile_image = db.Column(db.String(255), nullable=True)
+    role = db.Column(db.String(50), nullable=False)  
 
 class UserStreak(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -200,6 +352,31 @@ class Conversation(db.Model):
     user2_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     last_message_time = db.Column(db.DateTime, default=db.func.current_timestamp())
 
+class PlayerRating(db.Model):
+    __tablename__ = 'player_rating'
+    id = db.Column(db.Integer, primary_key=True)
+    
+    coach_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    player_id = db.Column(db.Integer, db.ForeignKey('player_profile.id'), nullable=False)
+    
+    score = db.Column(db.Float, nullable=False)
+
+    # Un coach peut noter un joueur une seule fois
+    __table_args__ = (db.UniqueConstraint('coach_id', 'player_id', name='unique_rating'),)
+
+    coach = db.relationship('User', backref='given_ratings')
+    player = db.relationship('PlayerProfile', backref='received_ratings')
+
+class Notification(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    player_id = db.Column(db.Integer, db.ForeignKey('player_profile.id'))
+    coach_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    message = db.Column(db.String(255))
+    is_read = db.Column(db.Boolean, default=False)
+    timestamp = db.Column(db.DateTime, default=datetime.utcnow)
+
+    player = db.relationship('PlayerProfile', backref='notifications')
+    coach = db.relationship('User', backref='sent_notifications')
 
 # Group conversation model, which holds multiple users
 class GroupConversation(db.Model):
@@ -739,7 +916,8 @@ def get_user(user_id):
             'username': user.username,
             'email': user.email,
             'name': user.name,
-            'profile_image': profile_image 
+            'profile_image': profile_image,
+            'role': user.role
         }), 200
     except Exception as e:
         print(f"Error fetching user data: {e}")
@@ -763,6 +941,8 @@ def register():
             return jsonify({"message": "Invalid Ethereum address"}), 400
 
         # Check if username or email already exists
+        role = request.form['role']
+        
         if User.query.filter_by(username=username).first() or User.query.filter_by(email=email).first():
             return jsonify({'message': 'Username or email already exists'}), 409
 
@@ -778,15 +958,141 @@ def register():
         hashed_password = generate_password_hash(password, method='scrypt')
 
         # Create new user with encrypted private key
-        new_user = User(username=username, email=email, password=hashed_password, name=name, profile_image=profile_image_path, eth_address=eth_address, private_key=private_key)
-
+        new_user = User(username=username, email=email, password=hashed_password, name=name, profile_image=profile_image_path, eth_address=eth_address, private_key=private_key,role=role)
         db.session.add(new_user)
         db.session.commit()
 
+        if role == 'Player':
+            print("Creating player profile for:", name)
+            player_profile = PlayerProfile(
+                user_id=new_user.id,
+                name=new_user.name,
+                photo=new_user.profile_image,
+                season='',
+                age=0,
+                nationality='',
+                position='',
+                matches=0,
+                minutes=0,
+                goals=0,
+                assists=0,
+                club='',
+                market_value=0.0,
+                total_yellow_cards=0,
+                total_red_cards=0,
+                score=0.0
+            )
+            db.session.add(player_profile)
+
+        elif role == 'Coach':
+            print("Creating coach profile for:", name)
+            coach_profile = Coach_Profile(
+                user_id=new_user.id,
+                name=new_user.name,
+                photo=new_user.profile_image,
+                nationality=''
+            )
+            db.session.add(coach_profile)
+
+        elif role == 'Manager':
+            print("Creating manager profile for:", name)
+            manager_profile = Manager_Profile(
+                user_id=new_user.id,
+                name=new_user.name,
+                nationality=''
+            )
+            db.session.add(manager_profile)
+
+        elif role == 'Agent':
+            print("Creating agent profile for:", name)
+            agent_profile = Agent_Profile(
+                user_id=new_user.id,
+                name=new_user.name,
+                nationality=''
+            )
+            db.session.add(agent_profile)
+
+        elif role == 'Scout':
+            print("Creating scout profile for:", name)
+            scout_profile = Scout_Profile(
+                user_id=new_user.id,
+                name=new_user.name
+            )
+            db.session.add(scout_profile)
+
+        elif role == 'Staff':
+            print("Creating staff profile for:", name)
+            staff_profile = Staff_Profile(
+                user_id=new_user.id,
+                name=new_user.name
+            )
+            db.session.add(staff_profile)
+
+        # Final commit for any profile added
+        db.session.commit()
+
+        # Send welcome email
+        msg = Message("Welcome to MetaScout!",
+                      sender=app.config['MAIL_USERNAME'],
+                      recipients=[email])
+        msg.html = f"""
+            <p>Hello {name},</p>
+            <p>Thank you for signing up on MetaScout. We’re excited to have you with us!</p>
+            <p>Best regards,<br>The MetaScout Team</p>
+        """
+        mail.send(msg)
+
         return jsonify({'message': 'User registered successfully'}), 201
     except Exception as e:
-        print(f"Error: {e}")
-        return jsonify({'error': 'An error occurred. Please try again.'}), 500
+        print("Registration failed:", str(e))
+        traceback.print_exc()
+        return jsonify({'error': str(e)}), 500
+    
+@app.route('/verify_document', methods=['POST'])
+def verify_document():
+    try:
+        file = request.files['file']
+        role = request.form.get('role')
+
+        if not file or not role:
+            return jsonify({'error': 'Missing file or role'}), 400
+
+        filename = secure_filename(file.filename)
+        file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+        file.save(file_path)
+
+        text = ""
+
+        if filename.lower().endswith('.pdf'):
+            # Extract text from PDF by converting each page to image
+            doc = fitz.open(file_path)
+            for page in doc:
+                pix = page.get_pixmap()
+                img_path = file_path + "_page.png"
+                pix.save(img_path)
+                img = Image.open(img_path)
+                text += pytesseract.image_to_string(img)
+                os.remove(img_path)
+            doc.close()
+        else:
+            # Image file
+            img = Image.open(file_path)
+            text = pytesseract.image_to_string(img)
+
+        print(f"OCR Text Extracted: {text}")  # DEBUG
+        print("Received file:", file)
+        print("Filename:", file.filename)
+        print("Role:", role)
+
+
+        if role.lower() in text.lower():
+            return jsonify({'valid': True})
+        else:
+            return jsonify({'valid': False})
+
+    except Exception as e:
+        print("Error during verification:", e)  # Log error in console
+        return jsonify({'error': str(e)}), 500
 
 @app.route('/me', methods=['GET'])
 def get_userId():
@@ -1977,3 +2283,106 @@ app.app_context().push()
 if __name__ == '__main__':
     app.run(debug=True)
 
+@app.route('/get_players', methods=['GET'])
+def get_players():
+    try:
+        players = PlayerProfile.query.all()
+        players_data = []
+
+        for player in players:
+            profile_image = player.photo.replace("\\", "/") if player.photo else ""
+
+            players_data.append({
+                'id': player.id,
+                'name': player.name,
+                'age': player.age,
+                'position': player.position,
+                'club': player.club,
+                'photo': profile_image,
+                'score': player.score,
+            })
+
+        return jsonify(players_data), 200
+
+    except Exception as e:
+        print(f"Error fetching players: {e}")
+        return jsonify({'message': 'Error fetching players'}), 500
+    
+
+@app.route('/rate_player', methods=['POST'])
+def rate_player():
+    try:
+        data = request.get_json()
+        player_id = data.get('id')
+        score = data.get('score')
+
+        user_id = data.get('user_id')
+        coach = User.query.get(user_id)
+
+        print("Coach ID:", user_id, "role:", coach.role)
+        
+        if coach.role != "Coach":
+            return jsonify({'message': 'Only coaches can rate players'}), 403
+
+        # Empêcher une double notation
+        existing_rating = PlayerRating.query.filter_by(coach_id=user_id, player_id=player_id).first()
+        if existing_rating:
+            return jsonify({'message': 'You already rated this player'}), 400
+
+        # Ajouter la note
+        new_rating = PlayerRating(coach_id=user_id, player_id=player_id, score=score)
+        db.session.add(new_rating)
+
+        # Recalcul de la moyenne
+        all_ratings = PlayerRating.query.filter_by(player_id=player_id).all()
+        average = round(sum(r.score for r in all_ratings) / len(all_ratings), 2)
+
+        player = PlayerProfile.query.get(player_id)
+        player.score = average
+
+         # Création de la notification pour le joueur
+        notification_message = f"Coach {coach.name} has rated you {score}/5."
+        notification = Notification(
+            player_id=player_id,
+            coach_id=user_id,
+            message=notification_message,
+            timestamp=datetime.utcnow()  # Timestamp actuel
+        )
+        db.session.add(notification)
+
+        db.session.commit()
+        
+        return jsonify({'message': 'Score added', 'average_score': average}), 200
+
+    except Exception as e:
+        print(f"Error rating player: {e}")
+        return jsonify({'message': 'Internal server error'}), 500
+    
+@app.route('/player_id/<int:user_id>', methods=['GET'])
+def get_player_id(user_id):
+    player = PlayerProfile.query.filter_by(user_id=user_id).first()
+    if player:
+        return jsonify({'player_id': player.id})
+    return jsonify({'message': 'Player not found'}), 404
+
+@app.route('/notifications/<int:player_id>', methods=['GET'])
+def get_notifications(player_id):
+    notifications = Notification.query.filter_by(player_id=player_id).order_by(Notification.timestamp.desc()).all()
+    notif_list = [{
+        'id': n.id,
+        'message': n.message,
+        'timestamp': n.timestamp.isoformat(),
+        'is_read': n.is_read,
+        'coach_image': n.coach.profile_image if n.coach else None
+    } for n in notifications]
+
+    return jsonify(notif_list), 200
+
+@app.route('/notifications/read/<int:notif_id>', methods=['POST'])
+def mark_notification_read(notif_id):
+    notif = Notification.query.get(notif_id)
+    if notif:
+        notif.is_read = True
+        db.session.commit()
+        return jsonify({'message': 'Notification marked as read'}), 200
+    return jsonify({'message': 'Notification not found'}), 404

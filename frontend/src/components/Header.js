@@ -9,11 +9,14 @@ const Header = () => {
   const navigate = useNavigate();
   const [isDropdownOpen, setDropdownOpen] = useState(false);
   const [error, setError] = useState(null);
+  const [notifications, setNotifications] = useState([]);
+  const [showNotifPanel, setShowNotifPanel] = useState(false);
+  const [playerId, setPlayerId] = useState(null);
   const user =  JSON.parse(Cookies.get('user'));
   const token = Cookies.get('token');
   let decodedToken = null;
   let exp = null;
-
+  const user_id = user.id;
   if (token) {
     decodedToken = jwt_decode(token);
     exp = decodedToken?.exp;
@@ -52,6 +55,56 @@ const Header = () => {
     return <div>Loading...</div>; // Show loading if user data is not fetched
   }
 
+
+  const fetchUser = async () => {
+    try {
+      const response = await axios.get(`${process.env.REACT_APP_BASE_URL}/get_user/${user_id}`);
+      setUser(response.data);
+    } catch (error) {
+      setError(error.response?.data?.message || 'Error fetching user data');
+    }
+  };
+
+  useEffect(() => {
+    fetchUser();
+  }, [user_id]);
+
+  useEffect(() => {
+    const fetchPlayerId = async () => {
+      try {
+        const response = await axios.get(`${process.env.REACT_APP_BASE_URL}/player_id/${user_id}`);
+        setPlayerId(response.data.player_id);
+      } catch (error) {
+        console.error("Erreur lors de la récupération du player ID:", error);
+      }
+    };
+
+    if (user_id) {
+      fetchPlayerId();
+    }
+  }, [user_id]);
+
+  useEffect(() => {
+        const fetchNotifications = async () => {
+            if (!playerId) return;
+            try {
+                const response = await axios.get(`${process.env.REACT_APP_BASE_URL}/notifications/${playerId}`);
+                console.log("Notifications reçues:", response.data);
+                setNotifications(response.data);
+            } catch (error) {
+                console.error("Error fetching notifications:", error);
+            }
+        };
+
+        if (playerId) {
+            console.log("Fetching notifications for player ID:", playerId);
+            fetchNotifications();
+        }
+    }, [playerId]);
+
+
+  const unreadCount = notifications.filter(n => !n.is_read).length;
+
   return (
     <div>
       <nav className="navbar">
@@ -76,14 +129,6 @@ const Header = () => {
             </li>
             <li>
               <NavLink 
-                to="/network"
-                className={({ isActive }) => isActive ? 'active-link' : ''}
-              >
-                <img src="assets/images/network.png" alt="network" /> <span style={{color:"#000"}}>My Network</span>
-              </NavLink>
-            </li>
-            <li>
-              <NavLink 
                 to="/jobs" 
                 className={({ isActive }) => isActive ? 'active-link' : ''}
               >
@@ -99,12 +144,23 @@ const Header = () => {
               </NavLink>
             </li>
             <li>
-              <NavLink 
-                to="/notifications"
-                className={({ isActive }) => isActive ? 'active-link' : ''}
-              >
-                <img src="assets/images/notification.png" alt="notification" /> <span style={{color:"#000"}}>Notifications</span>
-              </NavLink>
+              <a href="/players">
+                <img src="assets/images/network.png" alt="network" /> <span>Players</span>
+              </a>
+            </li>
+            <li>
+              <a href="/gpt">
+                <img src="assets/images/message.png" alt="message" /> <span>Ask AI</span>
+              </a>
+            </li>
+            <li className="notif-icon-wrapper">
+              <a href="/notifications" className="notif-icon-link">
+                <img src="assets/images/notification.png" alt="notification" />
+                {unreadCount > 0 && (
+                  <span className="notif-badge">{unreadCount}</span>
+                )}
+                <span>Notifications</span>
+              </a>
             </li>
           </ul>
         </div>
@@ -131,8 +187,8 @@ const Header = () => {
                   <div className="desc">{"Professional footballer"}</div>
                 </div>
               </div>
-              <NavLink to="#" className="profile-btn">See your profile</NavLink>
-              <button className="logout-btn" onClick={handleLogout}>Logout</button>
+              <a href="#" className="profile-btn">See your profile</a>
+              <a href="#" className="logout-btn" onClick={handleLogout}>Logout</a>
             </div>
           )}
         </div>

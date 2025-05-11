@@ -1,7 +1,8 @@
-
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 import Home from "./components/Home";
-import {Routes, Route } from "react-router-dom";
+import { Routes, Route } from "react-router-dom";
 import Login from "./components/Login";
 import Register from "./components/Register";
 import Chat from "./components/Chat";
@@ -17,9 +18,9 @@ import HashtagPage from "./components/HashtagPage";
 import PostJob from "./components/PostJob";
 import InjuryPredictor from "./components/InjuryPredictor";
 import StreakPopUp from "./components/StreakPopUp";
-
-
-
+import GPT from "./components/GPT";
+import PlayersList from "./components/PlayersList";
+import Notifications from "./components/Notifications";
 
 
 export default function App() {
@@ -44,10 +45,13 @@ export default function App() {
       <Route path="/hashtag" element={<HashtagPage header={header} footer={footer} />} />
       <Route path="/postJob" element={<PostJob header={header} footer={footer} />} />
       <Route path="/injury" element={<InjuryPredictor header={header} footer={footer} />} />
-            <Route path="/streak" element={<StreakPopUp  />} />
-
+      <Route path="/streak" element={<StreakPopUp  />} />
+      <Route path="/gpt" element={<GPT header={header} footer={footer}/>} />
+      <Route path="/players" element={<PlayersList header={header} footer={footer}/>} />
+      <Route path="/notifications" element={<Notifications header={header} footer={footer}/>} />
     </Routes>
+    <ToastContainer />
   </div>
-    
+
   );
 }
