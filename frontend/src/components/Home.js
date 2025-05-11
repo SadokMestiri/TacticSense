@@ -33,6 +33,9 @@ const reactions = [
   { name: "sad", icon: "assets/images/sad.png" },
   { name: "angry", icon: "assets/images/angry.png" },
 ];
+const [sortOption, setSortOption] = useState('date-desc'); // Default sort option
+const [filterType, setFilterType] = useState('all'); // Default filter type
+const [allPosts, setAllPosts] = useState([]);
 const token = Cookies.get('token');
 let decodedToken = null;
 let exp = null;
@@ -59,9 +62,6 @@ useEffect(() => {
   }
 }, [token, decodedToken, navigate, date]);
 
-  const [sortOption, setSortOption] = useState('date-desc'); // 'date-desc', 'date-asc', 'popularity'
-  const [filterType, setFilterType] = useState('all'); // 'all', 'text', 'image', 'video'
-  const [allPosts, setAllPosts] = useState([]);
 
   const getTimeAgo = (createdAt) => {
     const now = new Date();
@@ -277,7 +277,6 @@ useEffect(() => {
   const handleFilterTypeChange = (e) => {
     setFilterType(e.target.value);
   };
-
   const handleReaction = async (postId, reactionType) => {
     try {
       const response = await axios.post(`${process.env.REACT_APP_BASE_URL}/react_to_post`, {

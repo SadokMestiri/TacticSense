@@ -8,6 +8,7 @@ const Register = () => {
     const [name, setName] = useState('');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const [role, setRole] = useState('');
     const [error, setError] = useState(null);
     const [success, setSuccess] = useState(null);
     const [profileImage, setProfileImage] = useState(null);
@@ -59,6 +60,7 @@ const Register = () => {
         formData.append('email', email);
         formData.append('password', password);
         formData.append('name', name);
+        formData.append('role', role);
 
 
         if (profileImage) {
@@ -128,16 +130,36 @@ const Register = () => {
                                     onChange={(e) => setName(e.target.value)}
                                     required
                                 />
-                            </div>
+                                </div>
+                                <div className="form-group m-b-20">
+                                    <input
+                                        type="text"
+                                        className="form-control form-control-lg"
+                                        placeholder="Username"
+                                        value={username}
+                                        onChange={(e) => setUsername(e.target.value)}
+                                        required
+                                    />
+                                </div>
                             <div className="form-group m-b-20">
-                                <input
-                                    type="text"
+                                
+                                <select
                                     className="form-control form-control-lg"
-                                    placeholder="Username"
-                                    value={username}
-                                    onChange={(e) => setUsername(e.target.value)}
+                                    value={role}
+                                    placeholder="Role"
                                     required
-                                />
+                                    onChange={(e) => setRole(e.target.value)}
+                                >
+                                    <option value="" disabled>Select Role</option>
+                                    <option value="Player">Player</option>
+                                    <option value="Club">Club</option>
+                                    <option value="Manager">Manager</option>
+                                    <option value="Scout">Scout</option>
+                                    <option value="Staff">Staff</option>
+                                    <option value="Agent">Agent</option>
+                                    <option value="Coach">Coach</option>
+                                    <option value="Agency">Agency</option>
+                                </select>
                             </div>
                             <div className="form-group m-b-20">
                                 <input
