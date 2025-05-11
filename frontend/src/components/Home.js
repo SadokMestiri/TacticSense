@@ -3,6 +3,7 @@ import axios from 'axios';
 import Cookies from 'js-cookie';
 import jwt_decode from 'jwt-decode';
 import { useNavigate } from "react-router-dom";
+import './Home.css';
 
 const Home = ({ header }) => {
   const navigate = useNavigate();
@@ -186,23 +187,38 @@ useEffect(() => {
   };
   const fetchPosts = async () => {
     try {
-        const response = await axios.get(`${process.env.REACT_APP_BASE_URL}/get_posts`);
-        const postsData = response.data;
+      const token = Cookies.get('token');
+      const headers = {};
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+      const response = await axios.get(`${process.env.REACT_APP_BASE_URL}/get_posts`, { headers });
+      const postsData = response.data;
 
-        for (let post of postsData) {
-            if (post.user_id) {
-                await fetchUsers(post.user_id);
-            }
+      for (let post of postsData) {
+        if (post.user_id && !users[post.user_id]) { // Fetch user only if not already fetched
+          await fetchUsers(post.user_id);
         }
+      }
 
-        setPosts(postsData);
+      setPosts(postsData);
     } catch (error) {
-        console.error('Error fetching posts:', error);
+      console.error('Error fetching posts:', error);
+      // Handle error (e.g., if token expired and backend returned 401)
+      if (error.response && error.response.status === 401) {
+        Cookies.remove('token');
+        Cookies.remove('user');
+        navigate('/login');
+      }
     }
-};
+  };
+
   useEffect(() => {
-    fetchPosts();
-  }, []);
+    if (allowed) { // Only fetch posts if user is allowed (token valid)
+        fetchPosts();
+    }
+  }, [allowed]); // Rerun when allowed changes
+
 console.log(user)
   const handleReaction = async (postId, reactionType) => {
     try {
@@ -219,20 +235,58 @@ console.log(user)
       alert('There was an error reacting to the post');
     }
   };
+  const handleSavePost = async (postId, isCurrentlySaved) => {
+    if (!user || !token) {
+      alert('Please log in to save posts.');
+      navigate('/login');
+      return;
+    }
+    try {
+      const endpoint = isCurrentlySaved 
+        ? `${process.env.REACT_APP_BASE_URL}/posts/${postId}/unsave`
+        : `${process.env.REACT_APP_BASE_URL}/posts/${postId}/save`;
+      const method = isCurrentlySaved ? 'delete' : 'post';
 
+      await axios({
+        method: method,
+        url: endpoint,
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      // Update the specific post's saved status locally for immediate UI feedback
+      setPosts(prevPosts => 
+        prevPosts.map(p => 
+          p.id === postId ? { ...p, is_saved: !isCurrentlySaved } : p
+        )
+      );
+      // Optionally, show a success message
+    } catch (error) {
+      console.error('Error saving/unsaving post:', error);
+      alert('Failed to update save status.');
+    }
+  };
   const fetchComments = async (postId) => {
     try {
       const response = await axios.get(`${process.env.REACT_APP_BASE_URL}/get_comments/${postId}`);
       const commentsData = response.data;
-      for (let comment of commentsData) {
-        if (comment.user_id) {
-            await fetchUsers(comment.user_id);
-        }
-        setComments(commentsData);
 
-    }
+      // Ensure commentsData is an array before proceeding
+      if (Array.isArray(commentsData)) {
+        for (let comment of commentsData) {
+          if (comment.user_id && !users[comment.user_id]) { // Fetch user only if not already fetched and user_id exists
+            await fetchUsers(comment.user_id);
+          }
+        }
+        setComments(commentsData); // Set comments AFTER the loop and user fetching
+      } else {
+        console.error("Error fetching comments: API did not return an array.", commentsData);
+        setComments([]); // Set to empty array if data is not as expected
+      }
     } catch (error) {
       console.error("Error fetching comments:", error);
+      setComments([]); // Set to empty array on network or other errors
     }
   };
   
@@ -362,14 +416,26 @@ console.log(user)
 
           {/* Posts */}
           {posts.map((post, index) => (
-            <div key={index} className="post">
+            <div key={post.id || index} className="post"> {/* Ensure post.id is used for key */}
               <div className="post-author">
-                <img src={`${process.env.REACT_APP_BASE_URL}/${users[post.user_id]}`}  alt="user" />
+                <img 
+                  src={post.user_profile_image ? `${process.env.REACT_APP_BASE_URL}/${post.user_profile_image}` : 'assets/images/default-avatar.png'} 
+                  alt="user" 
+                  onError={(e) => e.target.src = 'assets/images/default-avatar.png'}
+                />
                 <div>
                   <h1>{post.user_name}</h1>
-                 {/* <small>{post.title}</small>*/}
-                 <small>{getTimeAgo(post.created_at)}</small>
-                 </div>
+                  <small>{getTimeAgo(post.created_at)}</small>
+                </div>
+                {/* Save Button - Placed it here for visibility, adjust as needed */}
+                <button 
+                    onClick={() => handleSavePost(post.id, post.is_saved)}
+                    className={`save-button ${post.is_saved ? 'saved' : ''}`}
+                    style={{ marginLeft: 'auto', padding: '5px 10px', cursor: 'pointer' }}
+                    title={post.is_saved ? 'Unsave Post' : 'Save Post'}
+                >
+                    {post.is_saved ? '❤️ Saved' : '🤍 Save'}
+                </button>
               </div>
               <p>{post.content}</p>
               {post.image_url && (
@@ -421,49 +487,44 @@ console.log(user)
 </div>
 
                 <div>
-                  {/*${post.shares}*/}
                   <span 
-  onClick={() => {
-    setSelectedPost(post); // Set the clicked post
-    setIsCommentsVisible(true); // Show the comments popup
-    fetchComments(post.id);  // Fetch comments
-  }}
->
-  {`${post.comments.length} comments `}
-</span>
+                    onClick={() => {
+                      setSelectedPost(post); 
+                      setIsCommentsVisible(true); 
+                      fetchComments(post.id);
+                    }}
+                    style={{ cursor: 'pointer' }} // Added style for better UX
+                  >
+                    {`${post.comments_count || 0} comments `} {/* USE comments_count HERE */}
+                  </span>
                 </div>
                 {isCommentsVisible && selectedPost && (
-  <div className="comments-modal">
-    <div className="modal-content">
-      {/* Modal Header */}
-      <div className="modal-header">
-        <h3>Comments</h3>
-        <button className="modal-close" onClick={() => setIsCommentsVisible(false)}>✖</button>
-      </div>
-
-      {/* Modal Body - Comments List */}
-      <div className="modal-body">
-        {comments.length === 0 ? (
-          <p style={{ textAlign: "center", color: "#666" }}>No comments yet.</p>
-        ) : (
-          comments.map((comment) => (
-            <div key={comment.id} className="comment-item">
-              {/* User Avatar */}
-              <img
-                src={`${process.env.REACT_APP_BASE_URL}/${users[comment.user_id]}`}
-                alt="User"
-                className="comment-avatar"
-                onError={(e) => (e.target.src = "assets/images/user-5.png")}
-              />
-              {/* Comment Content */}
-              <div className="comment-content">
-                <strong>{comment.user_name}</strong>
-                <p>{comment.comment_text}</p>
+    <div className="comments-modal"> {/* This is the main overlay */}
+      <div className="modal-content"> {/* This is the content window */}
+        <div className="modal-header">
+          <h3>Comments</h3>
+          <button className="modal-close" onClick={() => setIsCommentsVisible(false)}>✖</button>
+        </div>
+        <div className="modal-body">
+          {comments.length === 0 ? (
+            <p style={{ textAlign: "center", color: "#666" }}>No comments yet.</p>
+          ) : (
+            comments.map((comment) => (
+              <div key={comment.id} className="comment-item">
+                <img
+                  src={`${process.env.REACT_APP_BASE_URL}/${users[comment.user_id]}`} // Ensure users[comment.user_id] provides the image path
+                  alt="User"
+                  className="comment-avatar"
+                  onError={(e) => (e.target.src = "assets/images/user-5.png")} // Fallback avatar
+                />
+                <div className="comment-content">
+                  <strong>{comment.user_name}</strong> {/* Make sure comment.user_name is available */}
+                  <p>{comment.comment_text}</p>
+                </div>
+                <div className="comment-meta">{getTimeAgo(comment.created_at)}</div>
               </div>
-              <div className="comment-meta">{getTimeAgo(comment.created_at)}</div>
-            </div>
-          ))
-        )}
+            ))
+          )}
       </div>
     </div>
   </div>

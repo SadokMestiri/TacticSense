@@ -12,7 +12,7 @@ import SinglePost from "./components/SinglePost";
 import PlayerPredictor from './components/PlayerPredictor';
 import ExistingPlayerPredictor from './components/ExistingPlayerPredictor';
 import PlayerProfile from './components/PlayerProfile';
-
+import SavedPosts from './components/SavedPosts';
 export default function App() {
 
   const header = (<Header/>);
@@ -22,6 +22,7 @@ export default function App() {
     <div>
     <Routes>
       <Route path="/" element={<Login />} />
+      <Route path="/login" element={<Login />} />
       <Route path="/Home" element={<Home header={header} />} />
       <Route path="/Chat" element={<Chat header={header}/>} />
       <Route path="/Register" element={<Register/>} />
@@ -32,6 +33,7 @@ export default function App() {
       <Route path="/StatPredictions/new" element={<PlayerPredictor />} />
       <Route path="/StatPredictions/existing" element={<ExistingPlayerPredictor />} />
       <Route path="/player/:name" element={<PlayerProfile />} />
+      <Route path="/saved-posts" element={<SavedPosts header={header} />} />
     </Routes>
   </div>
     

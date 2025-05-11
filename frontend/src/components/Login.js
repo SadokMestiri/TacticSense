@@ -27,20 +27,38 @@ const Login = () => {
         
             if (response.status === 200) {
                 const { token } = response.data;
-                const decodedToken = jwt_decode(token);
-                const userId = decodedToken?.public_id;
-                
-                // Fetch user details using the userId
-                const userResponse = await axios.get(`${baseUrl}/get_user/${userId}`);
-                const user = userResponse.data;
-    
-                // Store token and user data in cookies
-                Cookies.set('token', token, { expires: 1 });
-                Cookies.set('user', JSON.stringify(user), { expires: 1 });
+                Cookies.set('token', token, { expires: 1 }); // Store token immediately
 
-                navigate('/');
+                const decodedToken = jwt_decode(token);
+                const userId = decodedToken?.user_id; // Correctly use user_id
+
+                if (userId) {
+                    try {
+                        // Fetch user details using the correct userId
+                        const userResponse = await axios.get(`${baseUrl}/get_user/${userId}`, {
+                            headers: { 'Authorization': `Bearer ${token}` } // Good practice to send token if /get_user is protected
+                        });
+                        const user = userResponse.data;
+            
+                        // Store user data in cookies
+                        Cookies.set('user', JSON.stringify(user), { expires: 1 });
+
+                        navigate('/Home'); // Navigate to Home page after successful login and user fetch
+                    } catch (userFetchError) {
+                        console.error("Error fetching user details:", userFetchError);
+                        setError(userFetchError.response?.data?.message || 'Failed to fetch user details after login.');
+                        // Optionally clear the token if user details can't be fetched
+                        // Cookies.remove('token'); 
+                    }
+                } else {
+                    console.error("User ID not found in token.");
+                    setError('Login successful, but user identification failed.');
+                }
             }
+            // No explicit else for response.status !== 200 as axios throws for non-2xx by default
         } catch (error) {
+            // This catches errors from axios.post('/login') or if jwt_decode fails (unlikely for valid token string)
+            console.error("Login process error:", error);
             setError(error.response?.data?.message || 'Invalid username or password');
         }
     };

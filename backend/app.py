@@ -17,9 +17,14 @@ import numpy as np
 import json
 
 app = Flask(__name__,template_folder='templates')
-CORS(app, origins=["http://localhost:3000"])
+CORS(app, 
+     origins=["http://localhost:3000"], 
+     methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"], 
+     allow_headers=["Content-Type", "Authorization"], 
+     supports_credentials=True
+)
 app.config['SECRET_KEY'] = '59c9d8576f920846140e2a8985911bec588c08aebf4c7799ba0d5ae388393703'  
-app.config['SQLALCHEMY_DATABASE_URI'] = "postgresql://postgres:5432@localhost/metascout"
+app.config['SQLALCHEMY_DATABASE_URI'] = "postgresql://postgres:0000@localhost:5432/metascout"
 db = SQLAlchemy(app)
 app.config['UPLOAD_FOLDER'] = 'uploads'
 app.config['MAIL_SERVER'] = 'smtp.gmail.com'
@@ -116,6 +121,20 @@ class Conversation(db.Model):
     user1_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     user2_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     last_message_time = db.Column(db.DateTime, default=db.func.current_timestamp())
+
+class SavedPost(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    post_id = db.Column(db.Integer, db.ForeignKey('post.post_id'), nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    user = db.relationship('User', backref=db.backref('saved_posts_assoc', lazy=True))
+    post = db.relationship('Post', backref=db.backref('savers_assoc', lazy=True))
+
+    __table_args__ = (db.UniqueConstraint('user_id', 'post_id', name='_user_post_uc'),)
+
+    def __repr__(self):
+        return f'<SavedPost user_id={self.user_id} post_id={self.post_id}>'
 
 def process_new_player_data(career_stats):
     df = pd.DataFrame(career_stats)
@@ -255,17 +274,51 @@ def get_player_features_from_dataset(player_name):
 def token_required(f):
     @wraps(f)
     def decorated(*args, **kwargs):
-        token = request.headers.get('Authorization')
+        token_header = request.headers.get('Authorization')
+        print(f"--- Token Debug: Authorization Header = {token_header} ---")
 
-        if not token:
+        if not token_header:
+            print("--- Token Debug: Token is missing from header! ---")
             return jsonify({'message': 'Token is missing!'}), 401
 
         try:
-            decoded_token = jwt.decode(token.split(" ")[1], app.config['SECRET_KEY'], algorithms=['HS256'])
-            current_user = User.query.get(decoded_token['user_id'])
-        except:
-            return jsonify({'message': 'Token is invalid!'}), 401
+            parts = token_header.split(" ")
+            if len(parts) != 2 or parts[0].lower() != 'bearer':
+                print(f"--- Token Debug: Invalid token format. Header: {token_header} ---")
+                return jsonify({'message': 'Invalid token format. "Bearer " prefix missing or malformed.'}), 401
+            
+            token_value = parts[1]
+            print(f"--- Token Debug: Token value to decode = {token_value} ---")
+            
+            decoded_token = jwt.decode(token_value, app.config['SECRET_KEY'], algorithms=['HS256'])
+            print(f"--- Token Debug: Decoded payload = {decoded_token} ---")
+            
+            user_id_from_token = decoded_token.get('user_id') # Use .get() for safer access
+            if user_id_from_token is None:
+                print(f"--- Token Debug: 'user_id' key not found in decoded token payload: {decoded_token} ---")
+                return jsonify({'message': "Invalid token payload: 'user_id' missing."}), 401
+            
+            print(f"--- Token Debug: User ID from token = {user_id_from_token} ---")
+            current_user = User.query.get(user_id_from_token)
+            print(f"--- Token Debug: User from DB = {current_user} ---")
 
+        except jwt.ExpiredSignatureError:
+            print("--- Token Debug: Token has expired! ---")
+            return jsonify({'message': 'Token has expired!'}), 401
+        except jwt.InvalidTokenError as e_invalid:
+            print(f"--- Token Debug: JWT InvalidTokenError: {e_invalid} ---") # Log specific JWT error
+            return jsonify({'message': 'Token is invalid!'}), 401 # This is what you're seeing
+        except KeyError as e_key:
+            print(f"--- Token Debug: KeyError accessing payload (e.g., 'user_id' missing): {e_key} ---")
+            return jsonify({'message': 'Invalid token payload structure.'}), 401
+        except Exception as e_generic: 
+            print(f"--- Token Debug: Generic token processing error: {e_generic} ---") 
+            return jsonify({'message': 'Token processing error!'}), 401
+
+        if not current_user: 
+            print(f"--- Token Debug: User not found in DB for user_id {user_id_from_token}! ---")
+            return jsonify({'message': 'User not found for token!'}), 401
+            
         return f(current_user, *args, **kwargs)
     
     return decorated
@@ -438,19 +491,26 @@ def get_post_by_id(post_id):
 def get_user(user_id):
     try:
         user = User.query.get_or_404(user_id)
-        profile_image = user.profile_image.replace("\\", "/")  
-
+        
+        profile_image_filename = None
+        if user.profile_image:
+            # Assuming user.profile_image stores just the filename like "avatar.jpg"
+            # and it's served from your UPLOAD_FOLDER
+            profile_image_filename = user.profile_image.replace("\\", "/")
+        # If you intend to return a full URL, construct it here using url_for
+        # e.g., profile_image_url = url_for('uploaded_file', filename=profile_image_filename, _external=True) if profile_image_filename else None
 
         return jsonify({
             'id': user.id,
             'username': user.username,
             'email': user.email,
             'name': user.name,
-            'profile_image': profile_image 
+            'profile_image': profile_image_filename # Send the filename or full URL
         }), 200
-    except Exception as e:
-        print(f"Error fetching user data: {e}")
-        return jsonify({'message': 'User not found'}), 404
+    except Exception as e: # Consider more specific exceptions if possible
+        print(f"Error fetching user data for ID {user_id}: {e}")
+        # Ensure a JSON response for errors too, if not handled by a global error handler
+        return jsonify({'message': 'User not found or error fetching data'}), 404
 
 @app.route('/register', methods=['POST'])
 def register():
@@ -465,11 +525,11 @@ def register():
 
         profile_image = request.files.get('profile_image')
         profile_image_path = None
-        if profile_image and allowed_file(profile_image.filename):
+        if profile_image:
             filename = secure_filename(profile_image.filename)
-            profile_image_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-            profile_image.save(profile_image_path) 
-
+            save_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+            profile_image.save(save_path)
+            profile_image_path = filename  # or save_path if you want the full path 
         hashed_password = generate_password_hash(password, method='sha256')
 
         new_user = User(username=username, email=email, password=hashed_password, name=name, profile_image=profile_image_path)
@@ -507,11 +567,10 @@ def login():
     
     # Check if user exists and password matches
     if user and check_password_hash(user.password, password):
-        # Create JWT token with expiration of 24 hours
         token = jwt.encode({
-            'public_id': user.id,
-            'exp': datetime.utcnow() + timedelta(hours=1)
-        }, app.config['SECRET_KEY'])
+            'user_id': user.id,
+            'exp': datetime.utcnow() + timedelta(hours=1) 
+        }, app.config['SECRET_KEY'], algorithm='HS256') 
         return jsonify({'token': str(token)}) ,200
     else:
         return jsonify({'message': 'Invalid username or password'}), 401
@@ -607,7 +666,20 @@ def create_post():
 
 @app.route('/get_posts', methods=['GET'])
 def get_posts():
-    posts = Post.query.all()
+    # Try to get token for current user, but don't require it
+    current_user_id = None
+    auth_header = request.headers.get('Authorization')
+    if auth_header and auth_header.startswith('Bearer '):
+        token = auth_header.split(" ")[1]
+        try:
+            decoded_token = jwt.decode(token, app.config['SECRET_KEY'], algorithms=['HS256'])
+            current_user_id = decoded_token.get('user_id') # Ensure your token has 'user_id'
+        except jwt.ExpiredSignatureError:
+            pass # Token expired, treat as anonymous
+        except jwt.InvalidTokenError:
+            pass # Invalid token, treat as anonymous
+
+    posts = Post.query.order_by(Post.created_at.desc()).all() # Order by most recent
     posts_data = []
 
     # Fetch all reactions in a single query to optimize performance
@@ -617,28 +689,32 @@ def get_posts():
         db.func.count(Reaction.reaction_id)
     ).group_by(Reaction.post_id, Reaction.reaction_type).all()
 
-    # Organize reactions into a dictionary for quick lookup
     reactions_dict = {}
-    for post_id, reaction_type, count in reactions_data:
-        if post_id not in reactions_dict:
-            reactions_dict[post_id] = {}
-        reactions_dict[post_id][reaction_type] = count
+    for post_id_rx, reaction_type, count in reactions_data:
+        if post_id_rx not in reactions_dict:
+            reactions_dict[post_id_rx] = {}
+        reactions_dict[post_id_rx][reaction_type] = count
+
+    saved_posts_by_current_user = set()
+    if current_user_id:
+        saved_posts_by_current_user = {sp.post_id for sp in SavedPost.query.filter_by(user_id=current_user_id).all()}
 
     for post in posts:
         post_reactions = reactions_dict.get(post.post_id, {})
 
-        # Fetch comments for the current post
         comments = Comment.query.filter_by(post_id=post.post_id).all()
         comments_data = [{
             'user_id': comment.user_id,
+            # 'user_name': User.query.get(comment.user_id).name if User.query.get(comment.user_id) else "Unknown", # Consider fetching user names efficiently
             'comment_text': comment.comment_text,
-            'created_at': comment.created_at
+            'created_at': comment.created_at.strftime('%Y-%m-%d %H:%M:%S')
         } for comment in comments]
 
         posts_data.append({
             'id': post.post_id,
             'user_id': post.user_id,
-            'user_name': post.user.name,
+            'user_name': post.user.name, # Assuming post.user relationship is eager/efficiently loaded
+            'user_profile_image': post.user.profile_image, # Add this
             'content': post.content,
             'image_url': post.image_url,
             'video_url': post.video_url,
@@ -648,8 +724,9 @@ def get_posts():
             'wows': post_reactions.get('wow', 0),
             'angrys': post_reactions.get('angry', 0),
             'sads': post_reactions.get('sad', 0),
-            'created_at': post.created_at,
-            'comments': comments_data  # Add comments data
+            'created_at': post.created_at.strftime('%Y-%m-%d %H:%M:%S'), # Ensure consistent formatting
+            'comments_count': len(comments_data), # Send count instead of full comments here for main feed
+            'is_saved': post.post_id in saved_posts_by_current_user if current_user_id else False
         })
 
     return jsonify(posts_data), 200
@@ -708,6 +785,66 @@ def add_comment():
     db.session.commit()
     return jsonify({'message': 'Comment added'})
 
+@app.route('/posts/<int:post_id>/save', methods=['POST'])
+@token_required
+def save_post(current_user, post_id):
+    post = Post.query.get_or_404(post_id)
+    existing_save = SavedPost.query.filter_by(user_id=current_user.id, post_id=post_id).first()
+
+    if existing_save:
+        return jsonify({'message': 'Post already saved'}), 409
+
+    new_save = SavedPost(user_id=current_user.id, post_id=post_id)
+    db.session.add(new_save)
+    db.session.commit()
+    return jsonify({'message': 'Post saved successfully'}), 201
+
+@app.route('/posts/<int:post_id>/unsave', methods=['DELETE'])
+@token_required
+def unsave_post(current_user, post_id):
+    saved_post = SavedPost.query.filter_by(user_id=current_user.id, post_id=post_id).first()
+
+    if not saved_post:
+        return jsonify({'message': 'Post not saved by this user'}), 404
+
+    db.session.delete(saved_post)
+    db.session.commit()
+    return jsonify({'message': 'Post unsaved successfully'}), 200
+
+@app.route('/users/<int:user_id>/saved_posts', methods=['GET'])
+@token_required # Or remove if you want this to be public for any user
+def get_saved_posts(current_user, user_id):
+    # Ensure the logged-in user can only see their own saved posts,
+    # or adjust logic if admins/other users can see them.
+    if current_user.id != user_id:
+         # If you want to allow fetching for other users, ensure they exist
+        target_user = User.query.get_or_404(user_id)
+        # Add any permission checks here if needed
+    else:
+        target_user = current_user
+
+    saved_post_associations = SavedPost.query.filter_by(user_id=target_user.id).order_by(SavedPost.created_at.desc()).all()
+    
+    posts_data = []
+    for assoc in saved_post_associations:
+        post = assoc.post 
+        if post: # Check if post still exists
+             # You might want to reuse the post serialization logic from get_posts
+            user_who_posted = User.query.get(post.user_id) # Get the user who made the post
+            posts_data.append({
+                'id': post.post_id,
+                'user_id': post.user_id,
+                'user_name': user_who_posted.name if user_who_posted else "Unknown User",
+                'user_profile_image': user_who_posted.profile_image if user_who_posted else None,
+                'content': post.content,
+                'image_url': post.image_url,
+                'video_url': post.video_url,
+                'created_at': post.created_at.strftime('%Y-%m-%d %H:%M:%S'),
+                'is_saved': True # Since we are fetching saved posts
+                # Add other relevant post details like reactions, comments count if needed
+            })
+    return jsonify(posts_data), 200
+
 @app.route('/predict/player/<player_name>', methods=['GET'])
 def predict_player(player_name):
     features_df = get_player_features_from_dataset(player_name)
@@ -763,7 +900,7 @@ def predict_new_player():
 
 @app.route('/players', methods=['GET'])
 def get_players():
-    df = pd.read_csv(DATA_PATH)
+    df = pd.read_csv(DATA_PATH)    
     df.columns = df.columns.str.strip()
     df['season_start'] = df['season'].astype(str).str.extract(r'(\d{4})')[0]
     df['season_start'] = pd.to_numeric(df['season_start'], errors='coerce').fillna(0).astype(int)
@@ -810,5 +947,9 @@ def player_career(name):
 
 app.app_context().push()
 if __name__ == '__main__':
+    with app.app_context(): # This is correct for ensuring context
+        print("Attempting to create database tables...")
+        db.create_all()
+        print("Database tables should be created (if they didn't exist).")
     app.run(debug=True)
 

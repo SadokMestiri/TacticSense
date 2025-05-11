@@ -3,7 +3,7 @@ import './Header.css';
 import axios from 'axios';
 import Cookies from 'js-cookie';
 import jwt_decode from 'jwt-decode';
-import { useNavigate } from "react-router-dom";
+import { useNavigate,Link } from "react-router-dom";
 
 const Header = () => {
   const navigate = useNavigate();
@@ -118,9 +118,10 @@ const Header = () => {
                   <div className="desc">{"Professional footballer"}</div>
                 </div>
               </div>
-              <a href="#" className="profile-btn">See your profile</a>
-              <a href="#" className="logout-btn" onClick={handleLogout}>Logout</a>
-            </div>
+                <Link to={`/profile/${user.username}`} className="profile-btn">See your profile</Link> 
+                <Link to="/saved-posts" className="profile-btn">Saved Posts</Link> 
+                <a href="#" className="logout-btn" onClick={handleLogout}>Logout</a>
+              </div>
           )}
         </div>
       </nav>
