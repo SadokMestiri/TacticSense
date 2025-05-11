@@ -3,10 +3,12 @@ import axios from 'axios';
 import StarRatings from 'react-star-ratings';
 import { toast } from "react-toastify";
 import './PlayersList.css';
+import Cookies from 'js-cookie';
 
 const PlayersList = ({ header, footer }) => {
-    const user_id = localStorage.getItem('user_id');
-    const [user, setUser] = useState({});
+const userCookie = Cookies.get('user');
+const user = userCookie ? JSON.parse(userCookie) : null;
+const user_id = user ? user.id : null;
     const [userImages, setUserImages] = useState({});
     const [users, setUsers] = useState([]);
     const [error, setError] = useState(null);
@@ -22,7 +24,6 @@ const PlayersList = ({ header, footer }) => {
         }
     };
     useEffect(() => {
-        fetchUser();
         fetchPlayers();
     }, [user_id]);
 
@@ -39,18 +40,7 @@ const PlayersList = ({ header, footer }) => {
             setError(error.response?.data?.message || 'Error fetching user data');
         }
     };
-    const fetchUser = async () => {
-        try {
-            const response = await axios.get(`${process.env.REACT_APP_BASE_URL}/get_user/${user_id}`);
 
-            setUser(response.data);
-        } catch (error) {
-            setError(error.response?.data?.message || 'Error fetching user data');
-        }
-    };
-    useEffect(() => {
-        fetchUser();
-    }, [user_id]);
 
     const handleRatingChange = async (playerId, rating) => {
         try {

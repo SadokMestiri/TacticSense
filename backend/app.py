@@ -25,7 +25,6 @@ from futurehouse_client.models.app import TaskRequest
 from threading import Thread
 from web3 import Web3
 from pdf2image import convert_from_bytes
-import fitz 
 import pytesseract
 from PIL import Image
 
@@ -44,7 +43,7 @@ mail = Mail(app)
 app.config['UPLOAD_FOLDER'] = 'uploads'
 app.config['ALLOWED_EXTENSIONS'] = {'png', 'jpg', 'jpeg', 'gif', 'mp4', 'mov', 'avi'}
 app.config['MAX_CONTENT_LENGTH'] = 100 * 1024 * 1024  
-
+pytesseract.pytesseract.tesseract_cmd =r'd:\programFiles\Tesseract-OCR\tesseract.exe'
 w3 = Web3(Web3.HTTPProvider("https://sepolia.infura.io/v3/2264fb8767644f77889c230508451721"))
 
 with open('MetaCoinABI.json', 'r') as f:
@@ -97,12 +96,14 @@ class User(db.Model):
     private_key = db.Column(db.String(256), unique=True, nullable=False)
     role = db.Column(db.String(50), nullable=False)  
 
-    def __init__(self,username, email, password ,name, profile_image, role):
+    def __init__(self,username, email, password ,name, profile_image,eth_address,private_key, role):
         self.username = username
         self.email = email
         self.password = password
         self.name = name
         self.profile_image = profile_image
+        self.eth_address = eth_address
+        self.private_key = private_key
         self.role = role
 
 class Club(db.Model):
@@ -1032,7 +1033,7 @@ def register():
         db.session.commit()
 
         # Send welcome email
-        msg = Message("Welcome to MetaScout!",
+        msg = MailMessage("Welcome to MetaScout!",
                       sender=app.config['MAIL_USERNAME'],
                       recipients=[email])
         msg.html = f"""

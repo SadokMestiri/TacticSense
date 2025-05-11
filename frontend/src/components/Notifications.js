@@ -1,11 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import './Notifications.css';
+import Cookies from 'js-cookie';
 
 const Notifications = ({ header, footer }) => {
-    const user_id = localStorage.getItem('user_id');
-    const [user, setUser] = useState({});
-    const [users, setUsers] = useState([]);
+const userCookie = Cookies.get('user');
+const user = userCookie ? JSON.parse(userCookie) : null;
+const user_id = user ? user.id : null;
+const [users, setUsers] = useState([]);
     const [error, setError] = useState(null);
     const [isActivityOpen, setIsActivityOpen] = useState(false);
     const [notifications, setNotifications] = useState([]);
@@ -39,18 +41,7 @@ const Notifications = ({ header, footer }) => {
             setError(error.response?.data?.message || 'Error fetching user data');
         }
     };
-    const fetchUser = async () => {
-        try {
-            const response = await axios.get(`${process.env.REACT_APP_BASE_URL}/get_user/${user_id}`);
 
-            setUser(response.data);
-        } catch (error) {
-            setError(error.response?.data?.message || 'Error fetching user data');
-        }
-    };
-    useEffect(() => {
-        fetchUser();
-    }, [user_id]);
 
     useEffect(() => {
         const fetchNotifications = async () => {

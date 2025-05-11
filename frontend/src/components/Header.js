@@ -37,37 +37,7 @@ const Header = () => {
       setAllowed(true);
     }
   }, [token, decodedToken, navigate, date]);
-
-  // Handle dropdown toggle for user profile
-  const toggleDropdown = () => {
-    setDropdownOpen(!isDropdownOpen);
-  };
-
-  // Handle user logout
-  const handleLogout = () => {
-    Cookies.remove('token');
-    Cookies.remove('user');
-    navigate('/');  // Navigate to login page after logout
-};
-
-  // Conditionally render based on user data availability
-  if (!user) {
-    return <div>Loading...</div>; // Show loading if user data is not fetched
-  }
-
-
-  const fetchUser = async () => {
-    try {
-      const response = await axios.get(`${process.env.REACT_APP_BASE_URL}/get_user/${user_id}`);
-      setUser(response.data);
-    } catch (error) {
-      setError(error.response?.data?.message || 'Error fetching user data');
-    }
-  };
-
-  useEffect(() => {
-    fetchUser();
-  }, [user_id]);
+  
 
   useEffect(() => {
     const fetchPlayerId = async () => {
@@ -101,6 +71,24 @@ const Header = () => {
             fetchNotifications();
         }
     }, [playerId]);
+
+  // Handle dropdown toggle for user profile
+  const toggleDropdown = () => {
+    setDropdownOpen(!isDropdownOpen);
+  };
+
+  // Handle user logout
+  const handleLogout = () => {
+    Cookies.remove('token');
+    Cookies.remove('user');
+    navigate('/');  // Navigate to login page after logout
+};
+
+  // Conditionally render based on user data availability
+  if (!user) {
+    return <div>Loading...</div>; // Show loading if user data is not fetched
+  }
+
 
 
   const unreadCount = notifications.filter(n => !n.is_read).length;
@@ -184,7 +172,7 @@ const Header = () => {
                 />
                 <div className="dropdown-info">
                   <div className="name">{user.name}</div>
-                  <div className="desc">{"Professional footballer"}</div>
+                  <div className="desc">{user.role}</div>
                 </div>
               </div>
               <a href="#" className="profile-btn">See your profile</a>
