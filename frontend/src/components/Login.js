@@ -51,7 +51,8 @@ const Login = () => {
             setUserStreakData(streakData);
 
             if (!streakData.already_logged_in_today) {
-                // First login of the day, show popup and mint MetaCoins
+                setMintingLoading(true);
+                setMetaCoinMessage("Generating streak and assigning MetaCoins...");
                 await handleMintAndStreakMetaCoins(userId, streakData.current_streak);
                 setShowStreakPopup(true);
             } else {
@@ -71,29 +72,35 @@ const Login = () => {
 
     // Handle minting and adding MetaCoins
     const handleMintAndStreakMetaCoins = async (userId, currentStreak) => {
-        try {
-            const addMetaCoinsResponse = await axios.post(
-                `${baseUrl}/add_metacoins_streak`,
-                { user_id: userId },
-                { headers: { "Content-Type": "application/json" } }
-            );
+    try {
+        const addMetaCoinsResponse = await axios.post(
+            `${baseUrl}/add_metacoins_streak`,
+            { user_id: userId },
+            { headers: { "Content-Type": "application/json" } }
+        );
 
-            if (addMetaCoinsResponse.status === 200) {
-                setMetaCoinMessage(`MetaCoins added for maintaining streak.`);
-            } else {
-                const errMsg = addMetaCoinsResponse.data?.error || "Failed to add MetaCoins.";
-                setError(errMsg);
-                navigate("/Home");
-            }
-        } catch (error) {
-            const errMsg = error.response?.data?.error || "An unexpected error occurred during MetaCoin minting.";
-            setError(errMsg);
+        console.log("MetaCoin mint response:", addMetaCoinsResponse);
+
+        if (addMetaCoinsResponse.status === 200) {
+            const message = addMetaCoinsResponse.data?.message || "MetaCoins rewarded.";
+            setMetaCoinMessage(message);
+        } else {
+            const errMsg = addMetaCoinsResponse.data?.error || "Failed to add MetaCoins.";
             setMetaCoinMessage(errMsg);
+            setError(errMsg);
+            console.error("MetaCoin minting failed:", errMsg);
             navigate("/Home");
-        } finally {
-            setMintingLoading(false);
         }
-    };
+    } catch (error) {
+        const errMsg = error.response?.data?.error || error.message || "Unexpected error during MetaCoin minting.";
+        setError(errMsg);
+        setMetaCoinMessage(errMsg);
+        console.error("MetaCoin minting error:", error);
+        navigate("/Home");
+    } finally {
+        setMintingLoading(false);
+    }
+};
 
 
 
@@ -143,8 +150,24 @@ const Login = () => {
                                     {showPassword ? <FaEyeSlash /> : <FaEye />}
                                 </span>
                             </div>
-                            <button type="submit" className="btn btn-primary btn-block" disabled={loading}>Sign in</button>
+<button type="submit" className="btn btn-primary btn-block d-flex align-items-center justify-content-center" disabled={loading}>
+    {loading ? (
+        <>
+            <span className="spinner-border spinner-border-sm mr-2" role="status" aria-hidden="true"></span>
+            Signing in...
+        </>
+    ) : (
+        'Sign in'
+    )}
+</button>
                         </form>
+                        {mintingLoading && (
+    <div className="text-center mt-3 d-flex align-items-center justify-content-center">
+        <span className="spinner-border spinner-border-sm mr-2" role="status" aria-hidden="true"></span>
+        <span>{metaCoinMessage}</span>
+    </div>
+)}
+
                         <div className="m-t-20">
                            Forgot password? <a href="/Reset">Click here to reset</a>
                         </div>
@@ -167,8 +190,14 @@ const Login = () => {
 
 
 {metaCoinMessage && (
-    <div className="alert alert-info">{metaCoinMessage}</div>
+  <div
+    className="alert alert-success"
+    style={{ backgroundColor: '#d4edda', color: '#155724' }}  // Dark green Bootstrap shades
+  >
+    {metaCoinMessage}
+  </div>
 )}
+
 
 
         </div>

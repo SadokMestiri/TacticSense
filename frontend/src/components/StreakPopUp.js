@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-const StreakPopUp = ({currentStreak}) => {
+const StreakPopUp = ({currentStreak=5}) => {
   const totalDays = 7;
   const [step, setStep] = useState(0);
   const navigate = useNavigate();

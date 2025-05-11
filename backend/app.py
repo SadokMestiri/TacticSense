@@ -91,7 +91,8 @@ class User(db.Model):
     name = db.Column(db.String(80), nullable=False)
     profile_image = db.Column(db.String(255), nullable=True) 
     eth_address = db.Column(db.String(42), unique=True, nullable=False)
-    private_key = db.Column(db.String(256), unique=True, nullable=False)  
+    private_key = db.Column(db.String(256), unique=True, nullable=False)
+    role = db.Column(db.String(50), nullable=False)  
 
 
 class UserStreak(db.Model):
