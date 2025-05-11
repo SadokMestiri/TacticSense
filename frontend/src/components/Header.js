@@ -120,10 +120,16 @@ const Header = () => {
               </div>
               {user.role === "Player" ? (
                 <a href="/Profile" className="profile-btn">See your profile</a>
+              ) : user.role === ("Coach" || "Agent" || "Staff" || "Scout") ? (
+                <a href="/CoachProfile" className="profile-btn">See your profile</a>
+              ) : user.role === ("Manager") ? (
+                <a href="/ManagerProfile" className="profile-btn">See your profile</a>
+              ) : user.role === ("Club") ? (
+                <a href="/ClubProfile" className="profile-btn">See your profile</a>
               ) : (
                 <a href="/Profile_View" className="profile-btn">See your profile</a>
               )}
-              <a href="/login" className="logout-btn" onClick={handleLogout}>Logout</a>
+              <a href="/" className="logout-btn" onClick={handleLogout}>Logout</a>
             </div>
           )}
         </div>

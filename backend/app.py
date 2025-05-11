@@ -65,6 +65,8 @@ class PlayerProfile(db.Model):
     id = db.Column(db.Integer, primary_key=True)
 
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), unique=True, nullable=False)
+    club_id = db.Column(db.Integer, db.ForeignKey('club__profile.id'), unique=False, nullable=True)  # Fixed table name
+    agency_id = db.Column(db.Integer, db.ForeignKey('agency__profile.id'), unique=False, nullable=True)
 
     # Infos générales
     name = db.Column(db.String(20), nullable=True)
@@ -106,11 +108,14 @@ class PlayerProfile(db.Model):
     gk_kicking = db.Column(db.Integer, nullable=True)
     gk_reflexes = db.Column(db.Integer, nullable=True)
     user = db.relationship('User', backref=db.backref('player_profile', uselist=False))
+    club = db.relationship('Club_Profile', foreign_keys=[club_id], backref=db.backref('player_profile', uselist=False))  # Explicit foreign key
+    agency = db.relationship('Agency_Profile', foreign_keys=[agency_id], backref=db.backref('player_profile', uselist=False))
 
 class Coach_Profile(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), unique=True, nullable=False)
-    name = db.Column(db.String(80), unique=True, nullable=False)
+    club_id = db.Column(db.Integer, db.ForeignKey('club__profile.id'), unique=False, nullable=True)  # Fixed table name
+    name = db.Column(db.String(80), nullable=True)
 
     nationality = db.Column(db.String(80), nullable=True)
     date_of_appointment = db.Column(db.Date, nullable=True)
@@ -120,11 +125,13 @@ class Coach_Profile(db.Model):
     availability = db.Column(db.Boolean, default=True)
 
     user = db.relationship('User', backref=db.backref('coach_profile', uselist=False))
+    club = db.relationship('Club_Profile', backref=db.backref('coach_profile', uselist=False))  # Fixed relationship
 
 class Agent_Profile(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), unique=True, nullable=False)
-    name = db.Column(db.String(80), unique=True, nullable=False)
+    agency_id = db.Column(db.Integer, db.ForeignKey('agency__profile.id'), unique=False, nullable=True)
+    name = db.Column(db.String(80), nullable=True)
 
     nationality = db.Column(db.String(80), nullable=True)
     date_of_appointment = db.Column(db.Date, nullable=True)
@@ -134,11 +141,13 @@ class Agent_Profile(db.Model):
     availability = db.Column(db.Boolean, default=True)
 
     user = db.relationship('User', backref=db.backref('agent_profile', uselist=False))
+    agency = db.relationship('Agency_Profile', foreign_keys=[agency_id], backref=db.backref('agent_profile', uselist=False))
 
 class Staff_Profile(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), unique=True, nullable=False)
-    name = db.Column(db.String(80), unique=True, nullable=False)
+    club_id = db.Column(db.Integer, db.ForeignKey('club__profile.id'), unique=False, nullable=True)  # Fixed table name
+    name = db.Column(db.String(80), nullable=True)
 
     nationality = db.Column(db.String(80), nullable=True)
     date_of_appointment = db.Column(db.Date, nullable=True)
@@ -148,11 +157,13 @@ class Staff_Profile(db.Model):
     availability = db.Column(db.Boolean, default=True)
 
     user = db.relationship('User', backref=db.backref('staff_profile', uselist=False))
+    club = db.relationship('Club_Profile', foreign_keys=[club_id], backref=db.backref('staff_profile', uselist=False))  # Fixed relationship
 
 class Scout_Profile(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), unique=True, nullable=False)
-    name = db.Column(db.String(80), unique=True, nullable=False)
+    club_id = db.Column(db.Integer, db.ForeignKey('club__profile.id'), unique=False, nullable=True)  # Fixed table name
+    name = db.Column(db.String(80), nullable=True)
 
     nationality = db.Column(db.String(80), nullable=True)
     date_of_appointment = db.Column(db.Date, nullable=True)
@@ -162,11 +173,13 @@ class Scout_Profile(db.Model):
     availability = db.Column(db.Boolean, default=True)
 
     user = db.relationship('User', backref=db.backref('scout_profile', uselist=False))
+    club = db.relationship('Club_Profile', backref=db.backref('scout_profile', uselist=False))  # Fixed relationship
 
 class Manager_Profile(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), unique=True, nullable=False)
-    name = db.Column(db.String(80), unique=True, nullable=False)
+    club_id = db.Column(db.Integer, db.ForeignKey('club__profile.id'), unique=False, nullable=True)  # Fixed table name
+    name = db.Column(db.String(80), nullable=True)
 
     nationality = db.Column(db.String(80), nullable=True)
     date_of_appointment = db.Column(db.Date, nullable=True)
@@ -182,7 +195,38 @@ class Manager_Profile(db.Model):
     ppg = db.Column(db.Float, nullable=True)  # Points per game
 
     user = db.relationship('User', backref=db.backref('manager_profile', uselist=False))
+    club = db.relationship('Club_Profile', backref=db.backref('manager_profile', uselist=False))  # Fixed relationship
 
+class Agency_Profile(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), unique=True, nullable=False)
+    player_id = db.Column(db.Integer, db.ForeignKey('player_profile.id'), unique=False, nullable=True)
+    club_id = db.Column(db.Integer, db.ForeignKey('club__profile.id'), unique=False, nullable=True)  # Fixed table name
+    agent_id = db.Column(db.Integer, db.ForeignKey('agent__profile.id'), unique=False, nullable=True)  # Fixed table name
+
+    country = db.Column(db.String(80), nullable=True)
+
+    user = db.relationship('User', backref=db.backref('agency_profile', uselist=False))
+    player = db.relationship('PlayerProfile', foreign_keys=[player_id], backref=db.backref('agency_profile', uselist=False))
+    club = db.relationship('Club_Profile', foreign_keys=[club_id], backref=db.backref('agency_profile', uselist=False))  # Fixed relationship
+    agent = db.relationship('Agent_Profile', foreign_keys=[agent_id], backref=db.backref('agency_profile', uselist=False))  # Fixed relationship
+
+class Club_Profile(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), unique=True, nullable=False)
+    player_id = db.Column(db.Integer, db.ForeignKey('player_profile.id'), unique=False, nullable=True)
+    agency_id = db.Column(db.Integer, db.ForeignKey('agency__profile.id'), unique=False, nullable=True)
+    staff_id = db.Column(db.Integer, db.ForeignKey('staff__profile.id'), unique=False, nullable=True)
+
+    country = db.Column(db.String(80), nullable=True)
+    competition = db.Column(db.String(100), nullable=True)
+    squad_size = db.Column(db.Integer, nullable=True)
+
+    user = db.relationship('User', backref=db.backref('club_profile', uselist=False))
+    player = db.relationship('PlayerProfile', foreign_keys=[player_id], backref=db.backref('club_profile', uselist=False))
+    agency = db.relationship('Agency_Profile', foreign_keys=[agency_id], backref=db.backref('club_profile', uselist=False))
+    staff = db.relationship('Staff_Profile', foreign_keys=[staff_id], backref=db.backref('club_profile', uselist=False))
+    
 class Play(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(80), unique=True, nullable=False)
@@ -457,6 +501,8 @@ def get_user(user_id):
             user_skills = Skills.query.filter_by(user_id=user.id).first()
             return jsonify({
                 'id': user.id,
+                'agency_id': user_profile.agency,
+                'club_id': user_profile.club_id,
                 'username': user.username,
                 'email': user.email,
                 'name': user.name,
@@ -496,54 +542,89 @@ def get_user(user_id):
                 'skill': user_skills.skill
             }), 200
         elif user.role == 'Coach':
-            user_profile = Coach_Profile.query.filter_by(user_id=user.id).first()
+            Coach = Coach_Profile.query.filter_by(user_id=user.id).first()
             return jsonify({
                 'id': user.id,
                 'username': user.username,
                 'email': user.email,
                 'name': user.name,
                 'profile_image': profile_image,
-                'role': user.role
+                'role': user.role,
+                'nationality': Coach.nationality,
+                'date_of_appointment': Coach.date_of_appointment,
+                'date_of_end_contract': Coach.date_of_end_contract,
+                'years_of_experience': Coach.years_of_experience,
+                'qualification': Coach.qualification,
+                'availability': Coach.availability
             }), 200
         elif user.role == 'Agent':
-            user_profile = Agent_Profile.query.filter_by(user_id=user.id).first()
+            Agent = Agent_Profile.query.filter_by(user_id=user.id).first()
             return jsonify({
                 'id': user.id,
                 'username': user.username,
                 'email': user.email,
                 'name': user.name,
                 'profile_image': profile_image,
-                'role': user.role
+                'role': user.role,
+                'nationality': Agent.nationality,
+                'date_of_appointment': Agent.date_of_appointment,
+                'date_of_end_contract': Agent.date_of_end_contract,
+                'years_of_experience': Agent.years_of_experience,
+                'qualification': Agent.qualification,
+                'availability': Agent.availability
             }), 200
         elif user.role == 'Staff':
-            user_profile = Staff_Profile.query.filter_by(user_id=user.id).first()
+            Staff = Staff_Profile.query.filter_by(user_id=user.id).first()
             return jsonify({
                 'id': user.id,
                 'username': user.username,
                 'email': user.email,
                 'name': user.name,
                 'profile_image': profile_image,
-                'role': user.role
+                'role': user.role,
+                'nationality': Staff.nationality,
+                'date_of_appointment': Staff.date_of_appointment,
+                'date_of_end_contract': Staff.date_of_end_contract,
+                'years_of_experience': Staff.years_of_experience,
+                'qualification': Staff.qualification,
+                'availability': Staff.availability
             }), 200
         elif user.role == 'Scout':
-            user_profile = Scout_Profile.query.filter_by(user_id=user.id).first()
+            Scout = Scout_Profile.query.filter_by(user_id=user.id).first()
             return jsonify({
                 'id': user.id,
                 'username': user.username,
                 'email': user.email,
                 'name': user.name,
                 'profile_image': profile_image,
-                'role': user.role
+                'role': user.role,
+                'nationality': Scout.nationality,
+                'date_of_appointment': Scout.date_of_appointment,
+                'date_of_end_contract': Scout.date_of_end_contract,
+                'years_of_experience': Scout.years_of_experience,
+                'qualification': Scout.qualification,
+                'availability': Scout.availability
             }), 200
         elif user.role == 'Manager':
-            user_profile = Manager_Profile.query.filter_by(user_id=user.id).first()
+            Manager = Manager_Profile.query.filter_by(user_id=user.id).first()
             return jsonify({
                 'id': user.id,
                 'username': user.username,
                 'email': user.email,
                 'name': user.name,
                 'profile_image': profile_image,
-                'role': user.role
+                'role': user.role,
+                'nationality': Manager.nationality,
+                'date_of_appointment': Manager.date_of_appointment,
+                'date_of_end_contract': Manager.date_of_end_contract,
+                'years_of_experience': Manager.years_of_experience,
+                'qualification': Manager.qualification,
+                'availability': Manager.availability,
+                'total_matches': Manager.total_matches,
+                'wins': Manager.wins,
+                'draws': Manager.draws,
+                'losses': Manager.losses,
+                'ppg': Manager.ppg
             }), 200
         else:
             user_profile = None  # Handle cases where the role doesn't match any known profiles
@@ -560,6 +641,15 @@ def get_user(user_id):
         print(f"Error fetching user data: {e}")
         return jsonify({'message': 'User not found'}), 404
 
+@app.route('/get_clubs', methods=['GET'])
+def get_clubs():
+    try:
+        clubs = Club_Profile.query.all()
+        club_list = [{'id': club.id, 'name': club.country} for club in clubs]  # Replace 'country' with the actual club name field
+        return jsonify(club_list), 200
+    except Exception as e:
+        return jsonify({'error': 'Failed to fetch clubs', 'details': str(e)}), 500
+    
 @app.route('/register', methods=['POST'])
 def register():
     try:
@@ -592,34 +682,45 @@ def register():
         # Add user to the appropriate profile table based on role
         if role == 'Manager':
             new_profile = Manager_Profile(user_id=new_user.id)
+            new_staff = Staff_Profile(user_id=new_user.id)
+            db.session.add(new_staff)
         elif role == 'Scout':
             new_profile = Scout_Profile(user_id=new_user.id)
+            new_staff = Staff_Profile(user_id=new_user.id)
+            db.session.add(new_staff)
         elif role == 'Staff':
             new_profile = Staff_Profile(user_id=new_user.id)
         elif role == 'Agent':
             new_profile = Agent_Profile(user_id=new_user.id)
         elif role == 'Coach':
             new_profile = Coach_Profile(user_id=new_user.id)
+            new_staff = Staff_Profile(user_id=new_user.id)
+            db.session.add(new_staff)
         elif role == 'Player':
             new_profile = PlayerProfile(user_id=new_user.id)
             new_skills = Skills(user_id=new_user.id)
+            db.session.add(new_skills)
+        elif role == 'Club':
+            new_profile = Club_Profile(user_id=new_user.id)
+        elif role == 'Agency':
+            new_profile = Agency_Profile(user_id=new_user.id)
         else:
             return jsonify({'error': 'Invalid role provided'}), 400
 
+        print(new_profile)
         db.session.add(new_profile)
-        db.session.add(new_skills)
         db.session.commit()
 
         # Send welcome email
-        msg = Message("Welcome to MetaScout!",
-                      sender=app.config['MAIL_USERNAME'],
-                      recipients=[email])
-        msg.html = f"""
-            <p>Hello {name},</p>
-            <p>Thank you for signing up on MetaScout. We’re excited to have you with us!</p>
-            <p>Best regards,<br>The MetaScout Team</p>
-        """
-        mail.send(msg)
+    #     msg = Message("Welcome to MetaScout!",
+    #                   sender=app.config['MAIL_USERNAME'],
+    #                   recipients=[email])
+    #     msg.html = f"""
+    #         <p>Hello {name},</p>
+    #         <p>Thank you for signing up on MetaScout. We’re excited to have you with us!</p>
+    #         <p>Best regards,<br>The MetaScout Team</p>
+    #     """
+    #     mail.send(msg)
 
         return jsonify({'message': 'User registered successfully'}), 201
     except Exception as e:
@@ -647,6 +748,8 @@ def login():
     username = data.get('username')
     password = data.get('password')
 
+    print(username)
+    print(password)
     user = User.query.filter_by(username=username).first()
     
     # Check if user exists and password matches
@@ -884,62 +987,175 @@ def update_profile(current_user):
 
     try:
         # Fetch the user's profile
-        user_profile = PlayerProfile.query.filter_by(user_id=current_user.id).first()
+        if current_user.role == 'Player':
+            user_profile = PlayerProfile.query.filter_by(user_id=current_user.id).first()
 
-        if not user_profile:
-            return jsonify({'error': 'Player profile not found'}), 404
+            if not user_profile:
+                return jsonify({'error': 'Player profile not found'}), 404
 
-        # Update PlayerProfile fields
-        if 'season' in data:
-            user_profile.season = data['season']
-        if 'age' in data:
-            user_profile.age = data['age']
-        if 'nationality' in data:
-            user_profile.nationality = data['nationality']
-        if 'position' in data:
-            user_profile.position = data['position']
-        if 'matches' in data:
-            user_profile.matches = data['matches']
-        if 'minutes' in data:
-            user_profile.minutes = data['minutes']
-        if 'goals' in data:
-            user_profile.goals = data['goals']
-        if 'assists' in data:
-            user_profile.assists = data['assists']
-        if 'club' in data:
-            user_profile.club = data['club']
-        if 'market_value' in data:
-            user_profile.market_value = data['market_value']
-        if 'total_yellow_cards' in data:
-            user_profile.total_yellow_cards = data['total_yellow_cards']
-        if 'total_red_cards' in data:
-            user_profile.total_red_cards = data['total_red_cards']
-        if 'performance_metrics' in data:
-            user_profile.performance_metrics = data['performance_metrics']
-        if 'media_sentiment' in data:
-            user_profile.media_sentiment = data['media_sentiment']
-        if 'aggression' in data:
-            user_profile.aggression = data['aggression']
-        if 'reactions' in data:
-            user_profile.reactions = data['reactions']
-        if 'long_pass' in data:
-            user_profile.long_pass = data['long_pass']
-        if 'stamina' in data:
-            user_profile.stamina = data['stamina']
-        if 'strength' in data:
-            user_profile.strength = data['strength']
-        if 'sprint_speed' in data:
-            user_profile.sprint_speed = data['sprint_speed']
-        if 'agility' in data:
-            user_profile.agility = data['agility']
-        if 'jumping' in data:
-            user_profile.jumping = data['jumping']
-        if 'heading' in data:
-            user_profile.heading = data['heading']
-        if 'free_kick_accuracy' in data:
-            user_profile.free_kick_accuracy = data['free_kick_accuracy']
-        if 'volleys' in data:
-            user_profile.volleys = data['volleys']
+            # Update PlayerProfile fields
+            if 'season' in data:
+                user_profile.season = data['season']
+            if 'age' in data:
+                user_profile.age = data['age']
+            if 'nationality' in data:
+                user_profile.nationality = data['nationality']
+            if 'position' in data:
+                user_profile.position = data['position']
+            if 'matches' in data:
+                user_profile.matches = data['matches']
+            if 'minutes' in data:
+                user_profile.minutes = data['minutes']
+            if 'goals' in data:
+                user_profile.goals = data['goals']
+            if 'assists' in data:
+                user_profile.assists = data['assists']
+            if 'club' in data:
+                user_profile.club = data['club']
+            if 'market_value' in data:
+                user_profile.market_value = data['market_value']
+            if 'total_yellow_cards' in data:
+                user_profile.total_yellow_cards = data['total_yellow_cards']
+            if 'total_red_cards' in data:
+                user_profile.total_red_cards = data['total_red_cards']
+            if 'performance_metrics' in data:
+                user_profile.performance_metrics = data['performance_metrics']
+            if 'media_sentiment' in data:
+                user_profile.media_sentiment = data['media_sentiment']
+            if 'aggression' in data:
+                user_profile.aggression = data['aggression']
+            if 'reactions' in data:
+                user_profile.reactions = data['reactions']
+            if 'long_pass' in data:
+                user_profile.long_pass = data['long_pass']
+            if 'stamina' in data:
+                user_profile.stamina = data['stamina']
+            if 'strength' in data:
+                user_profile.strength = data['strength']
+            if 'sprint_speed' in data:
+                user_profile.sprint_speed = data['sprint_speed']
+            if 'agility' in data:
+                user_profile.agility = data['agility']
+            if 'jumping' in data:
+                user_profile.jumping = data['jumping']
+            if 'heading' in data:
+                user_profile.heading = data['heading']
+            if 'free_kick_accuracy' in data:
+                user_profile.free_kick_accuracy = data['free_kick_accuracy']
+            if 'volleys' in data:
+                user_profile.volleys = data['volleys']
+        elif current_user.role == 'Coach':
+            user_profile = Coach_Profile.query.filter_by(user_id=current_user.id).first()
+
+            if not user_profile:
+                return jsonify({'error': 'Coach profile not found'}), 404
+
+            # Update Coach_Profile fields
+            if 'nationality' in data:
+                user_profile.nationality = data['nationality']
+            if 'date_of_appointment' in data:
+                user_profile.date_of_appointment = data['date_of_appointment']
+            if 'date_of_end_contract' in data:
+                user_profile.date_of_end_contract = data['date_of_end_contract']
+            if 'years_of_experience' in data:
+                user_profile.years_of_experience = data['years_of_experience']
+            if 'qualification' in data:
+                user_profile.qualification = data['qualification']
+            if 'availability' in data:
+                user_profile.availability = data['availability']
+
+        elif current_user.role == 'Agent':
+            user_profile = Agent_Profile.query.filter_by(user_id=current_user.id).first()
+
+            if not user_profile:
+                return jsonify({'error': 'Agent profile not found'}), 404
+
+            # Update Agent_Profile fields
+            if 'nationality' in data:
+                user_profile.nationality = data['nationality']
+            if 'date_of_appointment' in data:
+                user_profile.date_of_appointment = data['date_of_appointment']
+            if 'date_of_end_contract' in data:
+                user_profile.date_of_end_contract = data['date_of_end_contract']
+            if 'years_of_experience' in data:
+                user_profile.years_of_experience = data['years_of_experience']
+            if 'qualification' in data:
+                user_profile.qualification = data['qualification']
+            if 'availability' in data:
+                user_profile.availability = data['availability']
+
+        elif current_user.role == 'Staff':
+            user_profile = Staff_Profile.query.filter_by(user_id=current_user.id).first()
+
+            if not user_profile:
+                return jsonify({'error': 'Staff profile not found'}), 404
+
+            # Update Staff_Profile fields
+            if 'nationality' in data:
+                user_profile.nationality = data['nationality']
+            if 'date_of_appointment' in data:
+                user_profile.date_of_appointment = data['date_of_appointment']
+            if 'date_of_end_contract' in data:
+                user_profile.date_of_end_contract = data['date_of_end_contract']
+            if 'years_of_experience' in data:
+                user_profile.years_of_experience = data['years_of_experience']
+            if 'qualification' in data:
+                user_profile.qualification = data['qualification']
+            if 'availability' in data:
+                user_profile.availability = data['availability']
+
+        elif current_user.role == 'Scout':
+            user_profile = Scout_Profile.query.filter_by(user_id=current_user.id).first()
+
+            if not user_profile:
+                return jsonify({'error': 'Scout profile not found'}), 404
+
+            # Update Scout_Profile fields
+            if 'nationality' in data:
+                user_profile.nationality = data['nationality']
+            if 'date_of_appointment' in data:
+                user_profile.date_of_appointment = data['date_of_appointment']
+            if 'date_of_end_contract' in data:
+                user_profile.date_of_end_contract = data['date_of_end_contract']
+            if 'years_of_experience' in data:
+                user_profile.years_of_experience = data['years_of_experience']
+            if 'qualification' in data:
+                user_profile.qualification = data['qualification']
+            if 'availability' in data:
+                user_profile.availability = data['availability']
+
+        elif current_user.role == 'Manager':
+            user_profile = Manager_Profile.query.filter_by(user_id=current_user.id).first()
+
+            if not user_profile:
+                return jsonify({'error': 'Manager profile not found'}), 404
+
+            # Update Manager_Profile fields
+            if 'nationality' in data:
+                user_profile.nationality = data['nationality']
+            if 'date_of_appointment' in data:
+                user_profile.date_of_appointment = data['date_of_appointment']
+            if 'date_of_end_contract' in data:
+                user_profile.date_of_end_contract = data['date_of_end_contract']
+            if 'years_of_experience' in data:
+                user_profile.years_of_experience = data['years_of_experience']
+            if 'qualification' in data:
+                user_profile.qualification = data['qualification']
+            if 'availability' in data:
+                user_profile.availability = data['availability']
+            if 'total_matches' in data:
+                user_profile.total_matches = data['total_matches']
+            if 'wins' in data:
+                user_profile.wins = data['wins']
+            if 'draws' in data:
+                user_profile.draws = data['draws']
+            if 'losses' in data:
+                user_profile.losses = data['losses']
+            if 'ppg' in data:
+                user_profile.ppg = data['ppg']
+
+        else:
+            return jsonify({'error': 'Invalid role'}), 400
 
         # Debug: Log updated user data
         print(f"Updating user: {current_user}")
