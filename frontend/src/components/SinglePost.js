@@ -4,8 +4,13 @@ import Cookies from 'js-cookie';
 import jwt_decode from 'jwt-decode';
 import { useNavigate ,Link} from "react-router-dom";
 
-const SinglePost = ({ header,postId }) => {
+import { useParams } from 'react-router-dom';
+import CustomVideoPlayer from './CustomVideoPlayer';
+
+
+const SinglePost = ({ header }) => {
   const navigate = useNavigate();
+  const { postId } = useParams();
   const [post, setPost] = useState(null);
   const [comments, setComments] = useState([]);
   const [user, setUser] = useState(null);
@@ -139,14 +144,14 @@ const SinglePost = ({ header,postId }) => {
     }
   };
 
-  const handleReaction = async (reactionType) => {
+  const handleReaction = async (postId, reactionType) => {
     try {
       await axios.post(`${process.env.REACT_APP_BASE_URL}/react_to_post`, {
         user_id: currentUser.id,
         post_id: postId,
         reaction_type: reactionType,
       });
-      fetchPostData(); // Refresh post reactions
+      fetchPostData();
     } catch (error) {
       console.error('Error adding reaction:', error);
     }
@@ -168,9 +173,12 @@ const SinglePost = ({ header,postId }) => {
     { name: "sad", icon: "assets/images/sad.png" },
     { name: "angry", icon: "assets/images/angry.png" },
   ];
+ 
   return (
+
     <div>
-      <div className="container">
+ {header}
+    <div className="container">
     <div className="main-content">
     <div className="post">
     <div className="post-author">
@@ -189,12 +197,38 @@ const SinglePost = ({ header,postId }) => {
     style={{ width: '100%' }} 
   />
 )}
+
 {post.video_url && (
-<video autoPlay muted controls style={{ width: '100%' }}>
-<source src={`${process.env.REACT_APP_BASE_URL}${post.video_url}`} type="video/mp4" />
-Your browser does not support the video tag.
-</video>
+  <CustomVideoPlayer 
+    videoUrl={`${process.env.REACT_APP_BASE_URL}${post.video_url}`}
+    postId={post.id}
+  />
 )}
+
+
+{post.video_url && (
+  <>
+    <video autoPlay muted controls style={{ width: '100%' }}>
+      <source src={`${process.env.REACT_APP_BASE_URL}${post.video_url}`} type="video/mp4" />
+    </video>
+    
+    <div style={{backgroundColor: 'red', padding: '20px', margin: '15px 0'}}>
+      <a href={`/video-analysis/${post.id}`} 
+         style={{
+           display: 'block',
+           backgroundColor: 'blue',
+           color: 'white',
+           padding: '10px',
+           textAlign: 'center',
+           fontWeight: 'bold',
+           fontSize: '18px'
+         }}>
+        TEST BUTTON - ANALYZE VIDEO
+      </a>
+    </div>
+  </>
+)}
+
 
 <div className="post-stats">
 <div className="post-reactions">

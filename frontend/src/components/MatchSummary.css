@@ -1,0 +1,59 @@
+.match-summary {
+  margin-bottom: 20px;
+}
+
+.match-summary h3 {
+  margin-bottom: 10px;
+  color: #333;
+}
+
+.match-summary p {
+  margin-bottom: 15px;
+  color: #555;
+}
+
+.summary-actions {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.summary-actions .btn {
+  padding: 8px 12px;
+  font-size: 0.9em;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.summary-actions .btn-primary {
+  background-color: #007bff;
+  color: white;
+  border: none;
+}
+
+.summary-actions .btn-primary:disabled {
+  background-color: #cccccc;
+  cursor: not-allowed;
+}
+
+.summary-actions .btn-secondary {
+  background-color: #6c757d;
+  color: white;
+  border: none;
+}
+
+.summary-actions .btn-secondary:disabled {
+  background-color: #cccccc;
+  cursor: not-allowed;
+}
+
+.error-message {
+  color: #dc3545;
+  font-size: 0.9em;
+  margin-top: 10px;
+}
+
+audio {
+  margin-top: 10px;
+  width: 100%;
+}

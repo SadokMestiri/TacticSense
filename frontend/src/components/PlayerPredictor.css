@@ -1,0 +1,413 @@
+/* General Container for Predictor Pages */
+.predictor-container {
+    width: 90%;
+    max-width: 1600px;
+    margin: 2rem auto;
+    padding: 1.5rem 2rem;
+    background: #1f2333; /* Dark background */
+    color: #e0e0e0; /* Light text */
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.5); /* Adjusted shadow for dark theme */
+}
+
+.predictor-container h2,
+.predictor-container h4 {
+  color: #f0f0f0; /* Brighter text for headings */
+  margin-bottom: 0.5rem;
+}
+
+/* PlayerPredictor.js Form Styles (New Player Prediction) */
+.predictor-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.season-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+    background: #2a2f4c; /* Slightly lighter dark for cards */        
+    border: 1px solid #3a3f5c; /* Darker border */
+    border-radius: 10px;
+    padding: 1.5rem 1rem 1rem 1rem;
+    position: relative;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+    color: #e0e0e0;            
+}
+
+.season-row label {
+    display: flex;
+    flex-direction: column;
+    font-weight: 500;
+    color: #e0e0e0; 
+    margin-right: 8px;
+}
+
+.season-header {
+    position: absolute;
+    top: -18px;
+    left: 18px;
+    background: #007bff; /* Accent color */
+    color: #fff;
+    padding: 4px 16px;
+    border-radius: 14px;
+    font-size: 1rem;
+    font-weight: bold;
+    letter-spacing: 1px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.2);
+}
+
+.remove-btn {
+    background: #d9534f;
+    color: #fff;
+    border: none;
+    border-radius: 50%;
+    width: 28px;
+    height: 28px;
+    font-size: 1.2rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s;
+}
+
+.remove-btn:hover:enabled {
+    background: #c9302c;
+}
+
+.remove-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.prediction-result {
+    margin-top: 2rem;
+    background: #2a2f4c; /* Card background */
+    color: #e0e0e0;
+    border-radius: 8px;
+    padding: 1rem;
+}
+
+/* General Input Style (Base) */
+.input, 
+.season-row input,
+.filters-container .input,
+.filters-container .filter-select {
+    padding: 0.6rem 0.8rem;
+    border-radius: 5px;
+    border: 1px solid #4a4f6c; /* Lighter border for dark theme */
+    background-color: #2a2f4c; /* Dark input background */
+    color: #e0e0e0; /* Light text in input */
+    font-size: 0.9rem;
+}
+
+.filters-container .input::placeholder,
+.season-row input::placeholder {
+    color: #a0a0a0; /* Lighter placeholder text */
+}
+
+/* General Button Styles */
+.add-btn { /* Specific for "Add Season" type buttons */
+    background: #28a745;
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    padding: 0.5rem 1.5rem;
+    cursor: pointer;
+    margin-right: 0.5rem;
+}
+
+.add-btn:hover {
+    opacity: 0.9;
+}
+
+.submit-btn { /* Primary action button, e.g., "Predict", "Save" */
+    background: #0073b1;
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    padding: 10px 32px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s;
+    margin-top: 1rem; /* Note: this was in the second definition, adjust if needed elsewhere */
+}
+  
+.submit-btn:disabled {
+    background: #5a5f7c; /* Darker disabled background */
+    color: #a0a0a0;
+    cursor: not-allowed;
+}
+  
+.submit-btn:not(:disabled):hover {
+    background: #005580;
+}
+
+/* Error Message Style */
+.error {
+    color: #d9534f;
+    font-weight: bold;
+}
+
+/* Recharts Animation */
+.recharts-dot.animate {
+    animation: fadeInDot 1s;
+}
+
+@keyframes fadeInDot {
+    from { opacity: 0; transform: scale(0.5);}
+    to { opacity: 1; transform: scale(1);}
+}
+
+/* PlayerProfile.js Specific Styles */
+.profile-container {
+    background: #1f2333; /* Dark background */
+    color: #e0e0e0; /* Light text */
+    border-radius: 14px;
+    box-shadow: 0 2px 16px rgba(0,0,0,0.5);
+    padding: 2.5rem 2rem 2rem 2rem;
+    max-width: 1200px; 
+    margin: 2rem auto;
+    font-family: 'Segoe UI', Arial, sans-serif;
+}
+  
+.profile-container h2 { 
+    color: #00aaff; /* Accent color for main title */
+    font-size: 2.2rem;
+    margin-bottom: 0.5rem;
+    letter-spacing: 0.5px;
+}
+  
+.profile-header {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+    border-bottom: 1px solid #3a3f5c; /* Darker border */
+    padding-bottom: 1rem;
+}
+  
+.profile-avatar {
+    width: 72px;
+    height: 72px;
+    border-radius: 50%;
+    background: #3a3f5c; /* Darker background for avatar */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2.5rem;
+    color: #00aaff; /* Accent color for initial */
+    font-weight: bold;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+}
+  
+.profile-info {
+    font-size: 1.1rem;
+    color: #e0e0e0;
+}
+  
+.profile-info b {
+    color: #00aaff; /* Accent for bolded labels */
+}
+  
+.dashboard-graphs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 2rem;
+    margin-bottom: 2.5rem;
+}
+  
+.dashboard-graphs > div {
+    background: #2a2f4c; /* Card background for graphs */
+    border-radius: 10px;
+    padding: 1.2rem 1rem 0.5rem 1rem;
+    box-shadow: 0 1px 6px rgba(0,0,0,0.3);
+    flex: 1 1 350px;
+    min-width: 320px;
+}
+
+.profile-container .dashboard-graphs h4 {
+  color: #f0f0f0; /* Brighter text for graph titles */
+  font-size: 1.15rem; 
+  font-weight: 600;   
+  margin-top: 0;      
+  margin-bottom: 1rem; 
+  text-align: left;   
+}
+
+/* ExistingPlayerPredictor.js Specific Styles */
+.existing-players-layout { 
+    display: flex;
+    gap: 2rem;
+}
+  
+.existing-players-main-content {
+    flex: 3;
+    display: flex;
+    flex-direction: column;
+}
+  
+.existing-players-sidebar {
+    flex: 1;
+    padding-top: 3.5rem;
+}
+  
+.filters-container {
+    display: flex;
+    gap: 0.75rem;
+    margin-bottom: 1.5rem;
+    flex-wrap: wrap;
+    align-items: center;
+}
+  
+.filters-container .input { 
+    min-width: 150px;
+    flex-grow: 1;
+}
+
+.filters-container .filter-select { 
+    min-width: 120px;
+}
+  
+.players-list-container {
+    /* Styles for the scrollable list area if needed */
+}
+  
+.player-list-item {
+    cursor: pointer;
+    background: #2a2f4c; /* Card background */
+    padding: 12px 18px;
+    border-radius: 6px;
+    margin-bottom: 10px;
+    transition: background-color 0.2s ease, box-shadow 0.2s ease;
+    border: 1px solid #3a3f5c; /* Darker border */
+}
+  
+.player-list-item:hover {
+    background-color: #3a3f5c; /* Slightly lighter on hover */
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+}
+  
+.player-item-name {
+    font-weight: 600;
+    font-size: 1.1rem;
+    color: #00aaff; /* Accent for player name */
+    margin-bottom: 4px;
+}
+  
+.player-item-details {
+    font-size: 0.9rem;
+    color: #b0b0b0; /* Lighter grey for details */
+}
+  
+.add-player-prompt { 
+    background-color: #2a2f4c; /* Card background */
+    padding: 1.5rem;
+    border-radius: 8px;
+    border: 1px solid #3a3f5c;
+    text-align: center;
+    color: #e0e0e0;
+}
+  
+.add-player-prompt h4 { 
+    margin-top: 0;
+    margin-bottom: 0.75rem;
+    color: #f0f0f0; /* Brighter heading */
+    font-size: 1.1rem;
+}
+  
+.add-player-prompt p {
+    font-size: 0.9rem;
+    color: #b0b0b0;
+    margin-bottom: 1.25rem;
+    line-height: 1.5;
+}
+  
+.add-player-link { 
+    display: inline-block;
+    padding: 0.6rem 1.2rem;
+    background-color: #007bff; /* Accent color */
+    color: white;
+    text-decoration: none;
+    border-radius: 5px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    transition: background-color 0.2s ease;
+}
+  
+.add-player-link:hover {
+    background-color: #0056b3;
+}
+  
+.pagination-controls {
+    /* Styles for pagination container if needed */
+}
+  
+.pagination-btn { 
+    padding: 0.5rem 1rem;
+    border: 1px solid #4a4f6c; /* Lighter border */
+    background-color: #2a2f4c; /* Dark background */
+    color: #e0e0e0; /* Light text */
+    cursor: pointer;
+    border-radius: 4px;
+    font-size: 0.9rem; 
+    transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+  
+.pagination-btn:hover:not(:disabled) {
+    background-color: #3a3f5c; 
+    border-color: #5a5f7c;
+}
+
+.pagination-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    background-color: #3a3f5c;
+    border-color: #4a4f6c;
+    color: #a0a0a0;
+}
+
+/* Media Queries */
+@media (max-width: 900px) { /* For PlayerPredictor.js form */
+    .season-row {
+      flex-direction: column;
+      gap: 0.5rem;
+      /* background, border, radius, padding already defined, ensure they are what you want or override */
+    }
+    .season-row label {
+      min-width: 0;
+      width: 100%;
+    }
+    .season-header {
+      top: -14px;
+      left: 16px;
+      padding: 2px 12px;
+      border-radius: 12px;
+      font-size: 0.95rem;
+    }
+}
+
+/* Add other media queries as needed for .existing-players-layout, .profile-container etc. */
+/* Example for existing players layout */
+@media (max-width: 768px) {
+    .existing-players-layout {
+        flex-direction: column;
+    }
+    .existing-players-sidebar {
+        padding-top: 1rem; /* Adjust spacing when stacked */
+        order: -1; /* Optionally move sidebar to top on small screens */
+    }
+    .filters-container {
+        flex-direction: column;
+        align-items: stretch; /* Make filters take full width */
+    }
+    .filters-container .input,
+    .filters-container .filter-select {
+        width: 100%;
+        min-width: auto; /* Reset min-width */
+    }
+}

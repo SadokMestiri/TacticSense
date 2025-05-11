@@ -1,0 +1,231 @@
+.matches-list-container {
+    padding: 20px;
+    max-width: 900px;
+    margin: 20px auto;
+    background-color: #1a1a2e; /* Base dark background */
+    color: #e0e0e0; /* Default light text */
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.matches-list-container h1, .matches-list-container h2 {
+    color: #00aaff; /* Accent for titles */
+    margin-bottom: 1.5rem;
+    text-align: center;
+}
+
+.matches-table { /* If you use a table */
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 1.5rem;
+    background-color: #1f2333; /* Table background */
+    box-shadow: 0 2px 8px rgba(0,0,0,0.5);
+    border-radius: 8px;
+    overflow: hidden; /* To respect border-radius on th/td */
+}
+
+.matches-table th, .matches-table td {
+    padding: 12px 15px;
+    text-align: left;
+    border-bottom: 1px solid #3a3f5c; /* Darker border for rows */
+}
+
+.matches-table th {
+    background-color: #2a2f4c; /* Header background for table */
+    color: #f0f0f0; /* Brighter text for headers */
+    font-weight: 600;
+}
+
+.matches-table tr:last-child td {
+    border-bottom: none;
+}
+
+.matches-table tr:hover {
+    background-color: #2f3452; /* Hover effect for rows */
+}
+
+.matches-table a {
+    color: #00aaff; /* Accent for links */
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.matches-table a:hover {
+    text-decoration: underline;
+    color: #33c6ff;
+}
+
+.upload-match-link {
+    display: inline-block;
+    margin-bottom: 20px;
+    padding: 10px 15px;
+    background-color: #007bff;
+    color: white;
+    text-decoration: none;
+    border-radius: 5px;
+    transition: background-color 0.3s ease;
+}
+
+.upload-match-link:hover {
+    background-color: #0056b3;
+}
+
+.matches-list {
+    list-style: none;
+    padding: 0;
+}
+
+.match-item {
+    background-color: #fff;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    margin-bottom: 15px;
+    padding: 15px;
+    transition: box-shadow 0.3s ease;
+}
+
+.match-item:hover {
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.match-item a {
+    text-decoration: none;
+    color: inherit;
+    display: block;
+}
+
+.match-item h3 {
+    margin-top: 0;
+    margin-bottom: 10px;
+    color: #333;
+}
+
+.match-item p {
+    margin: 5px 0;
+    color: #555;
+    font-size: 0.9em;
+}
+
+.error-message {
+    color: #dc3545;
+    font-weight: bold;
+}
+
+/* Status styling */
+.status-uploaded {
+    color: #ffc107; /* Yellow */
+    font-weight: bold;
+}
+
+.status-processing_captions {
+    color: #17a2b8; /* Teal */
+    font-weight: bold;
+}
+
+.status-captions_ready {
+    color: #28a745; /* Green */
+    font-weight: bold;
+}
+
+.status-analysis_complete {
+    color: #007bff; /* Blue */
+    font-weight: bold;
+}
+
+.status-error {
+    color: #dc3545; /* Red */
+    font-weight: bold;
+}
+
+.match-status-container {
+    display: flex;
+    align-items: center;
+    font-size: 0.9em;
+    margin-top: 5px;
+}
+
+.match-status-container > span:first-child {
+    margin-right: 5px;
+    color: #555; /* Or your preferred text color for "Status:" label */
+}
+
+.status-tag {
+    padding: 3px 8px;
+    border-radius: 12px; /* More rounded for a pill shape */
+    font-size: 0.85em;
+    font-weight: 500;
+    color: #1f2333;
+    background-color: #b0b0b0;
+    text-align: center;
+    min-width: 70px; /* Ensure a minimum width for consistency */
+    display: inline-block;
+    line-height: 1.4; /* Adjust for vertical centering of text */
+}
+
+.status-tag.status-captions-ready {
+    background-color: #28a745; /* Green */
+    /* Specific styling for the CC icon if needed */
+}
+.status-tag.status-captions-ready span { /* If CC is wrapped in a span */
+    font-weight: bold;
+}
+
+.status-tag.status-processing {
+    background-color: #007bff; /* Blue */
+}
+
+.status-tag.status-pending {
+    background-color: #ffc107; /* Yellow */
+    color: #212529; /* Darker text for yellow background */
+}
+
+.status-tag.status-completed {
+    background-color: #17a2b8; /* Info/Teal Blue - distinct from captions green */
+}
+
+.status-tag.status-failed {
+    background-color: #dc3545; /* Red */
+}
+
+.status-tag.status-not-started {
+    background-color: #6c757d; /* Grey */
+}
+
+.status-tag.status-unknown {
+    background-color: #6c757d; /* Grey for unknown */
+    font-style: italic;
+}
+
+.item-error-message {
+    font-size: 0.8em;
+    color: #dc3545;
+    margin-top: 3px;
+    margin-left: 0; /* Align with other paragraph tags if Link is block */
+}
+
+.matches-list-actions { /* Container for buttons like "Upload Match" */
+    text-align: right;
+    margin-bottom: 1.5rem;
+}
+
+.matches-list-actions .btn-upload-match { /* Style for an upload button */
+    background-color: #007bff; /* Accent */
+    color: white;
+    padding: 10px 20px;
+    border-radius: 5px;
+    text-decoration: none;
+    font-weight: 500;
+    border: none;
+    cursor: pointer;
+}
+
+.matches-list-actions .btn-upload-match:hover {
+    background-color: #0056b3;
+}
+
+.no-matches-message {
+    text-align: center;
+    font-size: 1.1em;
+    color: #a0a0a0;
+    padding: 3rem 0;
+}

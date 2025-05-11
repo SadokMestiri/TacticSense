@@ -1,0 +1,3 @@
+[submodule "backend/ml/tactics"]
+	path = backend/ml/tactics
+	url = https://github.com/nassimch112/Football-formation-detection.git

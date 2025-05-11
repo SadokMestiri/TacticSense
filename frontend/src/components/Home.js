@@ -5,8 +5,10 @@ import jwt_decode from 'jwt-decode';
 import { useNavigate,Link } from "react-router-dom";
 import './Home.css';
 import Notifications from './Notifications'
+import CustomVideoPlayer from './CustomVideoPlayer';
 
 const Home = ({ header , footer}) => {
+
   const navigate = useNavigate();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isActivityOpen, setIsActivityOpen] = useState(false);
@@ -483,21 +485,22 @@ console.log(user)
                 </div>
               </div>
               <p>{renderContent(post.content)}</p>
-
               {post.image_url && (
-                <img
-                  src={`${process.env.REACT_APP_BASE_URL}${post.image_url}`}
-                  alt="post"
-                  style={{ width: '100%' }}
-                />
-              )}
-              {post.video_url && (
-                <video autoPlay muted controls style={{ width: '100%' }}>
-                  <source src={`${process.env.REACT_APP_BASE_URL}${post.video_url}`} type="video/mp4" />
-                  Your browser does not support the video tag.
-                </video>
-              )}
+            <img 
+              src={`${process.env.REACT_APP_BASE_URL}${post.image_url}`} 
+              alt="post" 
+              style={{ width: '100%' }} 
+            />
+          )}
+        {post.video_url && (
+  <CustomVideoPlayer 
+    videoUrl={`${process.env.REACT_APP_BASE_URL}${post.video_url}`}
+    postId={post.id}
+    srtUrl={post.srt_url ? `${process.env.REACT_APP_BASE_URL}${post.srt_url.startsWith('/') ? '' : '/'}${post.srt_url}` : undefined}
+  />
+)}
 
+            
               <div className="post-stats">
                 <div className="post-reactions">
                   {Object.entries({

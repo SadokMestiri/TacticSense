@@ -1,0 +1,519 @@
+.video-analysis-container {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh; /* Ensure it takes full viewport height */
+    background-color: #1a1a2e; /* Base dark background */
+    color: #e0e0e0; /* Default light text */
+}
+
+.video-analysis-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 20px; 
+  background-color: #1f2333; /* Slightly lighter dark for header */
+  border-bottom: 1px solid #3a3f5c; /* Darker border */
+  box-sizing: border-box;
+  color: #e0e0e0;
+}
+
+.video-analysis-header > div:first-child {
+  margin-left: 15px; /* Add left margin for the match title, competition, and status */
+}
+
+.video-analysis-header h2 {
+  margin: 0 0 5px 0; /* Adjusted margin */
+  font-size: 1.5rem;
+  color: #f0f0f0; /* Darker color for better contrast */
+}
+
+.video-analysis-header p {
+  margin: 2px 0;
+  font-size: 0.9rem;
+  color: #b0b0b0; /* Slightly lighter color for secondary text */
+}
+
+.analysis-hub-button, 
+.header-buttons .btn-primary, .header-buttons .btn-outline-primary { /* Theming for buttons in header */
+  padding: 8px 15px;
+  font-size: 0.9rem;
+  white-space: nowrap; 
+  background-color: #007bff; /* Accent color */
+  color: white;
+  border: 1px solid #007bff;
+  border-radius: 0.25rem;
+  text-decoration: none;
+  transition: background-color 0.15s ease-in-out, border-color 0.15s ease-in-out;
+}
+
+.analysis-hub-button:hover,
+.header-buttons .btn-primary:hover, .header-buttons .btn-outline-primary:hover {
+  background-color: #0056b3; /* Darker accent */
+  border-color: #0056b3;
+  color: white;
+}
+
+.header-buttons .btn-outline-primary {
+    background-color: transparent;
+    color: #00aaff; /* Accent color for outline */
+    border: 1px solid #00aaff;
+}
+.header-buttons .btn-outline-primary:hover {
+    background-color: rgba(0, 170, 255, 0.1); /* Subtle background on hover */
+}
+
+.custom-video-player-modern {
+  position: relative;
+  width: 100%;
+  height: 100%; /* Make player take full height of its container in VideoAnalysis */
+  background-color: #000;
+  overflow: hidden; /* Important to hide controls when they slide out or fade */
+  display: flex; /* Added for centering video if needed, or managing aspect ratio */
+  flex-direction: column; /* Stack video and controls */
+  justify-content: center; /* Center video vertically if it doesn't fill height */
+}
+
+.video-wrapper-modern {
+  position: relative; /* For caption overlay positioning */
+  width: 100%;
+  flex-grow: 1; /* Allow video to take available space */
+  display: flex; /* For centering video element */
+  align-items: center; /* Center video vertically */
+  justify-content: center; /* Center video horizontally */
+}
+
+.video-wrapper-modern video {
+  display: block;
+  width: 100%;
+  height: 100%; /* Video fills its wrapper */
+  object-fit: contain; /* Or 'cover' depending on desired behavior */
+  cursor: pointer;
+}
+
+.captions-overlay-modern {
+  position: absolute;
+  bottom: 70px; /* Adjust based on control bar height */
+  left: 50%;
+  transform: translateX(-50%);
+  width: auto; /* Fit content */
+  max-width: 80%; /* Prevent overly wide captions */
+  padding: 8px 15px;
+  background-color: rgba(0, 0, 0, 0.75);
+  color: #fff;
+  text-align: center;
+  border-radius: 4px;
+  font-size: 1em; /* Relative to parent */
+  line-height: 1.4;
+  z-index: 10;
+  pointer-events: none; /* Allow clicks to pass through to video */
+  white-space: pre-line;
+  text-shadow: 1px 1px 2px rgba(0,0,0,0.8); /* Ensure readability */
+}
+
+.srt-loading-indicator, .loading-indicator { /* General loading indicator */
+  background-color: rgba(0, 0, 0, 0.8);
+  color: white;
+  padding: 8px 15px;
+  border-radius: 5px;
+  font-size: 1em;
+  z-index: 20;
+  position: absolute; /* Or relative to its container */
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.controls-modern {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  align-items: center;
+  padding: 10px 15px;
+  background: linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.4) 70%, rgba(0,0,0,0) 100%); /* Darker gradient */
+  color: #fff;
+  transition: opacity 0.3s ease-in-out, transform 0.3s ease-in-out;
+  opacity: 0;
+  transform: translateY(100%); /* Start hidden below */
+  z-index: 20;
+}
+
+.controls-modern.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.control-button-modern {
+  background: none;
+  border: none;
+  color: #fff;
+  font-size: 1.2em; /* Adjust for icon-like appearance if using text */
+  padding: 5px 8px;
+  cursor: pointer;
+  margin: 0 5px;
+  transition: color 0.2s ease;
+}
+
+.control-button-modern:hover {
+  color: #00aaff; /* Accent color on hover */
+}
+
+.control-button-modern.caption-button-modern.active {
+  color: #4CAF50; /* Active color for CC */
+}
+.control-button-modern:disabled {
+  color: #777;
+  cursor: not-allowed;
+}
+
+
+.time-display-modern {
+    color: #fff;
+    font-size: 0.9em;
+    margin: 0 10px;
+}
+
+.time-slider-modern {
+  flex-grow: 1;
+  margin: 0 10px;
+  cursor: pointer;
+  -webkit-appearance: none;
+  appearance: none;
+  height: 8px;
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 4px;
+  outline: none;
+}
+
+.time-slider-modern::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 14px;
+  height: 14px;
+  background: #4CAF50;
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+.time-slider-modern::-moz-range-thumb {
+  width: 14px;
+  height: 14px;
+  background: #4CAF50;
+  border-radius: 50%;
+  cursor: pointer;
+  border: none;
+}
+
+.progress-bar-modern, .volume-slider-modern {
+    /* Adjust track and thumb colors if needed for better visibility on dark controls */
+}
+.progress-bar-modern::-webkit-slider-thumb { background: #00aaff; }
+.progress-bar-modern::-moz-range-thumb { background: #00aaff; }
+.volume-slider-modern::-webkit-slider-thumb { background: #fff; } /* Keep volume thumb white or light */
+.volume-slider-modern::-moz-range-thumb { background: #fff; }
+
+.volume-control-modern {
+  display: flex;
+  align-items: center;
+  margin-left: 10px;
+}
+.volume-control-modern span {
+  font-size: 1.2em;
+  margin-right: 5px;
+}
+
+.volume-slider-modern {
+  width: 70px; /* Adjust as needed */
+   -webkit-appearance: none;
+  appearance: none;
+  height: 6px;
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 3px;
+  outline: none;
+}
+.volume-slider-modern::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 12px;
+  height: 12px;
+  background: #fff; /* White thumb for volume */
+  border-radius: 50%;
+  cursor: pointer;
+}
+.volume-slider-modern::-moz-range-thumb {
+   width: 12px;
+  height: 12px;
+  background: #fff;
+  border-radius: 50%;
+  cursor: pointer;
+  border: none;
+}
+
+.analysis-layout {
+    display: flex; 
+    flex: 1; 
+    overflow: hidden; 
+    box-sizing: border-box;
+}
+
+.video-player-section {
+    flex-grow: 7;
+    flex-shrink: 1; 
+    flex-basis: 0%; 
+    min-width: 0; 
+    position: relative; 
+    display: flex; 
+    flex-direction: column;
+    background-color: #000; /* Keep video player background black */
+    padding: 0; 
+}
+
+.analysis-sidebar {
+    flex-grow: 3;
+    flex-shrink: 1;
+    flex-basis: 0%;
+    min-width: 280px; 
+    max-width: 400px; 
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto; 
+    padding: 15px;
+    box-sizing: border-box;
+    background-color: #1f2333; /* Sidebar dark background */
+    border-left: 1px solid #3a3f5c; /* Darker border */
+    color: #e0e0e0;
+}
+
+/* Ensure CustomVideoPlayer fills the .video-player-section */
+.video-player-section .custom-video-player-modern {
+    width: 100%;
+    height: 100%;
+}
+
+.analysis-sidebar h3 {
+  font-size: 1.2rem;
+  color: #f0f0f0; /* Brighter for heading */
+  margin-bottom: 10px;
+  border-bottom: 1px solid #3a3f5c; 
+  padding-bottom: 5px; 
+}
+
+/* Match Summary Section */
+.match-summary {
+  background-color: #2a2f4c; /* Card background */
+  padding: 15px;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  margin-bottom: 20px;
+  color: #e0e0e0;
+}
+
+.match-summary h3 { /* Overrides general sidebar h3 if needed */
+  margin-bottom: 10px;
+  color: #f0f0f0;
+  border-bottom: none; /* Remove double border if .analysis-sidebar h3 has one */
+}
+
+.match-summary p {
+  margin-bottom: 15px;
+  color: #b0b0b0;
+}
+
+.summary-actions {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.summary-actions .btn { /* General class for buttons in summary */
+  padding: 8px 12px;
+  font-size: 0.9em;
+  border-radius: 4px;
+  cursor: pointer;
+  color: white;
+  border: none;
+}
+
+.summary-actions .btn-primary {
+  background-color: #007bff; /* Accent */
+}
+.summary-actions .btn-primary:disabled {
+  background-color: #5a5f7c;
+  cursor: not-allowed;
+}
+.summary-actions .btn-secondary {
+  background-color: #4a4f6c; /* Darker secondary */
+}
+.summary-actions .btn-secondary:disabled {
+  background-color: #5a5f7c;
+  cursor: not-allowed;
+}
+
+.error-message { /* General error message style */
+  color: #ff6b6b; /* Brighter red */
+  background-color: rgba(255, 107, 107, 0.1);
+  padding: 10px;
+  border-radius: 4px;
+  border: 1px solid #ff6b6b;
+  margin: 10px 0;
+}
+
+/* Transcript Section */
+.transcript-section {
+  background-color: #2a2f4c; /* Card background */
+  padding: 15px;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  color: #e0e0e0;
+}
+
+.transcript-header {
+  font-size: 1.2rem;
+  color: #f0f0f0; /* Brighter for heading */
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.transcript-header .toggle-icon {
+  font-size: 1rem;
+  color: #b0b0b0; /* Slightly lighter color for the toggle icon */
+}
+
+.transcript-content {
+  font-size: 0.9rem;
+  color: #b0b0b0; 
+  line-height: 1.5;
+  max-height: 300px; /* Example max height */
+  overflow-y: auto;
+}
+
+/* Header Buttons */
+.header-buttons {
+  display: flex;
+  gap: 10px; /* Space between buttons */
+  align-items: center;
+}
+
+.analyze-button {
+  padding: 8px 15px;
+  font-size: 0.9rem;
+  background-color: #28a745; /* Green button for Analyze */
+  color: white;
+  border: 1px solid #28a745;
+  border-radius: 0.25rem;
+  text-decoration: none;
+  transition: background-color 0.15s ease-in-out, border-color 0.15s ease-in-out;
+}
+
+.analyze-button:hover {
+  background-color: #218838;
+  border-color: #218838;
+  color: white;
+}
+
+
+.tactical-processing-status {
+  color: #007bff; /* Blue color for processing */
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  margin-top: 5px;
+}
+
+.loading-dots {
+  margin-left: 5px;
+}
+
+.loading-dots span {
+  animation: blink 1.4s infinite both;
+  font-size: 1.5em; /* Make dots bigger */
+  margin-left: 1px;
+  position: relative;
+  top: -0.1em; /* Adjust vertical alignment if needed */
+}
+
+.loading-dots span:nth-child(1) {
+  animation-delay: 0s;
+}
+.loading-dots span:nth-child(2) {
+  animation-delay: 0.2s;
+}
+.loading-dots span:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+@keyframes blink {
+  0% {
+    opacity: .2;
+  }
+  20% {
+    opacity: 1;
+  }
+  100% {
+    opacity: .2;
+  }
+}
+
+/* General tactical status styling */
+.status-tactical-completed {
+  color: green;
+  font-weight: bold;
+}
+
+.status-tactical-failed {
+  color: red;
+  font-weight: bold;
+}
+
+.status-tactical-pending {
+  color: #007bff; /* Blue */
+  font-weight: bold;
+}
+
+.status-tactical-processing { /* Style for the text part if not using .tactical-processing-status */
+  color: #007bff; /* Blue */
+  font-weight: bold;
+}
+
+/* General match status styling (examples, adjust if you have them elsewhere) */
+/* Status messages within VideoAnalysis.js */
+.status-uploaded, .status-processing_captions, .status-captions_ready, 
+.status-analysis_complete, .status-error,
+.status-tactical-completed, .status-tactical-failed, 
+.status-tactical-pending, .status-tactical-processing, .status-tactical-not_started {
+    font-weight: bold;
+    padding: 2px 6px;
+    border-radius: 3px;
+    display: inline-block; /* To allow padding and background */
+}
+
+.status-uploaded { color: #adb5bd; background-color: rgba(173, 181, 189, 0.1); }
+.status-processing_captions { color: #ffc107; background-color: rgba(255, 193, 7, 0.1); }
+.status-captions_ready { color: #28a745; background-color: rgba(40, 167, 69, 0.1); }
+.status-analysis_complete { color: #17a2b8; background-color: rgba(23, 162, 184, 0.1); }
+.status-error, .status-tactical-failed { color: #dc3545; background-color: rgba(220, 53, 69, 0.1); }
+
+.status-tactical-not_started { color: #adb5bd; background-color: rgba(173, 181, 189, 0.1); }
+.status-tactical-pending { color: #ffc107; background-color: rgba(255, 193, 7, 0.1); }
+.status-tactical-processing { color: #007bff; background-color: rgba(0, 123, 255, 0.1); }
+.status-tactical-completed { color: #28a745; background-color: rgba(40, 167, 69, 0.1); }
+
+.tactical-processing-status {
+  color: #00aaff; /* Accent color */
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  margin-top: 5px;
+}
+
+.loading-dots span {
+  animation: blink 1.4s infinite both;
+  font-size: 1.5em; 
+  margin-left: 1px;
+  position: relative;
+  top: -0.1em; 
+}

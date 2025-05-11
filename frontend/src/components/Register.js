@@ -79,8 +79,17 @@ const Register = () => {
                 setTimeout(() => navigate('/'), 2000);
             }
         } catch (error) {
-            setError(error.response?.data?.message || 'An error occured.');
-            console.log(error);
+            console.error('Registration error:', error);
+            if (error.response) {
+                // The request was made and the server responded with a status code
+                setError(error.response.data?.message || `Server error: ${error.response.status}`);
+            } else if (error.request) {
+                // The request was made but no response was received
+                setError('No response from server. Please check if the backend is running.');
+            } else {
+                // Something happened in setting up the request
+                setError(`Error: ${error.message}`);
+            }
         }
     };
 

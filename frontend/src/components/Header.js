@@ -3,7 +3,7 @@ import './Header.css';
 import axios from 'axios';
 import Cookies from 'js-cookie';
 import jwt_decode from 'jwt-decode';
-import { useNavigate, NavLink } from "react-router-dom";
+import { useNavigate, NavLink  ,Link} from "react-router-dom";
 
 const Header = () => {
   const navigate = useNavigate();
@@ -12,7 +12,7 @@ const Header = () => {
   const [notifications, setNotifications] = useState([]);
   const [showNotifPanel, setShowNotifPanel] = useState(false);
   const [playerId, setPlayerId] = useState(null);
-  const user =  JSON.parse(Cookies.get('user'));
+  const user = Cookies.get('user') ? JSON.parse(Cookies.get('user')) : null;
   const token = Cookies.get('token');
   let decodedToken = null;
   let exp = null;
@@ -33,9 +33,22 @@ const Header = () => {
     } else if (date && date.getTime() < now.getTime()) {
       Cookies.remove('token');
       navigate('/');
+    if (!token || !user) {
+      console.log("User or token missing, potential redirect to /login");
     } else {
-      setAllowed(true);
+      const decodedToken = jwt_decode(token);
+      const exp = decodedToken?.exp;
+      const date = exp ? new Date(exp * 1000) : null;
+      const now = new Date();
+      if (date && date.getTime() < now.getTime()) {
+        Cookies.remove('token');
+        Cookies.remove('user');
+        navigate('/login');
+      } else {
+        setAllowed(true);
+      }
     }
+  }
   }, [token, decodedToken, navigate, date]);
   
 
@@ -71,6 +84,7 @@ const Header = () => {
             fetchNotifications();
         }
     }, [playerId]);
+ 
 
   // Handle dropdown toggle for user profile
   const toggleDropdown = () => {
@@ -81,12 +95,12 @@ const Header = () => {
   const handleLogout = () => {
     Cookies.remove('token');
     Cookies.remove('user');
-    navigate('/');  // Navigate to login page after logout
-};
+    navigate('/login');
+  };
 
   // Conditionally render based on user data availability
-  if (!user) {
-    return <div>Loading...</div>; // Show loading if user data is not fetched
+  if (!user && !allowed) {
+    return null;
   }
 
 
@@ -150,19 +164,26 @@ const Header = () => {
                 <span>Notifications</span>
               </a>
             </li>
+            <li>
+              <Link to="/analysis-hub" className={window.location.pathname.startsWith('/matches') ? 'active-link' : ''}>
+                <img src="assets/images/analysis.png" alt="matches" /> <span>Analysis Hub</span>
+              </Link>
+            </li>
           </ul>
         </div>
         <div className="navbar-right" id="nav-right">
-          <div className="online">
-            <img
-              src={`${process.env.REACT_APP_BASE_URL}/${user.profile_image}`}
-              className="nav-profile-img"
-              alt="profile"
-              onClick={toggleDropdown}
-            />
-          </div>
+          {user && (
+            <div className="online">
+              <img
+                src={`${process.env.REACT_APP_BASE_URL}/${user.profile_image}`}
+                className="nav-profile-img"
+                alt="profile"
+                onClick={toggleDropdown}
+              />
+            </div>
+          )}
 
-          {isDropdownOpen && (
+          {isDropdownOpen && user && (
             <div className="drop-menu">
               <div className="dropdown-header">
                 <img

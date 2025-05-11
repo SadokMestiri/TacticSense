@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from "react-router-dom";
 import axios from 'axios';
 import { FaEye, FaEyeSlash } from 'react-icons/fa';
-import Cookies from 'js-cookie';
+import Cookies from 'js-cookie'; // Re-added Cookies import
 import jwt_decode from 'jwt-decode';
 import './streak.css';
 import StreakPopUp from "./StreakPopUp";
@@ -175,9 +175,8 @@ const Login = () => {
                             Don't have an account yet?<a href="/Register"> Sign up now</a>
                         </div>
                     </div>
+                    </div>
                 </div>
-            </div>
-
             {/* Show MetaCoin messages */}
 {showStreakPopup && userStreakData && (
   <div >
