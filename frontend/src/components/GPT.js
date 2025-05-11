@@ -54,6 +54,11 @@ const GPT = ({ header, footer }) => {
         }
     };
 
+    const formatResponse = (text) => {
+        // Remplace les éléments entre **...** par du <strong>...</strong>
+        return text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+    };
+
     return (
         <div>
             {header}
@@ -109,11 +114,11 @@ const GPT = ({ header, footer }) => {
                 </div>
                 <div className="main-content">
                     <div className="create-post" style={{ height: '872px' }}>
-                        <form onSubmit={handleSubmit} className="w-full max-w-md" style={{ paddingTop: '50px'}}>
-                            <div style={{ marginLeft: '50px'}}>
+                        <form onSubmit={handleSubmit} className="w-full max-w-md" style={{ paddingTop: '50px' }}>
+                            <div style={{ marginLeft: '50px' }}>
                                 <textarea
                                     value={question}
-                                    style={{ width:'500px', height:'200px'}}
+                                    style={{ width: '500px', height: '200px' }}
                                     onChange={(e) => setQuestion(e.target.value)}
                                     placeholder="Ask a question..."
                                     className="w-full p-3 border border-gray-300 rounded-xl mb-4 resize-y min-h-[120px] focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -124,16 +129,16 @@ const GPT = ({ header, footer }) => {
                             <button
                                 type="submit"
                                 className="send-chat-btn"
-                                style={{marginLeft: '450px', width:'100px'}}
+                                style={{ marginLeft: '450px', width: '100px' }}
                             >
                                 {loading ? 'Loading...' : 'Send'}
                             </button>
-                            
+
                         </form>
                         {response && (
-                            <div className="mt-6 bg-white p-4 rounded shadow max-w-xl w-full" style={{ border:'1px solid green', maxHeight: '300px', overflowY: 'auto' }}>
+                            <div className="mt-6 bg-white p-4 rounded shadow max-w-xl w-full" style={{ border: '1px solid green', maxHeight: '300px', overflowY: 'auto' }}>
                                 <h2 className="font-semibold mb-2">Response :</h2>
-                                <p>{response}</p>
+                                <div dangerouslySetInnerHTML={{ __html: formatResponse(response) }} />
                             </div>
                         )}
                     </div>
