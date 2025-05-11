@@ -1,0 +1,110 @@
+/* RecommendationSidebar.css */
+.recommendation-sidebar {
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+  padding: 16px;
+  margin-bottom: 20px;
+}
+
+.recommendation-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.recommendation-header h3 {
+  font-size: 16px;
+  font-weight: 600;
+  color: #000;
+  margin: 0;
+}
+
+.info-icon {
+  width: 20px;
+  height: 20px;
+  margin-right: 8px;
+}
+
+.recommendation-item {
+  padding: 10px 0;
+  border-bottom: 1px solid #f0f2f5;
+}
+
+.recommendation-item:last-child {
+  border-bottom: none;
+}
+
+.recommendation-item a {
+  color: #050505;
+  font-size: 14px;
+  font-weight: 500;
+  text-decoration: none;
+  display: block;
+  margin-bottom: 4px;
+}
+
+.recommendation-item a:hover {
+  text-decoration: underline;
+}
+
+.recommendation-item span {
+  color: #65676b;
+  font-size: 12px;
+  display: block;
+}
+
+.read-more-link {
+  color: #1877f2;
+  font-size: 14px;
+  font-weight: 500;
+  text-decoration: none;
+  display: block;
+  margin-top: 12px;
+}
+
+.read-more-link:hover {
+  text-decoration: underline;
+}
+
+/* Loading and error states */
+.loading {
+  padding: 20px;
+  text-align: center;
+  color: #65676b;
+}
+
+.error {
+  padding: 20px;
+  color: #f02849;
+  font-size: 14px;
+}
+
+/* Dropdown styles */
+.dropdown-container {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.3s ease-out;
+}
+
+.dropdown-container.expanded {
+  max-height: 1000px; /* Adjust based on content */
+}
+
+.dropdown-toggle {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #36A420; /* Facebook-style green */
+  font-weight: bold;
+  font-size: 16px;
+  padding: 0;
+  margin-left: 8px;
+}
+
+.recommendation-header {
+  display: flex;
+  align-items: center;
+  cursor: pointer; /* Makes entire header clickable */
+}

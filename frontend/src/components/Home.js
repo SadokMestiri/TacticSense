@@ -6,9 +6,9 @@ import { useNavigate,Link } from "react-router-dom";
 import './Home.css';
 import Notifications from './Notifications'
 import CustomVideoPlayer from './CustomVideoPlayer';
+import RecommendationSidebar from './RecommendationSidebar';
 
 const Home = ({ header , footer}) => {
-
   const navigate = useNavigate();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isActivityOpen, setIsActivityOpen] = useState(false);
@@ -654,8 +654,12 @@ console.log(user)
           ))}
         </div>
 
+
+
         {/* Right Sidebar */}
         <div className="right-sidebar">
+          {/*recommendation */}
+        <RecommendationSidebar token={token} />
           <div className="sidebar-news">
             <img src="assets/images/more.svg" className="info-icon" alt="more" />
             <h3>Trending News</h3>
