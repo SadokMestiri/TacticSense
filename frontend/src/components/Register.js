@@ -11,27 +11,60 @@ const Register = () => {
     const [success, setSuccess] = useState(null);
     const [profileImage, setProfileImage] = useState(null);
     const [role, setRole] = useState('');
+    const [verificationFile, setVerificationFile] = useState(null);
 
     const navigate = useNavigate();
+
+    const validateRoleDocument = async () => {
+        const formData = new FormData();
+        formData.append('file', verificationFile);
+        formData.append('role', role);
+
+        try {
+            const res = await axios.post(`${process.env.REACT_APP_BASE_URL}/verify_document`, formData);
+            return res.data.valid;
+        } catch (err) {
+            console.error(err);
+            return false;
+        }
+    };
+
+
 
     const handleRegister = async (e) => {
         e.preventDefault();
         setError(null);
         setSuccess(null);
 
+        if (!role) {
+            setError("Please select a role.");
+            return;
+        }
+
+        if (!verificationFile) {
+            setError("Please upload a verification document.");
+            return;
+        }
+
+        const isValid = await validateRoleDocument();
+        
+        if (!isValid) {
+            setError("The uploaded document does not match the selected role.");
+            return;
+        }
+
         const formData = new FormData();
         formData.append('username', username);
         formData.append('email', email);
         formData.append('password', password);
         formData.append('name', name);
-        
-        
+
+
         if (profileImage) {
             formData.append('profile_image', profileImage);
         }
         formData.append('role', role);
-
-        console.log(formData);
+        formData.append('verification_file', verificationFile);
 
         try {
             const response = await axios.post(`${process.env.REACT_APP_BASE_URL}/register`, formData, {
@@ -54,6 +87,8 @@ const Register = () => {
         setProfileImage(e.target.files[0]);
         setSuccess('Profile image uploaded successfully!');
     };
+
+
     return (
         <div>
             <div id="page-loader" className="fade show"><span className="spinner"></span></div>
@@ -131,7 +166,7 @@ const Register = () => {
                                     <option value="Scout">Scout</option>
                                 </select>
                             </div>
-                            
+
                             {/* Profile image upload */}
                             <div className="form-group m-b-20">
                                 <label htmlFor="profile-image-upload" className="upload-label">
@@ -150,6 +185,22 @@ const Register = () => {
                                 />
                             </div>
 
+                            <div className="form-group m-b-20">
+                                <label htmlFor="verification-file-upload" className="upload-label">
+                                    <div className="file-upload-area">
+                                        <i className="fa fa-file-upload"></i>
+                                        <p>Upload Verification Document (must mention your role)</p>
+                                    </div>
+                                </label>
+                                <input
+                                    type="file"
+                                    id="verification-file-upload"
+                                    className="file-upload-input"
+                                    onChange={(e) => setVerificationFile(e.target.files[0])}
+                                    accept="image/*,.pdf"
+                                    style={{ display: 'none' }}
+                                />
+                            </div>
 
                             {error && <p className="text-danger">{error}</p>}
                             {success && <p className="text-success">{success}</p>}
@@ -165,10 +216,9 @@ const Register = () => {
                 </div>
             </div>
         </div>
-        
     );
-    
-    
+
+
 };
 
 export default Register;

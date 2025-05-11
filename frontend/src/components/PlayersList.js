@@ -102,7 +102,7 @@ const PlayersList = ({ header, footer }) => {
                         <div className="sidebar-profile-info">
                             <img src={`${process.env.REACT_APP_BASE_URL}/${user.profile_image}`} alt="profile" />
                             <h1>{user.name}</h1>
-                            <h3>Professional footballer</h3>
+                            <h3><h3>{user.role}</h3></h3>
                             <ul>
                                 <li>Your profile views <span>24K</span></li>
                                 <li>Your post views <span>128K</span></li>

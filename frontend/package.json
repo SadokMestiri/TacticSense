@@ -19,6 +19,7 @@
     "jwt-decode": "^3.1.2",
     "mdb-react-ui-kit": "^9.0.0",
     "pdf-lib": "^1.17.1",
+    "pdfjs-dist": "^5.2.133",
     "react": "^18.2.0",
     "react-bootstrap": "^2.8.0",
     "react-countup": "^6.5.3",
@@ -38,6 +39,7 @@
     "react-toastify": "^11.0.5",
     "react-type-animation": "^3.1.0",
     "styled-components": "^6.1.11",
+    "tesseract.js": "^6.0.1",
     "web-vitals": "^2.1.4"
   },
   "scripts": {

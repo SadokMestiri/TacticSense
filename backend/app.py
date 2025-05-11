@@ -8,6 +8,9 @@ from datetime import datetime
 from sqlalchemy import Enum
 from flask_mail import Mail, Message 
 from datetime import datetime
+from pdf2image import convert_from_bytes
+import pytesseract
+from PIL import Image
 
 app = Flask(__name__,template_folder='templates')
 app.config['SQLALCHEMY_DATABASE_URI'] = "postgresql://postgres:0000@localhost/metascout"
@@ -448,20 +451,66 @@ def register():
         db.session.commit()
 
         # Send welcome email
-        #msg = Message("Welcome to MetaScout!",
-        #              sender=app.config['MAIL_USERNAME'],
-        #              recipients=[email])
-        #msg.html = f"""
-        #    <p>Hello {name},</p>
-        #    <p>Thank you for signing up on MetaScout. We’re excited to have you with us!</p>
-        #    <p>Best regards,<br>The MetaScout Team</p>
-        #"""
-        #mail.send(msg)
+        msg = Message("Welcome to MetaScout!",
+                      sender=app.config['MAIL_USERNAME'],
+                      recipients=[email])
+        msg.html = f"""
+            <p>Hello {name},</p>
+            <p>Thank you for signing up on MetaScout. We’re excited to have you with us!</p>
+            <p>Best regards,<br>The MetaScout Team</p>
+        """
+        mail.send(msg)
 
         return jsonify({'message': 'User registered successfully'}), 201
     except Exception as e:
         print("Registration failed:", str(e))
         traceback.print_exc()
+        return jsonify({'error': str(e)}), 500
+    
+@app.route('/verify_document', methods=['POST'])
+def verify_document():
+    try:
+        file = request.files['file']
+        role = request.form.get('role')
+
+        if not file or not role:
+            return jsonify({'error': 'Missing file or role'}), 400
+
+        filename = secure_filename(file.filename)
+        file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+        file.save(file_path)
+
+        text = ""
+
+        if filename.lower().endswith('.pdf'):
+            # Extract text from PDF by converting each page to image
+            doc = fitz.open(file_path)
+            for page in doc:
+                pix = page.get_pixmap()
+                img_path = file_path + "_page.png"
+                pix.save(img_path)
+                img = Image.open(img_path)
+                text += pytesseract.image_to_string(img)
+                os.remove(img_path)
+            doc.close()
+        else:
+            # Image file
+            img = Image.open(file_path)
+            text = pytesseract.image_to_string(img)
+
+        print(f"OCR Text Extracted: {text}")  # DEBUG
+        print("Received file:", file)
+        print("Filename:", file.filename)
+        print("Role:", role)
+
+
+        if role.lower() in text.lower():
+            return jsonify({'valid': True})
+        else:
+            return jsonify({'valid': False})
+
+    except Exception as e:
+        print("Error during verification:", e)  # Log error in console
         return jsonify({'error': str(e)}), 500
 
 @app.route('/login', methods=['POST'])
