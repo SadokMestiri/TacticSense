@@ -48,7 +48,7 @@ import PlayerProfile from "./components/PlayerProfile";
 function App() {
     const isAuthenticated = !!Cookies.get("token");
     const location = useLocation();
-    const noHeaderPaths = ["/login", "/register", "/reset", "/ResetPassword"];
+    const noHeaderPaths = ["/", "/register", "/reset", "/ResetPassword"];
 
     const header = !noHeaderPaths.includes(location.pathname) && <Header />;
     const footer = !noHeaderPaths.includes(location.pathname) && <Footer />;
@@ -58,115 +58,115 @@ function App() {
             {header}
             <Routes>
                 {/* Public Routes */}
-                <Route path="/login" element={<Login />} />
+                <Route path="/" element={<Login />} />
                 <Route path="/register" element={<Register />} />
                 <Route path="/reset" element={<Reset />} />
                 <Route path="/ResetPassword" element={<ResetPassword />} />
 
                 {/* Authenticated Routes */}
                 <Route
-                    path="/"
-                    element={isAuthenticated ? <Home header={header} footer={footer} /> : <Navigate to="/login" />}
+                    path="/home"
+                    element={isAuthenticated ? <Home header={header} footer={footer} /> : <Navigate to="/" />}
                 />
                 <Route
                     path="/chat"
-                    element={isAuthenticated ? <Chat header={header} footer={footer} /> : <Navigate to="/login" />}
+                    element={isAuthenticated ? <Chat header={header} footer={footer} /> : <Navigate to="/" />}
                 />
                 <Route
                     path="/chat/:userId"
-                    element={isAuthenticated ? <Chat header={header} footer={footer} /> : <Navigate to="/login" />}
+                    element={isAuthenticated ? <Chat header={header} footer={footer} /> : <Navigate to="/" />}
                 />
                 <Route
                     path="/post/:postId"
-                    element={isAuthenticated ? <SinglePost header={header} footer={footer} /> : <Navigate to="/login" />}
+                    element={isAuthenticated ? <SinglePost header={header} footer={footer} /> : <Navigate to="/" />}
                 />
                 <Route
                     path="/jobs"
-                    element={isAuthenticated ? <Jobs header={header} footer={footer} /> : <Navigate to="/login" />}
+                    element={isAuthenticated ? <Jobs header={header} footer={footer} /> : <Navigate to="/" />}
                 />
                 <Route
                     path="/jobDetails"
-                    element={isAuthenticated ? <JobDetails header={header} footer={footer} /> : <Navigate to="/login" />}
+                    element={isAuthenticated ? <JobDetails header={header} footer={footer} /> : <Navigate to="/" />}
                 />
                 <Route
                     path="/jobApplications"
-                    element={isAuthenticated ? <JobApplications header={header} footer={footer} /> : <Navigate to="/login" />}
+                    element={isAuthenticated ? <JobApplications header={header} footer={footer} /> : <Navigate to="/" />}
                 />
                 <Route
                     path="/hashtag"
-                    element={isAuthenticated ? <HashtagPage header={header} footer={footer} /> : <Navigate to="/login" />}
+                    element={isAuthenticated ? <HashtagPage header={header} footer={footer} /> : <Navigate to="/" />}
                 />
                 <Route
                     path="/postJob"
-                    element={isAuthenticated ? <PostJob header={header} footer={footer} /> : <Navigate to="/login" />}
+                    element={isAuthenticated ? <PostJob header={header} footer={footer} /> : <Navigate to="/" />}
                 />
                 <Route
                     path="/injury"
-                    element={isAuthenticated ? <InjuryPredictor header={header} footer={footer} /> : <Navigate to="/login" />}
+                    element={isAuthenticated ? <InjuryPredictor header={header} footer={footer} /> : <Navigate to="/" />}
                 />
                 <Route
                     path="/streak"
-                    element={isAuthenticated ? <StreakPopUp /> : <Navigate to="/login" />}
+                    element={isAuthenticated ? <StreakPopUp /> : <Navigate to="/" />}
                 />
                 <Route
                     path="/gpt"
-                    element={isAuthenticated ? <GPT header={header} footer={footer} /> : <Navigate to="/login" />}
+                    element={isAuthenticated ? <GPT header={header} footer={footer} /> : <Navigate to="/" />}
                 />
                 <Route
                     path="/players"
-                    element={isAuthenticated ? <PlayersList header={header} footer={footer} /> : <Navigate to="/login" />}
+                    element={isAuthenticated ? <PlayersList header={header} footer={footer} /> : <Navigate to="/" />}
                 />
                 <Route
                     path="/notifications"
-                    element={isAuthenticated ? <Notifications header={header} footer={footer} /> : <Navigate to="/login" />}
+                    element={isAuthenticated ? <Notifications header={header} footer={footer} /> : <Navigate to="/" />}
                 />
 
                 {/* Match Analysis Routes */}
                 <Route
                     path="/matches"
-                    element={isAuthenticated ? <MatchesList /> : <Navigate to="/login" />}
+                    element={isAuthenticated ? <MatchesList /> : <Navigate to="/" />}
                 />
                 <Route
                     path="/matches/upload"
-                    element={isAuthenticated ? <MatchUpload /> : <Navigate to="/login" />}
+                    element={isAuthenticated ? <MatchUpload /> : <Navigate to="/" />}
                 />
                 <Route
                     path="/matches/:matchId"
-                    element={isAuthenticated ? <VideoAnalysis /> : <Navigate to="/login" />}
+                    element={isAuthenticated ? <VideoAnalysis /> : <Navigate to="/" />}
                 />
 
                 {/* Analysis Hub */}
                 <Route
                     path="/analysis-hub"
-                    element={isAuthenticated ? <AnalysisHubMain /> : <Navigate to="/login" />}
+                    element={isAuthenticated ? <AnalysisHubMain /> : <Navigate to="/" />}
                 />
                 <Route
                     path="/analysis-hub/matches"
-                    element={isAuthenticated ? <MatchesList /> : <Navigate to="/login" />}
+                    element={isAuthenticated ? <MatchesList /> : <Navigate to="/" />}
                 />
                 <Route
                     path="/analysis-hub/matches/:matchId/analysis"
-                    element={isAuthenticated ? <MatchAnalysisDetail /> : <Navigate to="/login" />}
+                    element={isAuthenticated ? <MatchAnalysisDetail /> : <Navigate to="/" />}
                 />
 
                 {/* Player Prediction Routes */}
                 <Route
                     path="/analysis-hub/players"
-                    element={isAuthenticated ? <ExistingPlayerPredictor /> : <Navigate to="/login" />}
+                    element={isAuthenticated ? <ExistingPlayerPredictor /> : <Navigate to="/" />}
                 />
                 <Route
                     path="/analysis-hub/players/new"
-                    element={isAuthenticated ? <PlayerPredictor /> : <Navigate to="/login" />}
+                    element={isAuthenticated ? <PlayerPredictor /> : <Navigate to="/" />}
                 />
                 <Route
                     path="/analysis-hub/players/:name"
-                    element={isAuthenticated ? <PlayerProfile /> : <Navigate to="/login" />}
+                    element={isAuthenticated ? <PlayerProfile /> : <Navigate to="/" />}
                 />
 
                 {/* Catch-All */}
                 <Route
                     path="*"
-                    element={<Navigate to={isAuthenticated ? "/" : "/login"} />}
+                    element={<Navigate to={isAuthenticated ? "/" : "/"} />}
                 />
             </Routes>
             <ToastContainer />
