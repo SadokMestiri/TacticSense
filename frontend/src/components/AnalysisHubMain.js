@@ -2,7 +2,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import './AnalysisHubMain.css'; // We'll create this CSS file next
 
-function AnalysisHubMain({ header,footer }) {
+function AnalysisHubMain() {
     return (
         <div className="analysis-hub-main-container">
             <header className="hub-main-header">
@@ -27,6 +27,16 @@ function AnalysisHubMain({ header,footer }) {
                     <h2>Player Performance & Prediction</h2>
                     <p>Analyze player statistics and future performance forecasts.</p>
                 </Link>
+             <Link to="/injury" className="hub-tool-card">
+  <div className="tool-card-icon">
+    {/* Updated icon for injury prediction */}
+    <span role="img" aria-label="Injury Prediction Icon">🩹</span>
+  </div>
+  <h2>Player Injury Risk Prediction</h2>
+  <p>Predicts injury types and recovery time with medical research references.</p>
+</Link>
+
+                
                 
                 {/* Add more tool cards here as new features are developed */}
             </div>

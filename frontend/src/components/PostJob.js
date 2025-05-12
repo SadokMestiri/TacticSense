@@ -4,7 +4,7 @@ import Cookies from 'js-cookie';
 import jwt_decode from 'jwt-decode';
 import { useNavigate } from "react-router-dom";
 
-const PostJob = ({ header,footer }) => {
+const PostJob = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -83,7 +83,7 @@ const user = userCookie ? JSON.parse(userCookie) : null;
   
   return (
     <div className="job-post-wrapper">
-  {header}
+
   <div className="job-post-content">
     <div className="job-post-inner">
       <h2 className="text-center mb-4">Post a New Job</h2>
@@ -128,7 +128,6 @@ const user = userCookie ? JSON.parse(userCookie) : null;
     </div>
   </div>
   <div style={{ marginBottom: "100px" }}></div> {/* Spacing before footer */}
-  {footer}
 </div>
 
   );

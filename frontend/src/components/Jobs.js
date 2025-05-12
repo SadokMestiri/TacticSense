@@ -4,7 +4,7 @@ import Cookies from 'js-cookie';
 import jwt_decode from 'jwt-decode';
 import { useNavigate } from "react-router-dom";
 
-const Jobs = ({ header,footer }) => {
+const Jobs = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [jobs, setJobs] = useState([]);
@@ -208,7 +208,6 @@ console.log(jobs)
 
   return (
     <div >
- {header}
  <main>
         <div className="job-listing-area pt-120 pb-120">
             <div className="container">
@@ -555,7 +554,6 @@ console.log(jobs)
         </div>
  </div>
       </main>
-      {footer}
       </div>
   );
 };

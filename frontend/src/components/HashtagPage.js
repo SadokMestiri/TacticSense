@@ -4,7 +4,7 @@ import axios from "axios";
 import SinglePost from "./SinglePost"; // Import SinglePost component
 import JobCard from "./JobCard"; // Import JobCard component (for job listings)
 
-const HashtagPage = ({ header, footer }) => {
+const HashtagPage = () => {
   const location = useLocation();
   const { hashtag,type } = location.state || {}; // Get the hashtag from the state
 
@@ -38,7 +38,7 @@ const HashtagPage = ({ header, footer }) => {
 
   return (
     <div>
-      {header}
+
       <div className="hashtag-page">
         {loading ? (
           <p>Loading...</p>
@@ -66,7 +66,7 @@ const HashtagPage = ({ header, footer }) => {
           </>
         )}
       </div>
-      {footer}
+
     </div>
   );
 };

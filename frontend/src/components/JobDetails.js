@@ -123,7 +123,6 @@ console.log(job)
     };
   return (
     <div >
- {header}
  <main>
    { job &&(
     <div>

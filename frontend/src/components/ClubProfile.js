@@ -1,10 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import Header from './Header';
 import './Profile.css';
 import axios from 'axios';
 import Cookies from 'js-cookie';
 
-const ClubProfile = ({ header,footer }) => {
+const ClubProfile = () => {
     const [message, setMessage] = useState('');
     const [clubName, setClubName] = useState('');
     const [country, setCountry] = useState('');
@@ -77,7 +76,6 @@ const ClubProfile = ({ header,footer }) => {
 
     return (
         <div>
-            <Header />
             <div className="container">
                 <div className="left-sidebar">
                     <div className="sidebar-profile-box">

@@ -15,7 +15,7 @@ import Cookies from 'js-cookie';
 import jwt_decode from 'jwt-decode';
 import { useNavigate } from "react-router-dom";
 
-function Chat({ header,footer }) {
+function Chat() {
   const navigate = useNavigate();
   // Example in React using useState
   const reactions = [
@@ -312,7 +312,6 @@ const handleCreateConversation = async () => {
 
   return (
     <div>
-      {header}
       <MDBContainer fluid className="py-5" style={{ backgroundColor: "#cccc" }}>
         <MDBRow>
           <MDBCol md="12">
@@ -367,18 +366,22 @@ const handleCreateConversation = async () => {
         top: `${idx * 15}px`,   // Shift second image slightly upwards
       }}
     >
-      <img
-        src={`${process.env.REACT_APP_BASE_URL}/${user.profile_image}`}
-        alt="avatar"
-        className="d-flex align-self-center"
-        width="30"
-        height="auto"
-        style={{
-          borderRadius: "50%",
-          boxShadow: "0 2px 5px rgba(0, 0, 0, 0.2)", 
-          transition: 'transform 0.2s ease-in-out',   
-        }}
-      />
+<img
+  src={`${process.env.REACT_APP_BASE_URL}/${user.profile_image}`}
+  alt="avatar"
+  className="d-flex align-self-center"
+  style={{
+    width: "30px",
+    aspectRatio: "1 / 1",              // Makes it square
+    height: "auto",                    // Maintains proportions
+    objectFit: "cover",                // Prevents distortion
+    borderRadius: "50%",              // Needed for circular shape
+    boxShadow: "0 2px 5px rgba(0, 0, 0, 0.2)",
+    transition: "transform 0.2s ease-in-out",
+  }}
+/>
+
+
     </div>
   ))}
 </div>

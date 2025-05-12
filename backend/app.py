@@ -54,6 +54,8 @@ from fuzzywuzzy import process
 import pickle
 import fitz
 import json as std_json
+import time
+
 
 # Set up upload folder for processed videos
 PROCESSED_FOLDER = os.path.join(os.getcwd(), 'processed_videos')
@@ -113,8 +115,11 @@ label_encoder = joblib.load('modeling/injury_label_encoder.pkl')
 scaler = joblib.load('modeling/scaler.pkl')
 position_encoder = joblib.load('modeling/position_encoder.pkl')
 injury_encoder = joblib.load('modeling/injury_label_encoder.pkl')
-nationality_freq = joblib.load('modeling/nationality_freq.pkl')
-teamname_freq = joblib.load('modeling/teamname_freq.pkl')
+nationality_freq_df = pd.read_csv('modeling/nationality_mapping.csv')
+teamname_freq_df = pd.read_csv('modeling/teamname_mapping.csv')
+nationality_freq = dict(zip(nationality_freq_df['Value'], nationality_freq_df['Encoded']))
+teamname_freq = dict(zip(teamname_freq_df['Value'], teamname_freq_df['Encoded']))
+
 
 injury_group_map = {
     0: "Ankle/Foot",
@@ -135,6 +140,15 @@ class Follow(db.Model):
     follower_id = db.Column(db.Integer, db.ForeignKey('user.id'), primary_key=True)
     followed_id = db.Column(db.Integer, db.ForeignKey('user.id'), primary_key=True)
     timestamp = db.Column(db.DateTime, default=datetime.utcnow)
+
+
+
+performance_model = joblib.load('modelCareer/performance_model.pkl')
+longevity_model = joblib.load('modelCareer/longevity_model.pkl')
+imputer = joblib.load('modelCareer/imputer.pkl')
+with open('modelCareer/model_metadata.json', 'r') as f:
+    metadata = json.load(f)
+    feature_names = metadata['feature_names']
 
     def __repr__(self):
         return f'<Follow {self.follower_id} follows {self.followed_id}>'
@@ -1692,7 +1706,6 @@ def get_user(user_id):
         profile_image = user.profile_image.replace("\\", "/")  
         if user.role == 'Player':
             user_profile = PlayerProfile.query.filter_by(user_id=user.id).first()
-            user_skills = Skills.query.filter_by(user_id=user.id).first()
             return jsonify({
                 'id': user.id,
                 'agency_id': user_profile.agency_id,
@@ -3122,6 +3135,8 @@ def get_top_3_predictions(model, sample_df, group_map):
 
 
 
+
+
 @app.post("/predict_injury_type")
 def predict_injury():
     data = request.get_json()
@@ -3135,8 +3150,8 @@ def predict_injury():
     df['total_red_cards'] = pd.to_numeric(df['total_red_cards'], errors='coerce', downcast='integer')
 
     # Encoding
-    df['Nationality'] = df['Nationality'].map(nationality_freq)
-    df['Team_Name'] = df['Team_Name'].map(teamname_freq)
+    df['Nationality'] = df['Nationality'].map(nationality_freq).fillna(-1)
+    df['Team_Name'] = df['Team_Name'].map(teamname_freq).fillna(-1)
     df['Position'] = position_encoder.transform(df['Position'])
 
     # Fatigue level
@@ -3157,12 +3172,16 @@ def predict_injury():
 
     # Scale
     df_scaled = pd.DataFrame(scaler.transform(df), columns=scaler.feature_names_in_)
-    df_scaled['Injury_Grouped_Encoded'] = random.randint(0, 9)  # dummy value if needed
+
+    # Ensure a different random value each time by using a dynamic seed
+    random.seed(time.time())  # Use the current time to seed the random number generator
+    df_scaled['Injury_Grouped_Encoded'] = random.randint(0, 9)  # Random value for Injury_Grouped_Encoded
 
     # Predict
     top_3_predictions = get_top_3_predictions(model, df_scaled, injury_group_map)
 
     return {"top_3_predicted_injury_groups": top_3_predictions}
+
 
 @app.route('/get_injury_info', methods=['POST'])
 def get_injury_info():
@@ -3734,7 +3753,7 @@ def predict():
     model = MarketValuePredictor(input_dim, hidden_dim1, hidden_dim2, hidden_dim3, dropout_rate)
 
     # Load the state dictionary
-    model.load_state_dict(torch.load('uploads/marketValuemodel/market_value_predictor.pth'))
+    model.load_state_dict(torch.load('marketValuemodel/market_value_predictor.pth'))
 
     # Set the model to evaluation mode
     model.eval()
@@ -3860,7 +3879,7 @@ def get_user_type(current_user, recommendation_models):
     if current_user.role == "Agency":
         return 'agency'
     # Player = item in player dataset (agencys recommend players)
-    elif current_user.role == "player":
+    elif current_user.role == "Player":
         return 'player'
     elif current_user.role == "Club":
         return 'club'

@@ -6,7 +6,7 @@ import axios from 'axios';
 import Cookies from 'js-cookie';
 import jwt_decode from 'jwt-decode';
 
-const CoachProfile = ({ header,footer }) => {
+const CoachProfile = () => {
     const [message, setMessage] = useState('');
     const [profileImage, setProfileImage] = useState('');
     const [username, setUsername] = useState('');
@@ -19,6 +19,22 @@ const CoachProfile = ({ header,footer }) => {
     const [yearsOfExperience, setYearsOfExperience] = useState('');
     const [qualification, setQualification] = useState('');
     const [availability, setAvailability] = useState(true);
+    const [club_id, setClub_id] = useState('');
+    const [clubs, setClubs] = useState([]);
+
+    useEffect(() => {
+      const fetchClubs = async () => {
+        try {
+          const response = await axios.get(`${process.env.REACT_APP_BASE_URL}/get_clubs`);
+          setClubs(response.data);
+          console.log('Clubs:', response.data);
+        } catch (error) {
+          console.error('Error fetching clubs:', error);
+        }
+      };
+    
+      fetchClubs();
+    }, []);
 
     useEffect(() => {
         const fetchUserData = async () => {
@@ -48,6 +64,7 @@ const CoachProfile = ({ header,footer }) => {
               setYearsOfExperience(userData.years_of_experience);
               setQualification(userData.qualification);
               setAvailability(userData.availability);
+              setClub_id(userData.club_id);
               console.log('User data:', userData);
             } catch (error) {
               console.error('Error fetching user data:', error);
@@ -60,33 +77,30 @@ const CoachProfile = ({ header,footer }) => {
       }, []);
 
     const handleImageChange = async (event) => {
-        const file = event.target.files[0];
+    const file = event.target.files[0];
         if (file) {
-        const formData = new FormData();
-        formData.append('profile_image', file);
+            const formData = new FormData();
+            formData.append('profile_image', file);
 
-        const token = Cookies.get('token');
-        if (!token) {
-        setMessage('No token found. Please log in again.');
-        // window.location.href = '/login';
-        return;
-        }
-        console.log('Token:', token);
+            const token = Cookies.get('token');
+            if (!token) {
+                setMessage('No token found. Please log in again.');
+                return;
+            }
 
-        try {
-            const response = await axios.put(`${process.env.REACT_APP_BASE_URL}/update_profile`, formData, {
-            headers: {
-                // 'Content-Type': 'multipart/form-data',
-                Authorization: `Bearer ${token}`,
-            },
-            });
-            setProfileImage(response.data.profile_image);
-            setMessage('Profile image updated successfully');
-        } catch (error) {
-            setMessage('Error updating profile image');
+            try {
+                const response = await axios.put(`${process.env.REACT_APP_BASE_URL}/update_profile`, formData, {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
+                });
+                setProfileImage(response.data.profile_image);
+                setMessage('Profile image updated successfully');
+            } catch (error) {
+                setMessage('Error updating profile image');
+            }
         }
-        }
-    };
+  };
 
     const handleProfileUpdate = async () => {
         const updatedProfile = {
@@ -100,6 +114,7 @@ const CoachProfile = ({ header,footer }) => {
         yearsOfExperience,
         qualification,
         availability,
+        club_id,
         };
 
         const token = Cookies.get('token');
@@ -134,6 +149,7 @@ const CoachProfile = ({ header,footer }) => {
         const response = await axios.put(`${process.env.REACT_APP_BASE_URL}/update_profile`, updatedProfile, {
             headers: {
             Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
             },
         });
 
@@ -158,7 +174,6 @@ const CoachProfile = ({ header,footer }) => {
 
   return (
     <div>
-      <Header />
       <div className="container">
         <div className="left-sidebar">
           <div className="sidebar-profile-box">
@@ -273,6 +288,22 @@ const CoachProfile = ({ header,footer }) => {
             </div>
 
             <div className="form-group">
+              <label>Club</label>
+              <select
+                className="form-control"
+                value={club_id || ''}
+                onChange={(e) => setClub_id(e.target.value)}
+              >
+                <option value="">Select a club</option>
+                {clubs.map((club) => (
+                  <option key={club.id} value={club.id}>
+                    {club.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="form-group">
               <label>Date of Appointment</label>
               <input
                 type="date"
@@ -332,7 +363,15 @@ const CoachProfile = ({ header,footer }) => {
           </form>
           {message && <p className="text-info">{message}</p>}
         </div><div className="right-sidebar">
-          <div className="sidebar-news">
+              <div className="sidebar-ad">
+            <small>Ad </small>
+            <p>Master Web Development</p>
+            <div>
+              <im src={`${process.env.REACT_APP_BASE_URL}/${profileImage}`} alt="user" />
+              <img src="assets/images/mi-logo.png" alt="mi logo" />
+            </div>
+            <b>Brand and Demand in Xiaomi</b>
+            <a href="#" className="ad-link">Learn More</a>
           </div>
         </div>
       </div>

@@ -5,7 +5,7 @@ import jwt_decode from 'jwt-decode';
 import { useNavigate } from "react-router-dom";
 import { useLocation } from 'react-router-dom';
 
-const JobApplications = ({ header, footer }) => {
+const JobApplications = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [applications, setApplications] = useState([]);
@@ -66,7 +66,6 @@ console.log(jobId)
 
   return (
     <div>
-      {header}
       <main>
         <div className="applications-listing-area pt-120 pb-120">
           <div className="container">
@@ -89,7 +88,6 @@ console.log(jobId)
           </div>
         </div>
       </main>
-      {footer}
     </div>
   );
 };

@@ -421,11 +421,10 @@ useEffect(() => {
 console.log(user)
   return (
     <div>
-      {header}
       <div className="container">
         <div className="left-sidebar">
           <div className="sidebar-profile-box">
-            <img src="/assets/images/cover-pic.jpg" alt="cover" width="100%" />
+            <img src="assets/images/cover-pic.jpg" alt="cover" width="100%" style={{height:"100%"}}/>
             <div className="sidebar-profile-info">
               <img src={`${process.env.REACT_APP_BASE_URL}/${user.profile_image}`} alt="profile" />
               <h1>{user.name}</h1>

@@ -1,17 +1,22 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import './GPT.css';
+import Cookies from 'js-cookie';
 
-const GPT = ({ header, footer }) => {
+
+const GPT = () => {
     const [question, setQuestion] = useState('');
     const [response, setResponse] = useState('');
     const [loading, setLoading] = useState(false);
     const user_id = localStorage.getItem('user_id');
-    const [user, setUser] = useState({});
     const [users, setUsers] = useState([]);
     const [error, setError] = useState(null);
+      const [metaBalance, setMetaBalance] = useState(null);
+      const [metaCoinMessage, setMetaCoinMessage] = useState(false);
+      const [checkingBalance, setCheckingBalance] = useState(false);
     const [isActivityOpen, setIsActivityOpen] = useState(false);
-
+const userCookie = Cookies.get('user');
+const user = userCookie ? JSON.parse(userCookie) : null;
     const fetchUsers = async (user_id) => {
         try {
             const response = await axios.get(`${process.env.REACT_APP_BASE_URL}/get_user/${user_id}`);
@@ -24,18 +29,7 @@ const GPT = ({ header, footer }) => {
             setError(error.response?.data?.message || 'Error fetching user data');
         }
     };
-    const fetchUser = async () => {
-        try {
-            const response = await axios.get(`${process.env.REACT_APP_BASE_URL}/get_user/${user_id}`);
 
-            setUser(response.data);
-        } catch (error) {
-            setError(error.response?.data?.message || 'Error fetching user data');
-        }
-    };
-    useEffect(() => {
-        fetchUser();
-    }, [user_id]);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -53,6 +47,26 @@ const GPT = ({ header, footer }) => {
             setLoading(false);
         }
     };
+ const checkBalance = async () => {
+    setCheckingBalance(true);
+
+    try {
+        const response = await axios.get(
+            `${process.env.REACT_APP_BASE_URL}/check_balance/${user.id}`,
+        );
+
+        if (response.status === 200 && response.data?.balance !== undefined) {
+            setMetaBalance(response.data.balance);
+        } else {
+            setMetaCoinMessage("Failed to retrieve MetaCoin balance.");
+        }
+    } catch (error) {
+        const errMsg = error.response?.data?.error || "Error checking balance.";
+        setMetaCoinMessage(errMsg);
+    } finally {
+        setCheckingBalance(false);
+    }
+};
 
     const formatResponse = (text) => {
         // Remplace les éléments entre *...* par du <strong>...</strong>
@@ -61,7 +75,7 @@ const GPT = ({ header, footer }) => {
 
     return (
         <div>
-            {header}
+    
 
             <div className="container">
                 <div className="left-sidebar">
@@ -78,8 +92,11 @@ const GPT = ({ header, footer }) => {
                             </ul>
                         </div>
                         <div className="sidebar-profile-link">
-                            <a href="#"><img src="assets/images/items.svg" alt="items" />My Items</a>
-                            <a href="#"><img src="assets/images/premium.png" alt="premium" />Try Premium</a>
+              <a href="#"><img src="assets/images/items.svg" alt="items" />My Items</a>
+<a href="#" onClick={checkBalance} style={{ width: "60px", cursor: "pointer" }}>
+    <img src="assets/images/metacoin.png" alt="metacoin" style={{ width: "50px"}} />
+    {checkingBalance ? "Checking..." : metaBalance !== null ? `Balance: ${metaBalance} MC` : "Check MetaCoin Balance"}
+</a>
                         </div>
                     </div>
 
@@ -163,7 +180,7 @@ const GPT = ({ header, footer }) => {
                     </div>
 
                     <div className="sidebar-ad">
-                        <small>Ad &middot; &middot; &midd;</small>
+                        <small>Ad</small>
                         <p>Master Web Development</p>
                         <div>
                             <img src={`${process.env.REACT_APP_BASE_URL}/${user.profile_image}`} alt="user" />
@@ -188,7 +205,7 @@ const GPT = ({ header, footer }) => {
                     </div>
                 </div>
             </div>
-            {footer}
+
         </div>
     );
 };

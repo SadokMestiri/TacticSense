@@ -211,9 +211,10 @@ const Header = () => {
 
   const toggleDropdown = () => setDropdownOpen(!isDropdownOpen);
   const handleLogout = () => {
+    navigate('/login');
     Cookies.remove('token');
     Cookies.remove('user');
-    navigate('/login');
+
   };
 
   // Conditionally render based on user data availability
@@ -227,7 +228,7 @@ const Header = () => {
 
   const handleUserClick = (user) => {
     addSearch(user);
-    navigate(`/user/${user.username}`);
+    navigate('/profile_view', { state: { userId: user.id } });
     setSearchQuery('');
     setSearchResults([]);
     setSearchHovered(false);
@@ -398,7 +399,7 @@ const Header = () => {
               <Link to="/notifications" className="notif-icon-link">
                 <img src={`${process.env.PUBLIC_URL}/assets/images/notification.png`} alt="notification" />
                 {unreadCount > 0 && (
-                  <span className="notif-badge">{unreadCount}</span>
+                  <span className="notif-badge" style={{color:"#000"}}>{unreadCount}</span>
                 )}
                 <span>Notifications</span>
               </Link>
@@ -439,9 +440,24 @@ const Header = () => {
                 </div>
               </div>
               {/* Choosing origin/Sadok version for profile links as it uses <Link> */}
-              <Link to={`/profile/${user.username}`} className="profile-btn" onClick={() => setDropdownOpen(false)}>See your profile</Link>
+              <Link to={`/profile/${user.username}`} className="profile-btn" onClick={() => setDropdownOpen(false)}>My posts</Link>
               <Link to="/saved-posts" className="profile-btn" onClick={() => setDropdownOpen(false)}>Saved Posts</Link>
-              <a href="#" className="logout-btn" onClick={handleLogout}>Logout</a>
+              {user.role === "Player" ? (
+                <a href="/Profile" className="profile-btn">See your profile</a>
+              ) : ["Coach", "Staff", "Scout"].includes(user.role) ? (
+                <a href="/CoachProfile" className="profile-btn">See your profile</a>
+              ) : user.role === ("Manager") ? (
+                <a href="/ManagerProfile" className="profile-btn">See your profile</a>
+              ) : user.role === ("Agent") ? (
+                <a href="/AgentProfile" className="profile-btn">See your profile</a>
+              ) : user.role === ("Agency") ? (
+                <a href="/AgencyProfile" className="profile-btn">See your profile</a>
+              ) : user.role === ("Club") ? (
+                <a href="/ClubProfile" className="profile-btn">See your profile</a>
+              ) : (
+                <a href="/Profile_View" className="profile-btn">See your profile</a>
+              )}
+              <a href="/" className="logout-btn" onClick={handleLogout}>Logout</a>
             </div>
           )}
         </div>

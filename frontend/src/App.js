@@ -59,6 +59,8 @@ import MatchAnalysisDetail from "./components/MatchAnalysisDetail";
 import PlayerPredictor from "./components/PlayerPredictor";
 import ExistingPlayerPredictor from "./components/ExistingPlayerPredictor";
 import PlayerProfile from "./components/PlayerProfile";
+import AgentProfile from "./components/AgentProfile";
+import AgencyProfile from "./components/AgencyProfile";
 
 function App() {
     const isAuthenticated = !!Cookies.get("token");
@@ -70,7 +72,7 @@ function App() {
 
     return (
         <div>
-
+{header}
             <Routes>
                 {/* Public */}
                 <Route path="/" element={<Login />} />
@@ -94,6 +96,8 @@ function App() {
                 <Route path="/coachprofile" element={isAuthenticated ? <CoachProfile header={header} footer={footer} /> : <Navigate to="/" />} />
                 <Route path="/clubprofile" element={isAuthenticated ? <ClubProfile header={header} footer={footer} /> : <Navigate to="/" />} />
                 <Route path="/managerprofile" element={isAuthenticated ? <ManagerProfile header={header} footer={footer} /> : <Navigate to="/" />} />
+                <Route path="/agentprofile" element={isAuthenticated ? <AgentProfile header={header} footer={footer} /> : <Navigate to="/" />} />
+                <Route path="/agencyprofile" element={isAuthenticated ? <AgencyProfile header={header} footer={footer} /> : <Navigate to="/" />} />
 
                 {/* Jobs */}
                 <Route path="/jobs" element={isAuthenticated ? <Jobs header={header} footer={footer} /> : <Navigate to="/" />} />
