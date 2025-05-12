@@ -124,8 +124,8 @@ function App() {
                 <Route path="/analysis-hub/players/new" element={isAuthenticated ? <PlayerPredictor header={header} footer={footer}/> : <Navigate to="/" />} />
                 <Route path="/analysis-hub/players/:name" element={isAuthenticated ? <PlayerProfile header={header} footer={footer}/> : <Navigate to="/" />} />
 
-                <Route path="/saved-posts" element={<SavedPosts header={header} />} />
-                <Route path="/profile/:username" element={ <myPosts header={header} />} />
+                <Route path="/saved-posts" element={<SavedPosts />} />
+                <Route path="/profile/:username" element={ <myPosts />} />
 
                 {/* Fallback */}
                 <Route path="*" element={<Navigate to={isAuthenticated ? "/home" : "/"} />} />
