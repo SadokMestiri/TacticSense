@@ -1,6 +1,4 @@
 import React from 'react';
-import Header from './Header';
-import Footer from './Footer';
 import './Profile.css';
 
 const ManagerProfileView = ({
@@ -23,7 +21,6 @@ const ManagerProfileView = ({
 }) => {
   return (
     <div>
-      <Header />
       <div className="container">
         <div className="left-sidebar">
           <div className="sidebar-profile-box">

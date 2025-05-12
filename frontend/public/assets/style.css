@@ -59,13 +59,16 @@ a{
 .navbar-center ul li a.active-link::after{
     width: 100%;
 }
-.nav-profile-img{
+.nav-profile-img {
     width: 40px;
-    border-radius: 50%;
+    aspect-ratio: 1 / 1;       /* Ensures square shape */
+    border-radius: 50%;        /* Makes it circular */
+    object-fit: cover;         /* Prevents distortion, fills circle */
     display: block;
     cursor: pointer;
     position: relative;
 }
+
 
 .online{
     position: relative;
@@ -133,14 +136,17 @@ a{
     padding: 0 25px;
 
  }
- .sidebar-profile-info img{
+.sidebar-profile-info img {
     width: 90px;
+    height: auto; /* Keep aspect ratio */
     border-radius: 50%;
     background: #fff;
     padding: 4px;
     margin-top: -45px;
+    aspect-ratio: 1 / 1; /* Ensures it's a square for the circle */
+    object-fit: cover; /* Crops if needed but no distortion */
+}
 
- }
  .sidebar-profile-info h1{
     font-size: 20px;
     font-weight: 600;
@@ -197,9 +203,14 @@ a{
 
 }
 .sidebar-activity{
-    background: #fff;
     padding: 5px 25px;
     margin: 12px 0;
+      position: relative;
+  text-align: center;
+  background-color: #fff;
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 
 }
 .sidebar-activity h3{
@@ -291,13 +302,14 @@ a{
     font-size: 12px;
 }
 
-.sidebar-ad img{
+.sidebar-ad img {
     width: 60px;
-    border-radius: 50%;
+    aspect-ratio: 1 / 1;       /* Ensures it's a square */
+    object-fit: cover;         /* Prevents distortion and maintains image proportions */
+    border-radius: 50%;        /* Makes it circular */
     margin: 4px;
-
-     
 }
+
 .sidebar-ad small{
     float: right;
     font-weight: 500;
@@ -365,11 +377,14 @@ a{
     display: flex;
     align-items: flex-start;
 }
-.create-post-input img{
+.create-post-input img {
     width: 35px;
+    aspect-ratio: 1 / 1;       /* Forces square shape */
+    object-fit: cover;         /* Maintains image proportions inside the square */
     border-radius: 50%;
     margin-right: 10px;
 }
+
 .create-post-input textarea{
     width: 100%;
     border : 0;
@@ -450,12 +465,15 @@ a{
     margin-bottom: 20px;
 
 }
-.post-author img{
+.post-author img {
     width: 35px;
-    border-radius: 100px;
+    height: 35px;             /* Ensures square dimensions */
+    border-radius: 50%;       /* Makes it circular */
     margin-top: 5px;
-    margin-right: 5px ;
+    margin-right: 5px;
+    object-fit: cover;        /* Maintains image proportions without distortion */
 }
+
 .post-author h1{
     font-size: 18px;
     font-weight: 600;

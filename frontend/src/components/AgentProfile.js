@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
+import Header from './Header';
 import { Tabs, Tab, Container} from '@mui/material';
 import './Profile.css';
 import axios from 'axios';
 import Cookies from 'js-cookie';
 import jwt_decode from 'jwt-decode';
 
-const CoachProfile = () => {
+const AgentProfile = () => {
     const [message, setMessage] = useState('');
     const [profileImage, setProfileImage] = useState('');
     const [username, setUsername] = useState('');
@@ -18,12 +19,21 @@ const CoachProfile = () => {
     const [yearsOfExperience, setYearsOfExperience] = useState('');
     const [qualification, setQualification] = useState('');
     const [availability, setAvailability] = useState(true);
-    const [matches, setMatches] = useState('');
-    const [wins, setWins] = useState('');
-    const [losses, setLosss] = useState('');
-    const [draws, setDraws] = useState('');
-    const [ppg, setPpg] = useState('');
+    const [agency_id, setAgency_id] = useState('');
+    const [agencies, setAgencies] = useState([]);
 
+    useEffect(() => {
+    const fetchAgencies = async () => {
+        try {
+        const response = await axios.get(`${process.env.REACT_APP_BASE_URL}/get_agencies`);
+        setAgencies(response.data);
+        } catch (error) {
+        console.error('Error fetching agencies:', error);
+        }
+    };
+
+    fetchAgencies();
+    }, []);
 
     useEffect(() => {
         const fetchUserData = async () => {
@@ -53,11 +63,7 @@ const CoachProfile = () => {
               setYearsOfExperience(userData.years_of_experience);
               setQualification(userData.qualification);
               setAvailability(userData.availability);
-              setMatches(userData.matches);
-              setWins(userData.wins);
-              setLosss(userData.losses);
-              setDraws(userData.draws);
-              setPpg(userData.ppg);
+              setAgency_id(userData.agency_id);
               console.log('User data:', userData);
             } catch (error) {
               console.error('Error fetching user data:', error);
@@ -70,33 +76,30 @@ const CoachProfile = () => {
       }, []);
 
     const handleImageChange = async (event) => {
-        const file = event.target.files[0];
+    const file = event.target.files[0];
         if (file) {
-        const formData = new FormData();
-        formData.append('profile_image', file);
+            const formData = new FormData();
+            formData.append('profile_image', file);
 
-        const token = Cookies.get('token');
-        if (!token) {
-        setMessage('No token found. Please log in again.');
-        // window.location.href = '/login';
-        return;
-        }
-        console.log('Token:', token);
+            const token = Cookies.get('token');
+            if (!token) {
+                setMessage('No token found. Please log in again.');
+                return;
+            }
 
-        try {
-            const response = await axios.put(`${process.env.REACT_APP_BASE_URL}/update_profile`, formData, {
-            headers: {
-                // 'Content-Type': 'multipart/form-data',
-                Authorization: `Bearer ${token}`,
-            },
-            });
-            setProfileImage(response.data.profile_image);
-            setMessage('Profile image updated successfully');
-        } catch (error) {
-            setMessage('Error updating profile image');
+            try {
+                const response = await axios.put(`${process.env.REACT_APP_BASE_URL}/update_profile`, formData, {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
+                });
+                setProfileImage(response.data.profile_image);
+                setMessage('Profile image updated successfully');
+            } catch (error) {
+                setMessage('Error updating profile image');
+            }
         }
-        }
-    };
+  };
 
     const handleProfileUpdate = async () => {
         const updatedProfile = {
@@ -110,11 +113,7 @@ const CoachProfile = () => {
         yearsOfExperience,
         qualification,
         availability,
-        matches,
-        wins,
-        losses,
-        draws,
-        ppg
+        agency_id,
         };
 
         const token = Cookies.get('token');
@@ -149,6 +148,7 @@ const CoachProfile = () => {
         const response = await axios.put(`${process.env.REACT_APP_BASE_URL}/update_profile`, updatedProfile, {
             headers: {
             Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
             },
         });
 
@@ -173,6 +173,7 @@ const CoachProfile = () => {
 
   return (
     <div>
+      <Header />
       <div className="container">
         <div className="left-sidebar">
           <div className="sidebar-profile-box">
@@ -287,6 +288,22 @@ const CoachProfile = () => {
             </div>
 
             <div className="form-group">
+              <label>Agency</label>
+              <select
+                className="form-control"
+                value={agency_id || ''}
+                onChange={(e) => setAgency_id(e.target.value)}
+              >
+                <option value={agency_id || ''}>Select an agency</option>
+                {agencies.map((agency) => (
+                  <option key={agency.id} value={agency.id}>
+                    {agency.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="form-group">
               <label>Date of Appointment</label>
               <input
                 type="date"
@@ -340,62 +357,6 @@ const CoachProfile = () => {
               </select>
             </div>
 
-            <div className="form-group">
-              <label>Total Matches</label>
-              <input
-                type="text"
-                className="form-control"
-                value={matches}
-                onChange={(e) => setMatches(e.target.value)}
-                placeholder="Enter total matches"
-              />
-            </div>
-
-            <div className="form-group">
-              <label>Wins</label>
-              <input
-                type="number"
-                className="form-control"
-                value={wins}
-                onChange={(e) => setWins(e.target.value)}
-                placeholder="Enter total wins"
-              />
-            </div>
-
-            <div className="form-group">
-              <label>Losses</label>
-              <input
-                type="number"
-                className="form-control"
-                value={losses}
-                onChange={(e) => setLosss(e.target.value)}
-                placeholder="Enter total losses"
-              />
-            </div>
-
-            <div className="form-group">
-              <label>Draws</label>
-              <input
-                type="number"
-                className="form-control"
-                value={draws}
-                onChange={(e) => setDraws(e.target.value)}
-                placeholder="Enter total draws"
-              />
-            </div>
-
-            <div className="form-group">
-              <label>Points Per Game (PPG)</label>
-              <input
-                type="number"
-                step="0.01"
-                className="form-control"
-                value={ppg}
-                onChange={(e) => setPpg(e.target.value)}
-                placeholder="Enter points per game"
-              />
-            </div>
-
             <button type="button" className="update-profile-btn" onClick={handleProfileUpdate}>
               Update Profile
             </button>
@@ -410,4 +371,4 @@ const CoachProfile = () => {
   );
 };
 
-export default CoachProfile;
+export default AgentProfile;

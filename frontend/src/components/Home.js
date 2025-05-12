@@ -8,7 +8,7 @@ import Notifications from './Notifications'
 import CustomVideoPlayer from './CustomVideoPlayer';
 import RecommendationSidebar from './RecommendationSidebar';
 
-const Home = ({ header , footer}) => {
+const Home = () => {
   const navigate = useNavigate();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isActivityOpen, setIsActivityOpen] = useState(false);
@@ -333,11 +333,10 @@ useEffect(() => {
 console.log(user)
   return (
     <div>
- {header}
       <div className="container">
         <div className="left-sidebar">
           <div className="sidebar-profile-box">
-            <img src="assets/images/cover-pic.jpg" alt="cover" width="100%" />
+            <img src="assets/images/cover-pic.jpg" alt="cover" width="100%" style={{height:"100%"}}/>
             <div className="sidebar-profile-info">
               <img src={`${process.env.REACT_APP_BASE_URL}/${user.profile_image}`} alt="profile" />
               <h1>{user.name}</h1>
@@ -675,7 +674,7 @@ console.log(user)
           </div>
 
           <div className="sidebar-ad">
-            <small>Ad &middot; &middot; &midd;</small>
+            <small>Ad</small>
             <p>Master Web Development</p>
             <div>
               <img src={`${process.env.REACT_APP_BASE_URL}/${user.profile_image}`} alt="user" />
@@ -697,7 +696,6 @@ console.log(user)
           </div>
         </div>
       </div>
-      {footer}
     </div>
   );
 };

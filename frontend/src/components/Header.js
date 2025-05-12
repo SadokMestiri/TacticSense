@@ -143,9 +143,10 @@ const Header = () => {
 
   const toggleDropdown = () => setDropdownOpen(!isDropdownOpen);
   const handleLogout = () => {
+    navigate('/login');
     Cookies.remove('token');
     Cookies.remove('user');
-    navigate('/login');
+
   };
 
   // Conditionally render based on user data availability
@@ -159,7 +160,7 @@ const Header = () => {
 
   const handleUserClick = (user) => {
     addSearch(user);
-    navigate(`/user/${user.username}`);
+    navigate('/profile_view', { state: { userId: user.id } });
     setSearchQuery('');
     setSearchResults([]);
     setSearchHovered(false);
@@ -318,26 +319,26 @@ const Header = () => {
             </li>
             <li>
               <a href="/players">
-                <img src="assets/images/network.png" alt="network" /> <span>Players</span>
+                <img src="assets/images/network.png" alt="network" /> <span style={{color:"#000"}}>Players</span>
               </a>
             </li>
             <li>
               <a href="/gpt">
-                <img src="assets/images/message.png" alt="message" /> <span>Ask AI</span>
+                <img src="assets/images/message.png" alt="message" /> <span style={{color:"#000"}}>Ask AI</span>
               </a>
             </li>
             <li className="notif-icon-wrapper">
               <a href="/notifications" className="notif-icon-link">
                 <img src="assets/images/notification.png" alt="notification" />
                 {unreadCount > 0 && (
-                  <span className="notif-badge">{unreadCount}</span>
+                  <span className="notif-badge" style={{color:"#000"}}>{unreadCount}</span>
                 )}
-                <span>Notifications</span>
+                <span style={{color:"#000"}}>Notifications</span>
               </a>
             </li>
             <li>
               <Link to="/analysis-hub" className={window.location.pathname.startsWith('/matches') ? 'active-link' : ''}>
-                <img src="assets/images/analysis.png" alt="matches" /> <span>Analysis Hub</span>
+                <img src="assets/images/analysis.png" alt="matches" /> <span style={{color:"#000"}}>Analysis Hub</span>
               </Link>
             </li>
           </ul>
@@ -368,12 +369,16 @@ const Header = () => {
                   <div className="desc">{user.role}</div>
                 </div>
               </div>
-              {user.role === "Player" ? (
+               {user.role === "Player" ? (
                 <a href="/Profile" className="profile-btn">See your profile</a>
-              ) : user.role === ("Coach" || "Agent" || "Staff" || "Scout") ? (
+              ) : ["Coach", "Staff", "Scout"].includes(user.role) ? (
                 <a href="/CoachProfile" className="profile-btn">See your profile</a>
               ) : user.role === ("Manager") ? (
                 <a href="/ManagerProfile" className="profile-btn">See your profile</a>
+              ) : user.role === ("Agent") ? (
+                <a href="/AgentProfile" className="profile-btn">See your profile</a>
+              ) : user.role === ("Agency") ? (
+                <a href="/AgencyProfile" className="profile-btn">See your profile</a>
               ) : user.role === ("Club") ? (
                 <a href="/ClubProfile" className="profile-btn">See your profile</a>
               ) : (

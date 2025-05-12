@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import Header from './Header';
 import { Tabs, Tab, Container} from '@mui/material';
 import './Profile.css';
 import axios from 'axios';
 import Cookies from 'js-cookie';
 import jwt_decode from 'jwt-decode';
+import { useLocation } from 'react-router-dom';
 
-const Profile = ({ header,footer }) => {
+const Profile = () => {
   const [profileImage, setProfileImage] = useState('');
   const [username, setUsername] = useState('');
   const [name, setName] = useState('');
@@ -42,16 +42,16 @@ const Profile = ({ header,footer }) => {
   const [volleys, setVolleys] = useState(50);
   const [ratings, setRatings] = useState({}); // State to store ratings for each skill
   const [averageRatings, setAverageRatings] = useState({}); // State to store average ratings for each skill
-
+  const location = useLocation();
   const handleTabChange = (event, newValue) => {
     setActiveTab(newValue);
   };
 
   useEffect(() => {
     const fetchUserData = async () => {
-      const userCookie = Cookies.get('user');
-      if (userCookie) {
-        const parsedUser = JSON.parse(userCookie);
+      const user = location.state?.userId;;
+      if (user) {
+        const parsedUser = JSON.parse(user);
         const userId = parsedUser.id; // Assuming `id` is stored in the cookie
 
         try {
@@ -654,7 +654,6 @@ const Profile = ({ header,footer }) => {
 
   return (
     <div>
-      <Header />
       <div className="container">
         <div className="left-sidebar">
           <div className="sidebar-profile-box">

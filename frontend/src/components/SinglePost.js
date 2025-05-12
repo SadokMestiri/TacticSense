@@ -8,7 +8,7 @@ import { useParams } from 'react-router-dom';
 import CustomVideoPlayer from './CustomVideoPlayer';
 
 
-const SinglePost = ({ header }) => {
+const SinglePost = () => {
   const navigate = useNavigate();
   const { postId } = useParams();
   const [post, setPost] = useState(null);
@@ -177,7 +177,6 @@ const SinglePost = ({ header }) => {
   return (
 
     <div>
- {header}
     <div className="container">
     <div className="main-content">
     <div className="post">

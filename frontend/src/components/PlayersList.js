@@ -5,7 +5,7 @@ import { toast } from "react-toastify";
 import './PlayersList.css';
 import Cookies from 'js-cookie';
 
-const PlayersList = ({ header, footer }) => {
+const PlayersList = () => {
 const userCookie = Cookies.get('user');
 const user = userCookie ? JSON.parse(userCookie) : null;
 const user_id = user ? user.id : null;
@@ -14,6 +14,9 @@ const user_id = user ? user.id : null;
     const [error, setError] = useState(null);
     const [isActivityOpen, setIsActivityOpen] = useState(false);
     const [players, setPlayers] = useState([]);
+      const [metaBalance, setMetaBalance] = useState(null);
+      const [metaCoinMessage, setMetaCoinMessage] = useState(false);
+      const [checkingBalance, setCheckingBalance] = useState(false);
 
     const fetchPlayers = async () => {
         try {
@@ -27,6 +30,26 @@ const user_id = user ? user.id : null;
         fetchPlayers();
     }, [user_id]);
 
+ const checkBalance = async () => {
+    setCheckingBalance(true);
+
+    try {
+        const response = await axios.get(
+            `${process.env.REACT_APP_BASE_URL}/check_balance/${user.id}`,
+        );
+
+        if (response.status === 200 && response.data?.balance !== undefined) {
+            setMetaBalance(response.data.balance);
+        } else {
+            setMetaCoinMessage("Failed to retrieve MetaCoin balance.");
+        }
+    } catch (error) {
+        const errMsg = error.response?.data?.error || "Error checking balance.";
+        setMetaCoinMessage(errMsg);
+    } finally {
+        setCheckingBalance(false);
+    }
+};
 
     const fetchUsers = async (user_id) => {
         try {
@@ -83,7 +106,6 @@ const user_id = user ? user.id : null;
 
     return (
         <div>
-            {header}
 
             <div className="container">
                 <div className="left-sidebar">
@@ -100,8 +122,11 @@ const user_id = user ? user.id : null;
                             </ul>
                         </div>
                         <div className="sidebar-profile-link">
-                            <a href="#"><img src="assets/images/items.svg" alt="items" />My Items</a>
-                            <a href="#"><img src="assets/images/premium.png" alt="premium" />Try Premium</a>
+              <a href="#"><img src="assets/images/items.svg" alt="items" />My Items</a>
+<a href="#" onClick={checkBalance} style={{ width: "60px", cursor: "pointer" }}>
+    <img src="assets/images/metacoin.png" alt="metacoin" style={{ width: "50px"}} />
+    {checkingBalance ? "Checking..." : metaBalance !== null ? `Balance: ${metaBalance} MC` : "Check MetaCoin Balance"}
+</a>
                         </div>
                     </div>
 
@@ -221,7 +246,6 @@ const user_id = user ? user.id : null;
                     </div>
                 </div>
             </div>
-            {footer}
         </div>
     );
 };

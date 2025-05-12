@@ -3,7 +3,7 @@ import axios from 'axios';
 import './Notifications.css';
 import Cookies from 'js-cookie';
 
-const Notifications = ({ header, footer }) => {
+const Notifications = () => {
 const userCookie = Cookies.get('user');
 const user = userCookie ? JSON.parse(userCookie) : null;
 const user_id = user ? user.id : null;
@@ -12,6 +12,9 @@ const [users, setUsers] = useState([]);
     const [isActivityOpen, setIsActivityOpen] = useState(false);
     const [notifications, setNotifications] = useState([]);
     const [playerId, setPlayerId] = useState(null);
+      const [metaBalance, setMetaBalance] = useState(null);
+      const [metaCoinMessage, setMetaCoinMessage] = useState(false);
+      const [checkingBalance, setCheckingBalance] = useState(false);
 
     useEffect(() => {
         const fetchPlayerId = async () => {
@@ -74,10 +77,30 @@ const [users, setUsers] = useState([]);
             console.error("Erreur lors du marquage de la notification comme lue:", error);
         }
     };
+     const checkBalance = async () => {
+    setCheckingBalance(true);
+
+    try {
+        const response = await axios.get(
+            `${process.env.REACT_APP_BASE_URL}/check_balance/${user.id}`,
+        );
+
+        if (response.status === 200 && response.data?.balance !== undefined) {
+            setMetaBalance(response.data.balance);
+        } else {
+            setMetaCoinMessage("Failed to retrieve MetaCoin balance.");
+        }
+    } catch (error) {
+        const errMsg = error.response?.data?.error || "Error checking balance.";
+        setMetaCoinMessage(errMsg);
+    } finally {
+        setCheckingBalance(false);
+    }
+};
+
 
     return (
         <div>
-            {header}
 
             <div className="container">
                 <div className="left-sidebar">
@@ -94,8 +117,11 @@ const [users, setUsers] = useState([]);
                             </ul>
                         </div>
                         <div className="sidebar-profile-link">
-                            <a href="#"><img src="assets/images/items.svg" alt="items" />My Items</a>
-                            <a href="#"><img src="assets/images/premium.png" alt="premium" />Try Premium</a>
+              <a href="#"><img src="assets/images/items.svg" alt="items" />My Items</a>
+<a href="#" onClick={checkBalance} style={{ width: "60px", cursor: "pointer" }}>
+    <img src="assets/images/metacoin.png" alt="metacoin" style={{ width: "50px"}} />
+    {checkingBalance ? "Checking..." : metaBalance !== null ? `Balance: ${metaBalance} MC` : "Check MetaCoin Balance"}
+</a>
                         </div>
                     </div>
 
@@ -176,7 +202,7 @@ const [users, setUsers] = useState([]);
                     </div>
 
                     <div className="sidebar-ad">
-                        <small>Ad &middot; &middot; &midd;</small>
+                        <small>Ad</small>
                         <p>Master Web Development</p>
                         <div>
                             <img src={`${process.env.REACT_APP_BASE_URL}/${user.profile_image}`} alt="user" />
@@ -201,7 +227,6 @@ const [users, setUsers] = useState([]);
                     </div>
                 </div>
             </div>
-            {footer}
         </div>
     );
 };
