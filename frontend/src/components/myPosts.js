@@ -7,7 +7,7 @@ import './UserListModal.css'; // Styles for the new modal
 import './Profile.css'; // Create or use an existing CSS file for profile specific styles
 import MentionInput from './MentionInput'; // Add this import
 
-const Profile = () => {
+const MyPosts = () => {
   const navigate = useNavigate();
   const { username: profileUsername } = useParams(); // Get username from URL
 
@@ -691,4 +691,4 @@ const Profile = () => {
   );
 };
 
-export default myPosts;
+export default MyPosts;

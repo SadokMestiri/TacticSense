@@ -139,7 +139,6 @@ useEffect(() => {
 
   return (
     <div>
-      <Header />
       <div className="container">
         <div className="left-sidebar">
           <div className="sidebar-profile-box">

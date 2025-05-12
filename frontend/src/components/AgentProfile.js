@@ -173,7 +173,6 @@ const AgentProfile = () => {
 
   return (
     <div>
-      <Header />
       <div className="container">
         <div className="left-sidebar">
           <div className="sidebar-profile-box">
@@ -362,9 +361,8 @@ const AgentProfile = () => {
             </button>
           </form>
           {message && <p className="text-info">{message}</p>}
-        </div><div className="right-sidebar">
-          <div className="sidebar-news">
-          </div>
+        </div><div className="right-sidebar"> 
+          <div></div>
         </div>
       </div>
     </div>

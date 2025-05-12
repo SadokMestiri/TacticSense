@@ -29,6 +29,7 @@ const Home = ({ header , footer}) => {
   const [checkingBalance, setCheckingBalance] = useState(false);
   const [selectedPost, setSelectedPost] = useState(null); // For managing the selected post
   const [showReactions, setShowReactions] = useState(null);
+  
 const reactions = [
   { name: "like", icon: "assets/images/post-like.png" },
   { name: "love", icon: "assets/images/love.png" },
@@ -52,51 +53,11 @@ const now = new Date();
 const [allowed, setAllowed] = useState(false);
 const userCookie = Cookies.get('user');
 const user = userCookie ? JSON.parse(userCookie) : null;
-// Token expiration check
-useEffect(() => {
-  if (!token || !decodedToken) {
-    navigate('/');
-  } else if (date && date.getTime() < now.getTime()) {
-    Cookies.remove('token');
-    navigate('/');
-  } else {
-    setAllowed(true);
-  }
-}, [token, decodedToken, navigate, date]);
+
+
   const [commentText, setCommentText] = useState(''); // For new comment content
   const [mentionedUsersInComment, setMentionedUsersInComment] = useState([]); // Users mentioned in new comment
   const [isCommentingOnPostId, setIsCommentingOnPostId] = useState(null); // ID of post being commented on
-
-  // Token and user setup
-  useEffect(() => {
-    const token = Cookies.get('token');
-    const userCookie = Cookies.get('user');
-
-    if (token && userCookie) {
-      try {
-        const decodedToken = jwt_decode(token);
-        const exp = decodedToken?.exp;
-        const date = exp ? new Date(exp * 1000) : null;
-        const now = new Date();
-
-        if (date && date.getTime() < now.getTime()) {
-          Cookies.remove('token');
-          Cookies.remove('user');
-          navigate('/login');
-        } else {
-          setUser(JSON.parse(userCookie));
-          setAllowed(true);
-        }
-      } catch (e) {
-        console.error("Error decoding token or parsing user cookie:", e);
-        Cookies.remove('token');
-        Cookies.remove('user');
-        navigate('/login');
-      }
-    } else {
-      navigate('/login');
-    }
-  }, [navigate]);
 
   const constructMediaUrl = (urlPath) => {
     if (!urlPath) return '';
@@ -196,70 +157,16 @@ useEffect(() => {
   }, [users]); // Dependency: users state to avoid re-fetching already fetched users
 
 
-  // Unified fetchPosts function
-  const fetchPosts = useCallback(async () => {
-    if (!allowed || !user) {
-      // console.log("fetchPosts: Not allowed or no user, returning.");
-      return;
-    }
-    try {
-      const token = Cookies.get('token');
-      // console.log("fetchPosts: Fetching with token...");
-      const response = await axios.get(`${process.env.REACT_APP_BASE_URL}/get_posts`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      const postsData = response.data;
-
-      if (Array.isArray(postsData)) {
-        // console.log("fetchPosts: Posts data received", postsData.length);
-        setAllPosts(postsData); // Store all fetched posts
-
-        // Extract user IDs from posts and fetch their data
-        const userIdsFromPosts = postsData.map(post => post.user_id).filter(id => id); // Filter out null/undefined
-        if (userIdsFromPosts.length > 0) {
-          // console.log("fetchPosts: Fetching user data for post authors");
-          await fetchUsersData(userIdsFromPosts);
-        }
-        // The useEffect hook below will handle sorting, filtering, and setting the 'posts' state
-      } else {
-        console.error("Error fetching posts: API did not return an array.", postsData);
-        setAllPosts([]);
-        setPosts([]); // Clear displayable posts as well
-      }
-    } catch (error) {
-      console.error('Error fetching posts:', error);
-      if (error.response && error.response.status === 401) {
-        Cookies.remove('token');
-        Cookies.remove('user');
-        navigate('/login');
-      } else {
-        setAllPosts([]);
-        setPosts([]);
-      }
-    }
-  }, [allowed, user, navigate, fetchUsersData]); // Dependencies for the fetchPosts callback
-
-  // useEffect to call fetchPosts when user/auth status changes
-  useEffect(() => {
-    // console.log("useEffect (fetchPosts trigger): allowed, user changed", allowed, !!user);
-    if (allowed && user) {
-      fetchPosts();
-    }
-  }, [allowed, user, fetchPosts]); // fetchPosts is a dependency
-
-  // useEffect to handle sorting and filtering whenever allPosts, sortOption, or filterType changes
-  useEffect(() => {
-    // console.log("useEffect (sorting/filtering): allPosts, sortOption, or filterType changed");
-    if (allPosts && allPosts.length > 0) {
-      let processedPosts = [...allPosts]; // Create a new array for processing
-      processedPosts = filterPosts(processedPosts, filterType);
-      processedPosts = sortPosts(processedPosts, sortOption);
-      setPosts(processedPosts);
-    } else {
-      setPosts([]); // If allPosts is empty, ensure posts is also empty
-    }
-  }, [allPosts, sortOption, filterType, filterPosts, sortPosts]); // filterPosts and sortPosts should be stable or included if they can change
-
+  // Fonction de filtrage par type de post
+  const filterPosts = (postsData, type) => {
+    if (type === 'all') return postsData;
+    return postsData.filter(post => {
+      if (type === 'text') return !post.image_url && !post.video_url;
+      if (type === 'image') return post.image_url;
+      if (type === 'video') return post.video_url;
+      return true;
+    });
+  };
 
   // Fonction de tri
   const sortPosts = (postsData, option) => {
@@ -275,16 +182,70 @@ useEffect(() => {
     }
   };
 
-  // Fonction de filtrage par type de post
-  const filterPosts = (postsData, type) => {
-    if (type === 'all') return postsData;
-    return postsData.filter(post => {
-      if (type === 'text') return !post.image_url && !post.video_url;
-      if (type === 'image') return post.image_url;
-      if (type === 'video') return post.video_url;
-      return true;
-    });
+  const fetchUsers = async (user_id) => {
+    try {
+      const response = await axios.get(`${process.env.REACT_APP_BASE_URL}/get_user/${user_id}`);
+      
+      setUsers(prevUsers => ({
+        ...prevUsers,
+        [user_id]: response.data?.profile_image || '/default-avatar.png' 
+      }));
+    } catch (error) {
+      setError(error.response?.data?.message || 'Error fetching user data');
+      // Set a default image on error
+      setUsers(prevUsers => ({
+        ...prevUsers,
+        [user_id]: 'assets/images/default-avatar.png'
+      }));
+    }
   };
+
+  // Unified fetchPosts function
+ 
+  const fetchPosts = async () => {
+    try {
+      const response = await axios.get(`${process.env.REACT_APP_BASE_URL}/get_posts`);
+      let postsData = response.data;
+      console.log(response)
+      for (let post of postsData) {
+        if (post.user_id) {
+          await fetchUsers(post.user_id);
+        }
+      }
+
+      postsData = sortPosts(postsData, sortOption);
+      setAllPosts(postsData);
+      setPosts(postsData);
+    } catch (error) {
+      console.error('Error fetching posts:', error);
+    }
+  };
+  useEffect(() => {
+    let filteredPosts = filterPosts([...allPosts], filterType);
+    filteredPosts = sortPosts(filteredPosts, sortOption);
+    setPosts(filteredPosts);
+  }, [sortOption, filterType, allPosts]);
+
+  useEffect(() => {
+    fetchPosts();
+  }, []);
+
+
+  // useEffect to handle sorting and filtering whenever allPosts, sortOption, or filterType changes
+  useEffect(() => {
+    // console.log("useEffect (sorting/filtering): allPosts, sortOption, or filterType changed");
+    if (allPosts && allPosts.length > 0) {
+      let processedPosts = [...allPosts]; // Create a new array for processing
+      processedPosts = filterPosts(processedPosts, filterType);
+      processedPosts = sortPosts(processedPosts, sortOption);
+      setPosts(processedPosts);
+    } 
+  }, [allPosts, sortOption, filterType, filterPosts, sortPosts]); // filterPosts and sortPosts should be stable or included if they can change
+
+
+  
+
+  
 
   useEffect(() => {
     let filteredPosts = filterPosts([...allPosts], filterType);
@@ -308,7 +269,7 @@ useEffect(() => {
     const token = Cookies.get('token');
     if (!token) { navigate('/login'); return; }
     try {
-      await axios.post(`${process.env.REACT_APP_BASE_URL}/react_to_post`, {
+      const response = await axios.post(`${process.env.REACT_APP_BASE_URL}/react_to_post`, {
         // user_id: user.id, // Backend uses token
         post_id: postId,
         reaction_type: reactionType,
@@ -365,6 +326,94 @@ useEffect(() => {
       setComments([]);
     }
   }, [fetchUsersData]);
+  
+  const handleImageChange = (e) => {
+    if (e.target.files && e.target.files[0]) {
+      setImage(e.target.files[0]);
+      setVideo(null); 
+    }
+  };
+
+  const handleVideoChange = (e) => {
+    if (e.target.files && e.target.files[0]) {
+      setVideo(e.target.files[0]);
+      setImage(null); 
+    }
+  };
+
+  const handleSubmitPost = async (e) => {
+    if (e) e.preventDefault();
+
+    if (!text.trim() && !image && !video) {
+      alert("Cannot create an empty post.");
+      return;
+    }
+    if (!user) { // Use user state
+      alert("You must be logged in to post.");
+      navigate('/login'); 
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append('text', text);
+
+    if (image) {
+      formData.append('image', image);
+    }
+    if (video) {
+      formData.append('video', video);
+    }
+
+    const mentionIds = mentionedUsersInPost.map(user => user.id);
+    formData.append('mentioned_user_ids', JSON.stringify(mentionIds));
+
+    const currentToken = Cookies.get('token'); // Renamed to avoid conflict with global 'token'
+    if (!currentToken) {
+      alert("Authentication token not found. Please log in again.");
+      navigate('/login');
+      return;
+    }
+
+    try {
+      // setIsLoading(true); // Assuming you have an isLoading state
+      await axios.post(`${process.env.REACT_APP_BASE_URL}/create_post`, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+          'Authorization': `Bearer ${currentToken}`
+        },
+      });
+      setText('');
+      setImage(null);
+      setVideo(null);
+      setMentionedUsersInPost([]);
+      fetchPosts(); 
+      alert('Post created successfully!');
+    } catch (err) { // Changed to 'err' to avoid conflict if 'error' state exists
+      console.error('Error creating post:', err.response?.data?.error || err.message);
+      alert(`Error creating post: ${err.response?.data?.error || err.message}`);
+    } finally {
+      // setIsLoading(false);
+    }
+  };
+
+  const renderContentWithMentions = (content, mentions) => {
+    if (!content) return <p></p>; 
+
+    let processedContent = content;
+
+    if (mentions && mentions.length > 0) {
+      const sortedMentions = [...mentions].sort((a, b) => b.username.length - a.username.length);
+
+      sortedMentions.forEach(mention => {
+        if (mention && mention.username) {
+          const mentionTag = `@${mention.username}`;
+          const linkRegex = new RegExp(mentionTag.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '(?![^<]*?>|[^<>]*?</\\w+>)', 'g');
+          processedContent = processedContent.replace(linkRegex, `<a href="/profile/${mention.username}" class="mention-link">${mentionTag}</a>`);
+        }
+      });
+    }
+    return <p dangerouslySetInnerHTML={{ __html: processedContent.replace(/\n/g, '<br />') }} />;
+  };
 
   const handleCommentSubmit = async (postId) => {
     if (commentText.trim() === '' || !user) return;
@@ -418,7 +467,6 @@ useEffect(() => {
     }
 };
 
-console.log(user)
   return (
     <div>
       <div className="container">
@@ -568,16 +616,11 @@ console.log(user)
               {post.video_url && (
                 // If you keep CustomVideoPlayer from HEAD, ensure it's compatible.
                 // Otherwise, use origin/Sadok's simpler video tag:
-                <video autoPlay muted controls style={{ width: '100%', marginTop: '10px', borderRadius: '4px' }}>
-                  <source src={constructMediaUrl(post.video_url)} type="video/mp4" />
-                  Your browser does not support the video tag.
-                </video>
-                // OR if CustomVideoPlayer is preferred and compatible:
-                // <CustomVideoPlayer 
-                //   videoUrl={constructMediaUrl(post.video_url)}
-                //   postId={post.id || post.post_id}
-                //   srtUrl={post.srt_url ? constructMediaUrl(post.srt_url) : undefined}
-                // />
+                <CustomVideoPlayer 
+                  videoUrl={constructMediaUrl(post.video_url)}
+                  postId={post.id || post.post_id} // Assuming postId is a prop CustomVideoPlayer might use
+                  srtUrl={post.srt_url ? constructMediaUrl(post.srt_url) : undefined} // Pass srt_url if available
+                />
               )}
             
               <div className="post-stats">
@@ -779,3 +822,5 @@ console.log(user)
     </div>
   );
 };
+
+export default Home;

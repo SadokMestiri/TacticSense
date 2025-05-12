@@ -17,19 +17,19 @@ const Profile = ({ header,footer }) => {
   const [activeTab, setActiveTab] = useState(0);
   const [uploadedVideos, setUploadedVideos] = useState({});
   const [currentPage, setCurrentPage] = useState({});
-  const [age, setAge] = useState({});
-  const [nationality, setNationality] = useState({});
-  const [position, setPosition] = useState({});
-  const [matches, setMatches] = useState({});
-  const [minutes, setMinutes] = useState({});
-  const [goals, setGoals] = useState({});
-  const [assists, setAssists] = useState({});
-  const [club, setClub] = useState({});
-  const [market_value, setMarket_value] = useState({});
-  const [total_yellow_cards, setTotal_yellow_cards] = useState({});
-  const [total_red_cards, setTotal_red_cards] = useState({});
-  const [performance_metrics, setPerformance_metrics] = useState({});
-  const [media_sentiment, setMedia_sentiment] = useState({});
+  const [age, setAge] = useState('');
+  const [nationality, setNationality] = useState('');
+  const [position, setPosition] = useState('');
+  const [matches, setMatches] = useState('');
+  const [minutes, setMinutes] = useState('');
+  const [goals, setGoals] = useState('');
+  const [assists, setAssists] = useState('');
+  const [club, setClub] = useState('');
+  const [market_value, setMarket_value] = useState('');
+  const [total_yellow_cards, setTotal_yellow_cards] = useState('');
+  const [total_red_cards, setTotal_red_cards] = useState('');
+  const [performance_metrics, setPerformance_metrics] = useState('');
+  const [media_sentiment, setMedia_sentiment] = useState('');
   const [aggression, setAggression] = useState(50);
   const [reactions, setReecation] = useState(50);
   const [long_pass, setLong_pass] = useState(50);
@@ -137,11 +137,28 @@ useEffect(() => {
 
   const handleImageChange = async (event) => {
     const file = event.target.files[0];
-    if (file) {
-      const imageUrl = URL.createObjectURL(file);
-      setProfileImage(imageUrl); // Set the new image locally
-      setMessage('Profile image updated locally. Save changes to update in the database.');
-    }
+        if (file) {
+            const formData = new FormData();
+            formData.append('profile_image', file);
+
+            const token = Cookies.get('token');
+            if (!token) {
+                setMessage('No token found. Please log in again.');
+                return;
+            }
+
+            try {
+                const response = await axios.put(`${process.env.REACT_APP_BASE_URL}/update_profile`, formData, {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
+                });
+                setProfileImage(response.data.profile_image);
+                setMessage('Profile image updated successfully');
+            } catch (error) {
+                setMessage('Error updating profile image');
+            }
+        }
   };
 
   const handleProfileUpdate = async () => {
@@ -150,50 +167,43 @@ useEffect(() => {
     setMessage('No token found. Please log in again.');
     return;
   }
-
-  // Create a FormData object to include the profile image and other fields
-  const formData = new FormData();
-  formData.append('username', username);
-  formData.append('name', name);
-  formData.append('email', email);
-  formData.append('role', role);
-  formData.append('age', age);
-  formData.append('nationality', nationality);
-  formData.append('position', position);
-  formData.append('matches', matches);
-  formData.append('minutes', minutes);
-  formData.append('goals', goals);
-  formData.append('assists', assists);
-  formData.append('club', club);
-  formData.append('market_value', market_value);
-  formData.append('total_yellow_cards', total_yellow_cards);
-  formData.append('total_red_cards', total_red_cards);
-  formData.append('performance_metrics', performance_metrics);
-  formData.append('media_sentiment', media_sentiment);
-  formData.append('aggression', aggression);
-  formData.append('reactions', reactions);
-  formData.append('long_pass', long_pass);
-  formData.append('stamina', stamina);
-  formData.append('strength', strength);
-  formData.append('sprint_speed', sprint_speed);
-  formData.append('agility', agility);
-  formData.append('jumping', jumping);
-  formData.append('heading', heading);
-  formData.append('free_kick_accuracy', free_kick_accuracy);
-  formData.append('volleys', volleys);
-
-  // Add the profile image if it is a local blob URL
-  if (profileImage.startsWith('blob:')) {
-    const response = await fetch(profileImage);
-    const blob = await response.blob();
-    formData.append('profile_image', blob, 'profile_image.jpg');
-  }
+  const updatedProfile = {
+  username,
+  name,
+  email,
+  role,
+  nationality,
+  age,
+  position,
+  matches,
+  minutes,
+  goals,
+  assists,
+  club,
+  market_value,
+  total_yellow_cards,
+  total_red_cards,
+  performance_metrics,
+  media_sentiment,
+  aggression,
+  reactions,
+  long_pass,
+  stamina,
+  strength,
+  sprint_speed,
+  agility,
+  jumping,
+  heading,
+  free_kick_accuracy,
+  volleys,
+  club_id
+};
 
   try {
-    const response = await axios.put(`${process.env.REACT_APP_BASE_URL}/update_profile`, formData, {
+    const response = await axios.put(`${process.env.REACT_APP_BASE_URL}/update_profile`, updatedProfile, {
       headers: {
         Authorization: `Bearer ${token}`,
-        // Do not set 'Content-Type' manually
+        // 'Content-Type': 'multipart/form-data',
       },
     });
 
@@ -276,16 +286,34 @@ useEffect(() => {
     return (
       <div>
         <h3>Market Value Predictor</h3>
-        <button onClick={() => predictMarketValue([2.481939,-0.828362,
+        <p>Current market value: {market_value || "N/A"}</p>
+        {setClub(clubs.find((club) => club.id === club_id)?.name)}
+        {console.log('Club:', club)}
+        {console.log('Position:', position)}
+
+        <button onClick={() => predictMarketValue([2.481939,market_value,
           -1.597527,-2.013867,-1.998466,-1.618861,-1.573948,-1.695989,-0.003764,
           -2.063420,-1.307850,-1.468429,-1.00975,-2.044530,-2.123675,-1.865531,
           -1.238116,-2.191793,0.438333,-1.591032,-1.444629,-0.909757,-0.489147,
           -2.136695,-0.833992,-1.855516,-1.526697,-2.019015,-1.803907,-1.574778,
-          -1.657954,2.341630,2.356355,2.363265,2.358774,2.348967,93,2,1])}>
+          -1.657954,2.341630,2.356355,2.363265,2.358774,2.348967,92,2,1])}>
           Predict Market Value
         </button>
-        {prediction && <p>Prediction: {prediction}</p>}
+        <br/>
+        {market_value === null ? (
+          <p>Prediction range: Insufficient data</p>
+        ) : (
+          prediction &&
+          prediction.length > 0 && (
+            <p>
+              Prediction range: <p>{(1.5 * prediction[0]).toFixed(2)} -{' '}
+              {(0.5 * prediction[0]).toFixed(2)}</p>
+            </p>
+          )
+        )}
+        {/* {prediction && <p>Prediction range: {1.5*prediction[0]}-{0.5*prediction[0]}</p>} */}
       </div>
+
     );
   };
 
@@ -846,7 +874,6 @@ useEffect(() => {
 
   return (
     <div>
-      <Header />
       <div className="container">
         <div className="left-sidebar">
           <div className="sidebar-profile-box">

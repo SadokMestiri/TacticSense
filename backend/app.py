@@ -52,7 +52,7 @@ import torch.nn as nn
 import unicodedata
 from fuzzywuzzy import process
 import pickle
-import fitz
+# import fitz
 import json as std_json
 import time
 
@@ -2344,93 +2344,38 @@ def get_jobs_by_hashtag(hashtag):
 
 @app.route('/get_posts', methods=['GET'])
 def get_posts():
-    current_user_id = None
-    auth_header = request.headers.get('Authorization')
-    if auth_header and auth_header.startswith('Bearer '):
-        token = auth_header.split(" ")[1]
-        try:
-            decoded_token = jwt.decode(token, app.config['SECRET_KEY'], algorithms=['HS256'])
-            current_user_id = decoded_token.get('user_id') 
-        except jwt.ExpiredSignatureError:
-            # Token expired, treat as anonymous
-            pass 
-        except jwt.InvalidTokenError:
-            # Invalid token, treat as anonymous
-            pass 
-
-    posts_query = Post.query # Start with a base query
-
-    if current_user_id:
-        current_user = User.query.get(current_user_id)
-        if current_user:
-            following_ids = [user.id for user in current_user.following.all()]
-            # If the user is following at least one person, filter by those IDs.
-            # Also include the current user's own posts.
-            if following_ids:
-                posts_query = posts_query.filter(Post.user_id.in_(following_ids + [current_user_id]))
-            else:
-                # If the user is not following anyone, only show their own posts on the home feed.
-                posts_query = posts_query.filter(Post.user_id == current_user_id)
-        else:
-            # Should not happen if token is valid, but as a fallback, show no posts if user not found
-            return jsonify([]), 200
-    else:
-        # If no user is logged in (no token or invalid token), return no posts or all posts.
-        # For "only see his following posts", returning an empty list is more appropriate.
-        return jsonify([]), 200
-
-
-    posts = posts_query.order_by(Post.created_at.desc()).all() 
+    posts = Post.query.all()
     posts_data = []
 
-    if not posts: # If no posts after filtering, return empty list
-        return jsonify([]), 200
-
-    # Efficiently fetch necessary related data
-    post_ids = [post.post_id for post in posts]
-    user_ids = list(set(post.user_id for post in posts)) # Get unique user IDs from the posts
-
-    # Fetch users involved in these posts
-    users_dict = {user.id: user for user in User.query.filter(User.id.in_(user_ids)).all()}
-
+    # Fetch all reactions in a single query to optimize performance
     reactions_data = db.session.query(
         Reaction.post_id,
         Reaction.reaction_type,
         db.func.count(Reaction.reaction_id)
-    ).filter(Reaction.post_id.in_(post_ids)).group_by(Reaction.post_id, Reaction.reaction_type).all()
+    ).group_by(Reaction.post_id, Reaction.reaction_type).all()
 
+    # Organize reactions into a dictionary for quick lookup
     reactions_dict = {}
-    for post_id_rx, reaction_type, count in reactions_data:
-        if post_id_rx not in reactions_dict:
-            reactions_dict[post_id_rx] = {}
-        reactions_dict[post_id_rx][reaction_type] = count
-    
-    comments_count_data = db.session.query(
-        Comment.post_id,
-        db.func.count(Comment.comment_id)
-    ).filter(Comment.post_id.in_(post_ids)).group_by(Comment.post_id).all()
-    
-    comments_count_dict = {post_id_cc: count for post_id_cc, count in comments_count_data}
-
-    saved_posts_by_current_user = set()
-    if current_user_id: # Only fetch saved posts if a user is logged in
-        saved_posts_by_current_user = {
-            sp.post_id for sp in SavedPost.query.filter_by(user_id=current_user_id).filter(SavedPost.post_id.in_(post_ids)).all()
-        }
+    for post_id, reaction_type, count in reactions_data:
+        if post_id not in reactions_dict:
+            reactions_dict[post_id] = {}
+        reactions_dict[post_id][reaction_type] = count
 
     for post in posts:
-        post_user = users_dict.get(post.user_id) # Get user from pre-fetched dict
-        if not post_user: # Should not happen if data is consistent
-            continue
-
         post_reactions = reactions_dict.get(post.post_id, {})
-        post_mentions = get_post_mentions_data(post.post_id)
+
+        # Fetch comments for the current post
+        comments = Comment.query.filter_by(post_id=post.post_id).all()
+        comments_data = [{
+            'user_id': comment.user_id,
+            'comment_text': comment.comment_text,
+            'created_at': comment.created_at
+        } for comment in comments]
+
         posts_data.append({
             'id': post.post_id,
             'user_id': post.user_id,
-            'user_name': post_user.name, 
-            'user_profile_image': post_user.profile_image, 
-            'username': post_user.username, # Added username for linking to profile
+            'user_name': post.user.name,
             'content': post.content,
             'image_url': post.image_url,
             'video_url': post.video_url,
@@ -2440,10 +2385,8 @@ def get_posts():
             'wows': post_reactions.get('wow', 0),
             'angrys': post_reactions.get('angry', 0),
             'sads': post_reactions.get('sad', 0),
-            'created_at': post.created_at.strftime('%Y-%m-%d %H:%M:%S'), 
-            'comments_count': comments_count_dict.get(post.post_id, 0), 
-            'is_saved': post.post_id in saved_posts_by_current_user,
-            'mentions': post_mentions
+            'created_at': post.created_at,
+            'comments': comments_data  # Add comments data
         })
 
     return jsonify(posts_data), 200
@@ -3745,16 +3688,19 @@ def predict():
             return self.model(x)
 
     input_dim = 39   
-    hidden_dim1= 222
-    hidden_dim2= 80
+    hidden_dim1= 186
+    hidden_dim2= 85
     hidden_dim3= 21
-    dropout_rate= 0.038842948881822076
+    dropout_rate= 0.008811343391188392
 
     model = MarketValuePredictor(input_dim, hidden_dim1, hidden_dim2, hidden_dim3, dropout_rate)
 
     # Load the state dictionary
     model.load_state_dict(torch.load('marketValuemodel/market_value_predictor.pth'))
-
+    scaler = joblib.load("marketValuemodel\scaler_market_value.pkl")
+    print("scaler loaded")
+    #encoder = joblib.load("marketValuemodel\label_encoder.pkl")
+    print("encoder loaded")
     # Set the model to evaluation mode
     model.eval()
 
@@ -3765,11 +3711,25 @@ def predict():
 
         # Get input data from the request
         input_data = request.json['input']
-
-        # Ensure input_data is a list of numbers
+        print("aasasdsdfsddddfgsf")
+        
+        #input_data[37] = int(encoder.transform([input_data[37]]))  # Encode the 38th element
+        #input_data[36] = int(encoder.transform([input_data[36]]))  # Encode the 39th element
+               
+        
         if not isinstance(input_data, list) or not all(isinstance(i, (int, float)) for i in input_data):
             return jsonify({'error': 'Invalid input format. Expected a list of numbers.'}), 400
 
+        # input_array = np.array(input_data).reshape(1, -1)  # Shape: [1, 39]
+        # input_scaled = scaler.transform(input_array)  # Scale the input data
+        
+        
+        input_data[1] = scaler.transform([[input_data[1]]])[0][0]  # Scale the second element
+        # input_data[37] = encoder.transform([[input_data[37]]])[0][0]  # Encode the 38th element
+        # input_data[36] = encoder.transform([[input_data[36]]])[0][0]  # Encode the 39th element
+        
+        
+        
         input_tensor = torch.tensor([input_data], dtype=torch.float32) # Convert to tensor
         input_tensor = torch.tensor([input_data], dtype=torch.float32)  # Shape: [1, 39]
         # Perform prediction
@@ -3778,7 +3738,14 @@ def predict():
         
         # Convert prediction to a list and return as JSON
         prediction_list = prediction.numpy().tolist()
-        return jsonify({'prediction': prediction_list})
+        prediction_array = prediction.numpy()
+
+        # Apply reverse scaling using the scaler
+        scaled_prediction = scaler.inverse_transform(prediction_array)
+
+        # Convert the scaled prediction to a list and return as JSON
+        scaled_prediction_list = scaled_prediction.tolist()
+        return jsonify({'prediction': scaled_prediction_list})
     except Exception as e:
         return jsonify({'error': str(e)}), 400
 
@@ -5920,8 +5887,4 @@ def get_taggable_users(current_user):
 
 # app.app_context().push()
 if __name__ == '__main__':
-    with app.app_context(): 
-        print("Attempting to create database tables...")
-        db.create_all()
-        print("Database tables should be created (if they didn't exist).")
     app.run(debug=True)
