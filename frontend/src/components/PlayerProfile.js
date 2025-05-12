@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom'; // useNavigate already imported
+import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import './PlayerPredictor.css'; // Assuming styles are shared or specific to player profile
@@ -11,45 +11,75 @@ const PlayerProfile = () => {
   const [career, setCareer] = useState([]);
   const [predicted, setPredicted] = useState(false);
   const [probability, setProbability] = useState(null);
-  const [loading, setLoading] = useState(true); // Added loading state
-  const [error, setError] = useState(''); // Added error state
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
   useEffect(() => {
     setLoading(true);
     setError('');
     axios.get(`http://localhost:5000/player/${encodeURIComponent(name)}/career`)
       .then(res => {
-        if (res.data && res.data.info && res.data.career) {
-            setInfo(res.data.info);
-            const cleaned = res.data.career.map(season => ({
-              ...season,
-              minutes: Number(String(season.minutes).replace(/,/g, '')),
-              goals: Number(season.goals),
-              assists: Number(season.assists),
-              mp: Number(season.mp)
-            }));
-            const merged = [];
-            cleaned.forEach(season => {
-              const existing = merged.find(s => s.season === season.season);
-              if (existing) {
-                existing.goals += season.goals;
-                existing.assists += season.assists;
-                existing.minutes += season.minutes;
-                existing.mp += season.mp;
-              } else {
-                merged.push({ ...season });
-              }
-            });
-            setCareer(merged);
-            setPredicted(false); 
-            setProbability(null); // Reset probability too
+        if (res.data && res.data.info) {
+          // Handle NaN values in info (from origin/Sadok)
+          const infoData = {
+            ...res.data.info,
+            age: isNaN(res.data.info.age) ? 'Unknown' : res.data.info.age,
+            team: res.data.info.team === null || res.data.info.team === undefined ? 'Unknown' : res.data.info.team,
+          };
+          setInfo(infoData);
         } else {
-            setError('Player data not found or in unexpected format.');
+          // Fallback if info is not directly available but res.data exists (from HEAD)
+          if (res.data) {
+            setInfo(res.data); // Or handle specific structure if different
+          } else {
+            setError('Player info not found or in unexpected format.');
+            setInfo({}); // Avoid null errors later
+          }
         }
+
+        // Clean and merge career data (combining logic)
+        if (res.data && res.data.career && Array.isArray(res.data.career)) {
+          // Filter out seasons with null/undefined season identifiers (from origin/Sadok)
+          const filteredCareer = res.data.career.filter(season =>
+            season.season !== null && season.season !== undefined
+          );
+
+          const cleaned = filteredCareer.map(season => ({
+            ...season,
+            minutes: Number(String(season.minutes).replace(/,/g, '')),
+            goals: Number(season.goals),
+            assists: Number(season.assists),
+            mp: Number(season.mp)
+          }));
+
+          // Merge duplicate seasons
+          const merged = [];
+          cleaned.forEach(season => {
+            const existing = merged.find(s => s.season === season.season);
+            if (existing) {
+              existing.goals += season.goals;
+              existing.assists += season.assists;
+              existing.minutes += season.minutes;
+              existing.mp += season.mp;
+            } else {
+              merged.push({ ...season });
+            }
+          });
+          setCareer(merged);
+        } else {
+          setCareer([]); // Initialize career to an empty array if data is missing
+          if (res.data && !res.data.career) { // Only set error if info was found but career was not
+            // setError('Player career data not found.'); // Optional: more specific error
+          }
+        }
+        setPredicted(false);
+        setProbability(null);
       })
       .catch(err => {
         console.error("Error fetching player profile:", err);
         setError(err.response?.data?.error || `Failed to load profile for ${name}.`);
+        setInfo({}); // Ensure info is not null on error to prevent render issues
+        setCareer([]);
       })
       .finally(() => {
         setLoading(false);
@@ -57,8 +87,10 @@ const PlayerProfile = () => {
   }, [name]);
 
   if (loading) return <div className="predictor-container" style={{textAlign: 'center', padding: '50px'}}>Loading player profile...</div>;
-  if (error) return <div className="predictor-container error" style={{textAlign: 'center', padding: '50px'}}>{error}</div>;
-  if (!info) return <div className="predictor-container" style={{textAlign: 'center', padding: '50px'}}>Player data not available.</div>;
+  if (error && !info) return <div className="predictor-container error" style={{textAlign: 'center', padding: '50px'}}>{error}</div>; // Show error prominently if no info
+  // If info is an empty object from an error case but no specific error message was set for "not found", show generic message
+  if (!info || Object.keys(info).length === 0 && !error) return <div className="predictor-container" style={{textAlign: 'center', padding: '50px'}}>Player data not available.</div>;
+
 
   const CustomDot = (props) => {
     const { cx, cy, payload } = props;
@@ -79,7 +111,7 @@ const PlayerProfile = () => {
         const lastSeasonYear = lastSeasonData ? parseInt(lastSeasonData.season.split('-')[0]) : new Date().getFullYear() -1; // Fallback if no career data
         
         const nextStart = lastSeasonYear + 1;
-        const nextSeason = `${nextStart}-${nextStart + 1}`;
+        const nextSeason = `${nextStart}-${String(nextStart + 1).slice(-2)}`; // Ensure two digits for year
         
         const newPoint = {
           season: nextSeason,
@@ -106,25 +138,28 @@ const PlayerProfile = () => {
       <button
         className="submit-btn" // Using submit-btn style, or create a specific "back-btn" style
         style={{ marginBottom: '1.5rem', background: '#e6f0fa', color: '#0073b1', border: '1px solid #0073b1' }}
-        // UPDATED NAVIGATION
         onClick={() => navigate('/analysis-hub/players')}
       >
         ← Back to Players List
       </button>  
-      <div className="profile-header">
-        <div className="profile-avatar">
-          {/* Ensure info.player_name or info.name exists before accessing [0] */}
-          {(info.player_name || info.name || 'P')[0].toUpperCase()}
-        </div>
-        <div className="profile-info">
-          <h2>{info.player_name || info.name}</h2>
-          <div>
-            <b>Age:</b> {info.age !== undefined ? info.age : 'N/A'} &nbsp;|&nbsp; 
-            <b>Position:</b> {info.position || 'N/A'} &nbsp;|&nbsp; 
-            <b>Team:</b> {info.team || 'N/A'}
+      {info && (info.player_name || info.name) && ( // Ensure info and name exist before rendering header
+        <div className="profile-header">
+          <div className="profile-avatar">
+            {/* Combined logic for avatar: check info, then player_name, then name, fallback to 'P', then toUpperCase */}
+            {(info && (info.player_name || info.name) ? (info.player_name || info.name)[0] : 'P').toUpperCase()}
+          </div>
+          <div className="profile-info">
+            <h2>{info.player_name || info.name}</h2>
+            <div>
+              <b>Age:</b> {info.age !== undefined ? info.age : 'N/A'} &nbsp;|&nbsp; 
+              <b>Position:</b> {info.position || 'N/A'} &nbsp;|&nbsp; 
+              <b>Team:</b> {info.team || 'N/A'}
+            </div>
           </div>
         </div>
-      </div>
+      )}
+      {error && <div className="predictor-container error" style={{textAlign: 'center', padding: '20px', color: 'red'}}>{error}</div>} {/* Display error message if any */}
+      
       <div className="dashboard-graphs">
         <div>
           <h4>Goals per Season</h4>
@@ -181,10 +216,10 @@ const PlayerProfile = () => {
       </div>
       <button
         className="submit-btn"
-        disabled={predicted || loading} // Disable if already predicted or currently loading prediction
+        disabled={predicted || loading || !info || Object.keys(info).length === 0} // Also disable if no player info
         onClick={handlePredict}
       >
-        {loading && predicted ? 'Predicting...' : (predicted ? 'Prediction Shown' : 'Predict Next Season')}
+        {loading && !predicted ? 'Loading Profile...' : (loading && predicted ? 'Predicting...' : (predicted ? 'Prediction Shown' : 'Predict Next Season'))}
       </button>
       {probability !== null && (
         <div style={{
@@ -200,7 +235,7 @@ const PlayerProfile = () => {
         }}>
             Probability of playing next season:&nbsp;
             <span style={{color: '#e91e63', fontWeight: 700}}>
-            {(probability * 100).toFixed(1)}%
+            {((probability || 0) * 100).toFixed(1)}%
             </span>
         </div>
         )}

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import Cookies from 'js-cookie';
 import jwt_decode from 'jwt-decode';
@@ -8,22 +8,26 @@ import Notifications from './Notifications'
 import CustomVideoPlayer from './CustomVideoPlayer';
 import RecommendationSidebar from './RecommendationSidebar';
 
+import MentionInput from './MentionInput'; 
+
 const Home = ({ header , footer}) => {
   const navigate = useNavigate();
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [isActivityOpen, setIsActivityOpen] = useState(false);
-  const [posts, setPosts] = useState([]); 
-  const [text, setText] = useState('');
-  const [image, setImage] = useState(null);
-  const [video, setVideo] = useState(null);
-  const [users, setUsers] = useState([]);
+  const [isMenuOpen, setIsMenuOpen] = useState(false); // For potential mobile menu
+  const [isActivityOpen, setIsActivityOpen] = useState(false); // For "RECENT", "GROUPS" sidebar
+
+  const [posts, setPosts] = useState([]);
+  const [text, setText] = useState(''); // For new post content
+  const [image, setImage] = useState(null); // For new post image
+  const [video, setVideo] = useState(null); // For new post video
+  const [mentionedUsersInPost, setMentionedUsersInPost] = useState([]); // Users mentioned in new post
+
+  const [users, setUsers] = useState({}); // Stores fetched user data (e.g., { userId: {profile_image: '...'} })
   const [error, setError] = useState(null);
   const [comments, setComments] = useState([]);
   const [metaBalance, setMetaBalance] = useState(null);
   const [metaCoinMessage, setMetaCoinMessage] = useState(false);
   const [checkingBalance, setCheckingBalance] = useState(false);
   const [selectedPost, setSelectedPost] = useState(null); // For managing the selected post
-  const [isCommentsVisible, setIsCommentsVisible] = useState(false); // To control visibility of the comments popup
   const [showReactions, setShowReactions] = useState(null);
 const reactions = [
   { name: "like", icon: "assets/images/post-like.png" },
@@ -40,10 +44,8 @@ const token = Cookies.get('token');
 let decodedToken = null;
 let exp = null;
 
-if (token) {
-  decodedToken = jwt_decode(token);
-  exp = decodedToken?.exp;
-}
+const [selectedPostForComments, setSelectedPostForComments] = useState(null); // Post whose comments are being viewed
+ const [isCommentsVisible, setIsCommentsVisible] = useState(false); // Comments modal visibility
 
 const date = exp ? new Date(exp * 1000) : null;
 const now = new Date();
@@ -61,7 +63,50 @@ useEffect(() => {
     setAllowed(true);
   }
 }, [token, decodedToken, navigate, date]);
+  const [commentText, setCommentText] = useState(''); // For new comment content
+  const [mentionedUsersInComment, setMentionedUsersInComment] = useState([]); // Users mentioned in new comment
+  const [isCommentingOnPostId, setIsCommentingOnPostId] = useState(null); // ID of post being commented on
 
+  // Token and user setup
+  useEffect(() => {
+    const token = Cookies.get('token');
+    const userCookie = Cookies.get('user');
+
+    if (token && userCookie) {
+      try {
+        const decodedToken = jwt_decode(token);
+        const exp = decodedToken?.exp;
+        const date = exp ? new Date(exp * 1000) : null;
+        const now = new Date();
+
+        if (date && date.getTime() < now.getTime()) {
+          Cookies.remove('token');
+          Cookies.remove('user');
+          navigate('/login');
+        } else {
+          setUser(JSON.parse(userCookie));
+          setAllowed(true);
+        }
+      } catch (e) {
+        console.error("Error decoding token or parsing user cookie:", e);
+        Cookies.remove('token');
+        Cookies.remove('user');
+        navigate('/login');
+      }
+    } else {
+      navigate('/login');
+    }
+  }, [navigate]);
+
+  const constructMediaUrl = (urlPath) => {
+    if (!urlPath) return '';
+    if (urlPath.startsWith('http://') || urlPath.startsWith('https://')) {
+      return urlPath;
+    }
+    // Assuming REACT_APP_BASE_URL is like 'http://localhost:5000' and urlPath might be '/uploads/image.jpg' or 'uploads/image.jpg'
+    const baseUrl = process.env.REACT_APP_BASE_URL || '';
+    return `${baseUrl}${urlPath.startsWith('/') ? '' : '/'}${urlPath}`;
+  };
 
   const getTimeAgo = (createdAt) => {
     const now = new Date();
@@ -95,37 +140,6 @@ useEffect(() => {
 
   const [isCommenting, setIsCommenting] = useState(false);
   const [comment, setComment] = useState(''); // Store comment text
-
-  // Handle comment input change
-  const handleCommentChange = (event) => {
-    setComment(event.target.value);
-  };
-
-  // Handle submitting the comment
-  const handleCommentSubmit = async (postId) => {
-    if (comment.trim() === '') return; // Don't submit empty comments
-
-    try {
-      // Send the comment to the backend via the /add_comment API
-      const response = await axios.post(`${process.env.REACT_APP_BASE_URL}/add_comment`, {
-        post_id: postId,  // Send the post_id in the request body
-        user_id: user.id, // Pass the current user's ID
-        comment_text: comment, // The actual comment content
-        created_at: new Date().toISOString(), // Optional: Use the current timestamp
-      });
-
-      // Check if the response is successful (status code 200)
-      if (response.status === 200) {
-        console.log('Comment added:', response.data.message); // Assuming response has a message
-        setComment(''); // Clear the input field
-        setIsCommenting(false); // Close the input field after submission
-      } else {
-        console.error('Error adding comment:', response.data.message || 'Unknown error');
-      }
-    } catch (error) {
-      console.error('Network error:', error);
-    }
-  };
   
   const renderContent = (content) => {
     return content.split(/(\s+)/).map((part, i) => {
@@ -150,72 +164,102 @@ useEffect(() => {
   };
   
 
-  const fetchUsers = async (user_id) => {
+
+  const fetchUsersData = useCallback(async (userIds) => {
+    const uniqueUserIds = Array.from(new Set(userIds.filter(id => id))); // Ensure unique, non-null IDs
+    const usersToFetch = uniqueUserIds.filter(id => !users[id]);
+    
+    if (usersToFetch.length === 0) return;
+
     try {
-      const response = await axios.get(`${process.env.REACT_APP_BASE_URL}/get_user/${user_id}`);
-      
+      // In a real app, you might have a batch endpoint, or fetch one by one
+      // For simplicity, fetching one by one here. Consider a batch endpoint for performance.
+      const fetchedUsersData = {};
+      for (const userId of usersToFetch) {
+        try {
+          const response = await axios.get(`${process.env.REACT_APP_BASE_URL}/get_user/${userId}`);
+          if (response.data) {
+            fetchedUsersData[userId] = response.data;
+          }
+        } catch (userError) {
+          console.error(`Error fetching user data for ID ${userId}:`, userError);
+          // Optionally, set a placeholder or skip this user
+        }
+      }
       setUsers(prevUsers => ({
         ...prevUsers,
-        [user_id]: response.data?.profile_image || '/default-avatar.png' 
+        ...fetchedUsersData,
       }));
     } catch (error) {
-      setError(error.response?.data?.message || 'Error fetching user data');
-      // Set a default image on error
-      setUsers(prevUsers => ({
-        ...prevUsers,
-        [user_id]: 'assets/images/default-avatar.png'
-      }));
+      console.error('Error fetching user data:', error);
     }
-  };
+  }, [users]); // Dependency: users state to avoid re-fetching already fetched users
 
 
-
-  const handleTextChange = (e) => {
-    setText(e.target.value);
-  };
-
-  const handleImageChange = (e) => {
-    setImage(e.target.files[0]);
-    console.log('Selected image:', e.target.files[0]);
-  };
-
-  const handleVideoChange = (e) => {
-    setVideo(e.target.files[0]);
-    console.log('Selected video:', e.target.files[0]);
-  };
-
-  const handleSubmitPost = async (e) => {
-    e.preventDefault();
-    console.log('Submitting post with text:', text);
-
-    const formData = new FormData();
-    formData.append('user_id', user.id);
-    formData.append('text', text);
-    if (image) {
-      formData.append('image', image);
+  // Unified fetchPosts function
+  const fetchPosts = useCallback(async () => {
+    if (!allowed || !user) {
+      // console.log("fetchPosts: Not allowed or no user, returning.");
+      return;
     }
-    if (video) {
-      formData.append('video', video);
-    }
-
     try {
-      const response = await axios.post(`${process.env.REACT_APP_BASE_URL}/create_post`, formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
+      const token = Cookies.get('token');
+      // console.log("fetchPosts: Fetching with token...");
+      const response = await axios.get(`${process.env.REACT_APP_BASE_URL}/get_posts`, {
+        headers: { Authorization: `Bearer ${token}` },
       });
+      const postsData = response.data;
 
-      console.log('Post created successfully:', response.data);
-      alert('Post created successfully');
-      setImage(null);
-      setVideo(null);
-      setText('');
-      fetchPosts();
+      if (Array.isArray(postsData)) {
+        // console.log("fetchPosts: Posts data received", postsData.length);
+        setAllPosts(postsData); // Store all fetched posts
+
+        // Extract user IDs from posts and fetch their data
+        const userIdsFromPosts = postsData.map(post => post.user_id).filter(id => id); // Filter out null/undefined
+        if (userIdsFromPosts.length > 0) {
+          // console.log("fetchPosts: Fetching user data for post authors");
+          await fetchUsersData(userIdsFromPosts);
+        }
+        // The useEffect hook below will handle sorting, filtering, and setting the 'posts' state
+      } else {
+        console.error("Error fetching posts: API did not return an array.", postsData);
+        setAllPosts([]);
+        setPosts([]); // Clear displayable posts as well
+      }
     } catch (error) {
-      console.error('Error creating post:', error);
-      alert('There was an error creating the post');
+      console.error('Error fetching posts:', error);
+      if (error.response && error.response.status === 401) {
+        Cookies.remove('token');
+        Cookies.remove('user');
+        navigate('/login');
+      } else {
+        setAllPosts([]);
+        setPosts([]);
+      }
     }
-  };
+  }, [allowed, user, navigate, fetchUsersData]); // Dependencies for the fetchPosts callback
+
+  // useEffect to call fetchPosts when user/auth status changes
+  useEffect(() => {
+    // console.log("useEffect (fetchPosts trigger): allowed, user changed", allowed, !!user);
+    if (allowed && user) {
+      fetchPosts();
+    }
+  }, [allowed, user, fetchPosts]); // fetchPosts is a dependency
+
+  // useEffect to handle sorting and filtering whenever allPosts, sortOption, or filterType changes
+  useEffect(() => {
+    // console.log("useEffect (sorting/filtering): allPosts, sortOption, or filterType changed");
+    if (allPosts && allPosts.length > 0) {
+      let processedPosts = [...allPosts]; // Create a new array for processing
+      processedPosts = filterPosts(processedPosts, filterType);
+      processedPosts = sortPosts(processedPosts, sortOption);
+      setPosts(processedPosts);
+    } else {
+      setPosts([]); // If allPosts is empty, ensure posts is also empty
+    }
+  }, [allPosts, sortOption, filterType, filterPosts, sortPosts]); // filterPosts and sortPosts should be stable or included if they can change
+
 
   // Fonction de tri
   const sortPosts = (postsData, option) => {
@@ -242,24 +286,6 @@ useEffect(() => {
     });
   };
 
-  const fetchPosts = async () => {
-    try {
-      const response = await axios.get(`${process.env.REACT_APP_BASE_URL}/get_posts`);
-      let postsData = response.data;
-
-      for (let post of postsData) {
-        if (post.user_id) {
-          await fetchUsers(post.user_id);
-        }
-      }
-
-      postsData = sortPosts(postsData, sortOption);
-      setAllPosts(postsData);
-      setPosts(postsData);
-    } catch (error) {
-      console.error('Error fetching posts:', error);
-    }
-  };
   useEffect(() => {
     let filteredPosts = filterPosts([...allPosts], filterType);
     filteredPosts = sortPosts(filteredPosts, sortOption);
@@ -278,39 +304,101 @@ useEffect(() => {
     setFilterType(e.target.value);
   };
   const handleReaction = async (postId, reactionType) => {
+    if (!user) return;
+    const token = Cookies.get('token');
+    if (!token) { navigate('/login'); return; }
     try {
-      const response = await axios.post(`${process.env.REACT_APP_BASE_URL}/react_to_post`, {
-        user_id:user.id,
+      await axios.post(`${process.env.REACT_APP_BASE_URL}/react_to_post`, {
+        // user_id: user.id, // Backend uses token
         post_id: postId,
         reaction_type: reactionType,
+      }, {
+        headers: { Authorization: `Bearer ${token}` },
       });
 
       console.log(`Reaction (${reactionType}) added:`, response.data);
       fetchPosts(); // Refresh posts to update reactions count
     } catch (error) {
       console.error('Error adding reaction:', error);
-      alert('There was an error reacting to the post');
+      alert('There was an error reacting to the post. ' + (error.response?.data?.error || ''));
     }
   };
 
-  const fetchComments = async (postId) => {
+  const handleSavePost = async (postId, isCurrentlySaved) => {
+    if (!user) { navigate('/login'); return; }
+    const token = Cookies.get('token');
+    if (!token) { navigate('/login'); return; }
+    try {
+      const endpoint = isCurrentlySaved
+        ? `${process.env.REACT_APP_BASE_URL}/posts/${postId}/unsave`
+        : `${process.env.REACT_APP_BASE_URL}/posts/${postId}/save`;
+      const method = isCurrentlySaved ? 'delete' : 'post';
+      await axios({
+        method, url: endpoint,
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setPosts(prevPosts =>
+        prevPosts.map(p =>
+          p.id === postId ? { ...p, is_saved: !isCurrentlySaved } : p
+        )
+      );
+    } catch (error) {
+      console.error('Error saving/unsaving post:', error);
+      alert('Failed to update save status. ' + (error.response?.data?.error || ''));
+    }
+  };
+
+  const fetchComments = useCallback(async (postId) => {
+    if (!postId) return;
     try {
       const response = await axios.get(`${process.env.REACT_APP_BASE_URL}/get_comments/${postId}`);
       const commentsData = response.data;
-      for (let comment of commentsData) {
-        if (comment.user_id) {
-          await fetchUsers(comment.user_id);
-        }
+      if (Array.isArray(commentsData)) {
         setComments(commentsData);
-
+        const userIdsFromComments = new Set(commentsData.map(comment => comment.user_id));
+        fetchUsersData(userIdsFromComments);
+      } else {
+        setComments([]);
       }
     } catch (error) {
       console.error("Error fetching comments:", error);
+      setComments([]);
+    }
+  }, [fetchUsersData]);
+
+  const handleCommentSubmit = async (postId) => {
+    if (commentText.trim() === '' || !user) return;
+    const token = Cookies.get('token');
+    if (!token) { navigate('/login'); return; }
+
+    const mentionIds = mentionedUsersInComment.map(u => u.id);
+
+    try {
+      await axios.post(`${process.env.REACT_APP_BASE_URL}/add_comment`, {
+        post_id: postId,
+        comment_text: commentText,
+        mentioned_user_ids: mentionIds,
+      }, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setCommentText('');
+      setMentionedUsersInComment([]);
+      setIsCommentingOnPostId(null); // Close comment input for this post
+      fetchComments(postId); // Refresh comments for the modal if open
+      fetchPosts(); // Refresh posts to update comment counts etc.
+    } catch (error) {
+      console.error('Error adding comment:', error);
+      alert('Error adding comment. ' + (error.response?.data?.error || ''));
     }
   };
   
   const checkBalance = async () => {
     setCheckingBalance(true);
+
+  if (!allowed || !user) {
+    // Or a loading spinner, or null if login redirect is fast enough
+    return <div style={{ textAlign: 'center', marginTop: '50px' }}>Loading...</div>;
+  }
 
     try {
         const response = await axios.get(
@@ -333,125 +421,89 @@ useEffect(() => {
 console.log(user)
   return (
     <div>
- {header}
+      {header}
       <div className="container">
         <div className="left-sidebar">
           <div className="sidebar-profile-box">
-            <img src="assets/images/cover-pic.jpg" alt="cover" width="100%" />
+            <img src="/assets/images/cover-pic.jpg" alt="cover" width="100%" />
             <div className="sidebar-profile-info">
               <img src={`${process.env.REACT_APP_BASE_URL}/${user.profile_image}`} alt="profile" />
               <h1>{user.name}</h1>
               <h3>{user.role}</h3>
               <ul>
-                <li>Your profile views <span>24K</span></li>
-                <li>Your post views <span>128K</span></li>
-                <li>Your Connections <span>108K</span></li>
+                <li>Profile views <span>0</span></li>
+                <li>Post views <span>0</span></li>
+                <li>Connections <span>0</span></li>
               </ul>
             </div>
             <div className="sidebar-profile-link">
               <a href="#"><img src="assets/images/items.svg" alt="items" />My Items</a>
-<a href="#" onClick={checkBalance} style={{ width: "60px", cursor: "pointer" }}>
-    <img src="assets/images/metacoin.png" alt="metacoin" style={{ width: "50px"}} />
-    {checkingBalance ? "Checking..." : metaBalance !== null ? `Balance: ${metaBalance} MC` : "Check MetaCoin Balance"}
-</a>
+              <a href="#" onClick={checkBalance} style={{ width: "60px", cursor: "pointer" }}>
+                <img src="assets/images/metacoin.png" alt="metacoin" style={{ width: "50px"}} />
+                  {checkingBalance ? "Checking..." : metaBalance !== null ? `Balance: ${metaBalance} MC` : "Check MetaCoin Balance"}
+                </a>
             </div>
           </div>
 
-          {/* Activity */}
           <div className={`sidebar-activity ${isActivityOpen ? 'open-activity' : ''}`} id="sidebarActivity">
             <h3>RECENT</h3>
-            <a href="#"><img src="assets/images/recent.svg" alt="recent" />Data Analysis</a>
-            <a href="#"><img src="assets/images/recent.svg" alt="recent" />UI UX Design</a>
-            <a href="#"><img src="assets/images/recent.svg" alt="recent" />Web Development</a>
-            <a href="#"><img src="assets/images/recent.svg" alt="recent" />Object Oriented Programming</a>
-            <a href="#"><img src="assets/images/recent.svg" alt="recent" />Operating Systems</a>
-            <a href="#"><img src="assets/images/recent.svg" alt="recent" />Platform technologies</a>
-
+            {/* Add actual recent activity links */}
+            <a href="#"><img src="/assets/images/recent.svg" alt="recent" />Sample Activity</a>
             <h3>GROUPS</h3>
-            <a href="#"><img src="assets/images/group.svg" alt="group" />Data Analyst group</a>
-            <a href="#"><img src="assets/images/group.svg" alt="group" />Learn NumPy</a>
-            <a href="#"><img src="assets/images/group.svg" alt="group" />Machine Learning group</a>
-            <a href="#"><img src="assets/images/group.svg" alt="group" />Data Science Aspirants</a>
-
+            {/* Add actual group links */}
+            <a href="#"><img src="/assets/images/group.svg" alt="group" />Sample Group</a>
             <h3>HASHTAG</h3>
-            <a href="#"><img src="assets/images/hashtag.svg" alt="hashtag" />dataanalyst</a>
-            <a href="#"><img src="assets/images/hashtag.svg" alt="hashtag" />numpy</a>
-            <a href="#"><img src="assets/images/hashtag.svg" alt="hashtag" />machinelearning</a>
-            <a href="#"><img src="assets/images/hashtag.svg" alt="hashtag" />datascience</a>
-
+            {/* Add actual hashtag links */}
+            <a href="#"><img src="/assets/images/hashtag.svg" alt="hashtag" />#sampletag</a>
             <div className="discover-more-link">
               <a href="#">Discover More</a>
             </div>
           </div>
-
-          <p id="showMoreLink" >Show more <b>+</b></p>
+          <p id="showMoreLink" onClick={() => setIsActivityOpen(!isActivityOpen)} style={{ cursor: 'pointer' }}>
+            {isActivityOpen ? 'Show less' : 'Show more'} <b>{isActivityOpen ? '-' : '+'}</b>
+          </p>
         </div>
 
         <div className="main-content">
-          {/* Create Post Section */}
+          {/* Create Post Section - Prioritizing origin/Sadok for MentionInput */}
           <div className="create-post">
             <div className="create-post-input">
-              <img src={`${process.env.REACT_APP_BASE_URL}/${user.profile_image}`} alt="profile" />
-              <textarea rows="2" placeholder="Write Something"
+              <img
+                src={user.profile_image ? constructMediaUrl(user.profile_image) : '/assets/images/default-avatar.png'}
+                alt="profile"
+                onError={(e) => e.target.src = '/assets/images/default-avatar.png'}
+              />
+              <MentionInput
                 value={text}
-                onChange={handleTextChange}
-              ></textarea>
+                onChange={setText} 
+                onMentionsChange={setMentionedUsersInPost} 
+                placeholder="Write Something..."
+                className="create-post-textarea-wrapper" 
+              />
             </div>
+            {mentionedUsersInPost.length > 0 && (
+                <div style={{ fontSize: '0.8em', color: '#555', padding: '5px 0', marginLeft: '50px' /* Align with input */ }}>
+                    Tagging: {mentionedUsersInPost.map(u => `@${u.username}`).join(', ')}
+                </div>
+            )}
             <div className="create-post-links">
-              <li onClick={() => document.getElementById('image-upload').click()} >
-                <img src="assets/images/photo.svg" alt="photo" /> Photo
-                <input
-                  type="file"
-                  id="image-upload"
-                  className="file-upload-input"
-                  onChange={handleImageChange}
-                  accept="image/*"
-                  multiple
-                  style={{ display: 'none' }}
-                />
+              {/* Using IDs from origin/Sadok for consistency if MentionInput is kept */}
+              <li onClick={() => document.getElementById('home-image-upload')?.click()}>
+                <img src="/assets/images/photo.svg" alt="photo" /> Photo
+                <input type="file" id="home-image-upload" onChange={handleImageChange} accept="image/*" style={{ display: 'none' }} />
               </li>
-
-              <li onClick={() => document.getElementById('video-upload').click()}>
-                <img src="assets/images/video.svg" alt="video" /> Video
-                <input
-                  type="file"
-                  id="video-upload"
-                  className="file-upload-input"
-                  onChange={handleVideoChange}
-                  accept="video/*"
-                  multiple
-                  style={{ display: 'none' }}
-                />
+              <li onClick={() => document.getElementById('home-video-upload')?.click()}>
+                <img src="/assets/images/video.svg" alt="video" /> Video
+                <input type="file" id="home-video-upload" onChange={handleVideoChange} accept="video/*" style={{ display: 'none' }} />
               </li>
-              <li><img src="assets/images/event.svg" alt="event" /> Event</li>
-              <li onClick={handleSubmitPost}>Post</li>
+              <li><img src="/assets/images/event.svg" alt="event" /> Event</li>
+              <li onClick={handleSubmitPost} style={{ cursor: 'pointer' }}>Post</li>
             </div>
-
-            {image && (
-              <div className="uploaded-files-preview">
-                <img
-                  src={URL.createObjectURL(image)}
-                  alt="Uploaded"
-                  style={{ maxWidth: '150px', marginTop: '10px' }}
-                />
-
-              </div>
-            )}
-
-            {video && (
-              <div className="uploaded-files-preview">
-                <video
-                  controls
-                  src={URL.createObjectURL(video)}
-                  style={{ maxWidth: '150px', marginTop: '10px' }}
-                />
-
-              </div>
-            )}
+            {image && <div className="uploaded-files-preview"><img src={URL.createObjectURL(image)} alt="Preview" style={{ maxWidth: '150px', marginTop: '10px' }} /></div>}
+            {video && <div className="uploaded-files-preview"><video controls src={URL.createObjectURL(video)} style={{ maxWidth: '150px', marginTop: '10px' }} /></div>}
           </div>
 
-
-          {/* Sorting & Filtering */}
+          {/* Sorting & Filtering - Using HEAD's more detailed UI, but ensure it works with origin/Sadok's post fetching if that's chosen */}
           <div className="sort-by">
             <hr />
             <p>
@@ -472,38 +524,68 @@ console.log(user)
             </p>
           </div>
 
-          {/* Posts */}
-          {posts.map((post, index) => (
-            <div key={index} className="post">
+          {/* Display "No posts to show" message from origin/Sadok if posts array is empty */}
+          {posts.length === 0 && (
+            <div style={{ textAlign: 'center', marginTop: '20px', color: '#666' }}>
+              <p>No posts to show.</p>
+              <p>Follow other users or create your own posts!</p>
+            </div>
+          )}
+
+          {/* Posts List - Combining elements from both, prioritizing origin/Sadok for post structure and HEAD for comments modal */}
+          {posts.map((post) => ( // Assuming 'posts' state is correctly populated by the unified fetchPosts
+            // Using post.id || post.post_id from origin/Sadok for key
+            <div key={post.id || post.post_id} className="post">
               <div className="post-author">
-                <img src={`${process.env.REACT_APP_BASE_URL}/${users[post.user_id]}`} alt="user" />
+                <img
+                  // Using origin/Sadok's user image logic with constructMediaUrl
+                  src={users[post.user_id]?.profile_image ? constructMediaUrl(users[post.user_id].profile_image) : '/assets/images/default-avatar.png'}
+                  alt={post.user_name || 'User'}
+                  onError={(e) => e.target.src = '/assets/images/default-avatar.png'}
+                />
                 <div>
-                  <h1>{post.user_name}</h1>
-                  {/* <small>{post.title}</small>*/}
+                  {/* Using Link from origin/Sadok */}
+                  <Link to={`/profile/${post.username}`} style={{ textDecoration: 'none', color: 'inherit' }}>
+                    <h1>{post.user_name}</h1>
+                  </Link>
                   <small>{getTimeAgo(post.created_at)}</small>
                 </div>
+                {/* Save button from origin/Sadok */}
+                <button
+                  onClick={() => handleSavePost(post.id || post.post_id, post.is_saved)}
+                  className={`save-button ${post.is_saved ? 'saved' : ''}`}
+                  style={{ marginLeft: 'auto', padding: '5px 10px', cursor: 'pointer', background: 'none', border: 'none', fontSize: '1.2em' }}
+                  title={post.is_saved ? 'Unsave Post' : 'Save Post'}
+                >
+                  {post.is_saved ? '❤️' : '🤍'}
+                </button>
               </div>
-              <p>{renderContent(post.content)}</p>
-              {post.image_url && (
-            <img 
-              src={`${process.env.REACT_APP_BASE_URL}${post.image_url}`} 
-              alt="post" 
-              style={{ width: '100%' }} 
-            />
-          )}
-        {post.video_url && (
-  <CustomVideoPlayer 
-    videoUrl={`${process.env.REACT_APP_BASE_URL}${post.video_url}`}
-    postId={post.id}
-    srtUrl={post.srt_url ? `${process.env.REACT_APP_BASE_URL}${post.srt_url.startsWith('/') ? '' : '/'}${post.srt_url}` : undefined}
-  />
-)}
 
+              {/* Content rendering - Using origin/Sadok's renderContentWithMentions */}
+              {renderContentWithMentions(post.content, post.mentions)}
+
+              {/* Image and Video display - Using origin/Sadok's structure with constructMediaUrl */}
+              {post.image_url && <img src={constructMediaUrl(post.image_url)} alt="post content" style={{ width: '100%', marginTop: '10px', borderRadius: '4px' }} />}
+              {post.video_url && (
+                // If you keep CustomVideoPlayer from HEAD, ensure it's compatible.
+                // Otherwise, use origin/Sadok's simpler video tag:
+                <video autoPlay muted controls style={{ width: '100%', marginTop: '10px', borderRadius: '4px' }}>
+                  <source src={constructMediaUrl(post.video_url)} type="video/mp4" />
+                  Your browser does not support the video tag.
+                </video>
+                // OR if CustomVideoPlayer is preferred and compatible:
+                // <CustomVideoPlayer 
+                //   videoUrl={constructMediaUrl(post.video_url)}
+                //   postId={post.id || post.post_id}
+                //   srtUrl={post.srt_url ? constructMediaUrl(post.srt_url) : undefined}
+                // />
+              )}
             
               <div className="post-stats">
+                {/* Reactions display - from HEAD, assuming post object has like, love, etc. counts */}
                 <div className="post-reactions">
                   {Object.entries({
-                    "post-like": post.likes,
+                    "post-like": post.likes, // Ensure these fields (post.likes, post.loves) exist on the post object
                     love: post.loves,
                     clap: post.claps,
                     haha: post.laughs,
@@ -511,13 +593,13 @@ console.log(user)
                     angry: post.angrys,
                     sad: post.sads
                   })
-                    .filter(([_, count]) => count > 0) // Show only reactions with a count > 0
+                    .filter(([_, count]) => count > 0)
                     .map(([reaction, count]) => (
                       <div key={reaction} className="reaction">
                         <img
-                          src={`assets/images/${reaction}.png`}
+                          src={`/assets/images/${reaction}.png`} // Assuming assets are in public folder
                           alt={reaction}
-                          className="post-reaction-icon" // Added CSS class for icons
+                          className="post-reaction-icon"
                         />
                       </div>
                     ))}
@@ -535,156 +617,118 @@ console.log(user)
                 </div>
 
                 <div>
-                  {/*${post.shares}*/}
+                  {/* Comments count and modal trigger - adapting HEAD's logic */}
                   <span
                     onClick={() => {
-                      setSelectedPost(post); // Set the clicked post
-                      setIsCommentsVisible(true); // Show the comments popup
-                      fetchComments(post.id);  // Fetch comments
+                      // Use selectedPostForComments from origin/Sadok if that's the state for the modal
+                      setSelectedPostForComments(post); // or setSelectedPost(post) if using HEAD's state variable
+                      setIsCommentsVisible(true);
+                      fetchComments(post.id || post.post_id); 
                     }}
+                    style={{ cursor: 'pointer' }}
                   >
-                    {`${post.comments.length} comments `}
+                    {/* Use comments_count from origin/Sadok or post.comments.length from HEAD */}
+                    {`${post.comments_count || (post.comments && post.comments.length) || 0} comments`}
                   </span>
                 </div>
-                {isCommentsVisible && selectedPost && (
-                  <div className="comments-modal">
-                    <div className="modal-content">
-                      {/* Modal Header */}
-                      <div className="modal-header">
-                        <h3>Comments</h3>
-                        <button className="modal-close" onClick={() => setIsCommentsVisible(false)}>✖</button>
-                      </div>
-
-                      {/* Modal Body - Comments List */}
-                      <div className="modal-body">
-                        {comments.length === 0 ? (
-                          <p style={{ textAlign: "center", color: "#666" }}>No comments yet.</p>
-                        ) : (
-                          comments.map((comment) => (
-                            <div key={comment.id} className="comment-item">
-                              {/* User Avatar */}
-                              <img
-                                src={`${process.env.REACT_APP_BASE_URL}/${users[comment.user_id]}`}
-                                alt="User"
-                                className="comment-avatar"
-                                onError={(e) => (e.target.src = "assets/images/user-5.png")}
-                              />
-                              {/* Comment Content */}
-                              <div className="comment-content">
-                                <strong>{comment.user_name}</strong>
-                                <p>{comment.comment_text}</p>
-                              </div>
-                              <div className="comment-meta">{getTimeAgo(comment.created_at)}</div>
-                            </div>
-                          ))
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                )}
-
               </div>
+
+              {/* Post Activity (Like, Comment buttons) - from origin/Sadok */}
               <div className="post-activity">
                 <div>
-                  <img src={`${process.env.REACT_APP_BASE_URL}/${user.profile_image}`} className="post-activity-user-icon" alt="user-icon" />
-                  <img src="assets/images/down-arrow.png" className="post-activity-arrow-icon" alt="arrow-icon" />
+                  <img
+                    src={user.profile_image ? constructMediaUrl(user.profile_image) : '/assets/images/default-avatar.png'}
+                    className="post-activity-user-icon" alt="user-icon"
+                    onError={(e) => e.target.src = '/assets/images/default-avatar.png'}
+                  />
+                  {/* Removed down-arrow from HEAD as it wasn't in origin/Sadok here */}
                 </div>
-                <div
-                  className="reaction-container"
-                  onMouseEnter={() => setShowReactions(post.id)}
-                  onMouseLeave={() => setShowReactions(null)}
-                >
-                  {/* Like Button */}
-                  <div className="post-activity-link">
-                    <img src="assets/images/like.png" alt="like-icon" />
+                <div className="reaction-container" 
+                     onMouseEnter={() => setShowReactions(post.id || post.post_id)} 
+                     onMouseLeave={() => setShowReactions(null)}>
+                  <div className="post-activity-link" onClick={() => handleReaction(post.id || post.post_id, 'like') /* Default to 'like' or make it dynamic */}>
+                    <img src="/assets/images/like.png" alt="like-icon" />
                     <span>Like</span>
                   </div>
-
-                  {/* Reactions Bar */}
-                  {showReactions === post.id && (
+                  {showReactions === (post.id || post.post_id) && (
                     <div className="reactions-bar">
-                      {reactions.map((reaction) => (
-                        <img
-                          key={reaction.name}
-                          src={reaction.icon}
-                          alt={reaction.name}
-                          className="reaction-icon"
-                          onClick={() => handleReaction(post.id, reaction.name)}
-                        />
+                      {reactions.map((reaction) => ( // Ensure 'reactions' array is defined (from HEAD)
+                        <img 
+                            key={reaction.name} 
+                            src={reaction.icon} // Ensure these icons are in /public/assets/images
+                            alt={reaction.name} 
+                            className="reaction-icon" 
+                            onClick={() => handleReaction(post.id || post.post_id, reaction.name)} />
                       ))}
                     </div>
                   )}
                 </div>
-
-
-                <div className="post-activity-link" onClick={() => setIsCommenting(true)}>
-                  <img src="assets/images/comment.png" alt="comment-icon" />
+                <div className="post-activity-link" onClick={() => { setIsCommentingOnPostId(post.id || post.post_id); setCommentText(''); setMentionedUsersInComment([]); }}>
+                  <img src="/assets/images/comment.png" alt="comment-icon" />
                   <span>Comment</span>
                 </div>
-
+                {/* Share and Send from HEAD can be added here if desired */}
+                {/* 
                 <div className="post-activity-link" onClick={() => console.log('Shared post')}>
-                  <img src="assets/images/share.png" alt="share-icon" />
+                  <img src="/assets/images/share.png" alt="share-icon" />
                   <span>Share</span>
                 </div>
                 <div className="post-activity-link" onClick={() => console.log('Sent post')}>
-                  <img src="assets/images/send.png" alt="send-icon" />
+                  <img src="/assets/images/send.png" alt="send-icon" />
                   <span>Send</span>
                 </div>
-
+                */}
               </div>
-
-              <div className="post-stats">
-                {isCommenting && (
-                  <div className="comment-input-wrapper">
-                    <textarea
-                      value={comment}
-                      onChange={handleCommentChange}
-                      placeholder="Write a comment..."
-                      rows="2"
-                      className="comment-input"
-                    />
-                    <button onClick={() => handleCommentSubmit(post.id)} className="comment-send-btn">
-                      <img src="assets/images/send-comment.png" alt="send" className="send-icon" />
-                    </button>
-                  </div>
-                )}
-              </div>
-
+                
+              {/* Comment Input - from origin/Sadok (inline with post) */}
+              {isCommentingOnPostId === (post.id || post.post_id) && (
+                <div className="comment-input-wrapper">
+                  <MentionInput
+                    value={commentText}
+                    onChange={setCommentText}
+                    onMentionsChange={setMentionedUsersInComment}
+                    placeholder="Write a comment..."
+                    className="comment-textarea-wrapper"
+                  />
+                 {mentionedUsersInComment.length > 0 && (
+                    <div style={{ fontSize: '0.7em', color: '#555', padding: '3px 0' }}>
+                        Tagging: {mentionedUsersInComment.map(u => `@${u.username}`).join(', ')}
+                    </div>
+                  )}
+                  <button onClick={() => handleCommentSubmit(post.id || post.post_id)} className="comment-send-btn">
+                    <img src="/assets/images/send-comment.png" alt="send" className="send-icon" />
+                  </button>
+                </div>
+              )}
             </div>
           ))}
         </div>
-
-
-
-        {/* Right Sidebar */}
+        
+        {/* Right Sidebar - Taking structure from origin/Sadok, content from HEAD where applicable */}
         <div className="right-sidebar">
-          {/*recommendation */}
-        <RecommendationSidebar token={token} />
+          <RecommendationSidebar token={token} /> {/* From origin/Sadok */}
           <div className="sidebar-news">
-            <img src="assets/images/more.svg" className="info-icon" alt="more" />
+            <img src="/assets/images/more.svg" className="info-icon" alt="more" />
             <h3>Trending News</h3>
-            <a href="#">High Demand for Skilled Employees</a>
-            <span>1d ago &middot; 10,934 readers</span>
-            <a href="#">Inflation in Canada Affects the Workforce</a>
-            <span>2d ago &middot; 7,043 readers</span>
-            <a href="#">Mass Recruiters fire Employees</a>
-            <span>4d ago &middot; 17,789 readers</span>
-            <a href="#">Crypto predicted to Boom this year</a>
-            <span>9d ago &middot; 2,436 readers</span>
+            {/* Placeholder news items */}
+            <a href="#">Sample News 1</a><span>1d ago</span>
+            <a href="#">Sample News 2</a><span>2d ago</span>
             <a href="#" className="read-more-link">Read More</a>
           </div>
-
           <div className="sidebar-ad">
-            <small>Ad &middot; &middot; &midd;</small>
-            <p>Master Web Development</p>
+            <small>Ad &middot; &middot; &middot;</small>
+            <p>Master Something</p>
             <div>
-              <img src={`${process.env.REACT_APP_BASE_URL}/${user.profile_image}`} alt="user" />
-              <img src="assets/images/mi-logo.png" alt="mi logo" />
+              <img
+                src={user.profile_image ? constructMediaUrl(user.profile_image) : '/assets/images/default-avatar.png'}
+                alt="user"
+                onError={(e) => e.target.src = '/assets/images/default-avatar.png'}
+              />
+              <img src="/assets/images/mi-logo.png" alt="ad logo" /> {/* Placeholder from origin/Sadok */}
             </div>
-            <b>Brand and Demand in Xiaomi</b>
+            <b>Some Ad Text Here</b>
             <a href="#" className="ad-link">Learn More</a>
           </div>
-
           <div className="sidebar-useful-links">
             <a href="#">About</a>
             <a href="#">Accessibility</a>
@@ -693,13 +737,46 @@ console.log(user)
             <a href="#">Advertising</a>
             <a href="#">Get the App</a>
             <a href="#">More</a>
-            
+            {/* Copyright from origin/Sadok */}
+            <div className="copyright-msg">
+              <img src="/assets/images/logo.png" alt="logo" />
+              <p>MetaScout &#169; 2025. All Rights Reserved</p>
+            </div>
           </div>
         </div>
       </div>
+
+      {/* Comments Modal - from origin/Sadok (preferred if it handles mentions) or HEAD */}
+      {/* This is the modal from origin/Sadok, which seems more integrated with mentions */}
+      {isCommentsVisible && selectedPostForComments && (
+        <div className="comments-modal">
+          <div className="modal-content">
+            <div className="modal-header">
+              <h3>Comments on {selectedPostForComments.user_name}'s post</h3>
+              <button className="modal-close" onClick={() => setIsCommentsVisible(false)}>✖</button>
+            </div>
+            <div className="modal-body">
+              {comments.length === 0 ? <p>No comments yet.</p> : comments.map(comment => (
+                <div key={comment.id || comment.comment_id} className="comment-item">
+                  <img
+                    src={users[comment.user_id]?.profile_image ? constructMediaUrl(users[comment.user_id].profile_image) : '/assets/images/default-avatar.png'}
+                    alt={comment.user_name || 'User'}
+                    className="comment-avatar"
+                    onError={(e) => e.target.src = '/assets/images/default-avatar.png'}
+                  />
+                  <div className="comment-content">
+                    <strong>{comment.user_name || "User"}</strong>
+                    {renderContentWithMentions(comment.comment_text, comment.mentions)}
+                  </div>
+                  <div className="comment-meta">{getTimeAgo(comment.created_at)}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
       {footer}
     </div>
   );
 };
-
-export default Home;

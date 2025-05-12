@@ -429,3 +429,11 @@ button:hover {
   border-radius: 0 0 10px 10px;
   margin-top: 20px;
 }
+.mention-link {
+  color: #007bff; /* Or your app's link color */
+  font-weight: bold;
+  text-decoration: none;
+}
+.mention-link:hover {
+  text-decoration: underline;
+}

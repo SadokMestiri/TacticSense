@@ -13,6 +13,8 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
 from sqlalchemy import Enum
 from sqlalchemy import Enum as SQLAlchemyEnum  # Renamed to avoid conflict
+from flask_migrate import Migrate
+from sqlalchemy import or_ 
 import jwt
 from functools import wraps
 from datetime import datetime, timedelta
@@ -50,7 +52,8 @@ import torch.nn as nn
 import unicodedata
 from fuzzywuzzy import process
 import pickle
-
+import fitz
+import json as std_json
 
 # Set up upload folder for processed videos
 PROCESSED_FOLDER = os.path.join(os.getcwd(), 'processed_videos')
@@ -70,7 +73,10 @@ CORS(app, resources={r"/*": {"origins": "http://localhost:3000", "supports_crede
 app.config['SECRET_KEY'] = '59c9d8576f920846140e2a8985911bec588c08aebf4c7799ba0d5ae388393703'  
 app.config['SQLALCHEMY_DATABASE_URI'] = "postgresql://postgres:admin@localhost/metascout"
 db = SQLAlchemy(app)
-app.config['UPLOAD_FOLDER'] = 'uploads'
+migrate = Migrate(app, db)
+APP_ROOT = os.path.dirname(os.path.abspath(__file__)) # Gets the directory where app.py is located
+UPLOAD_FOLDER_PATH = os.path.join(APP_ROOT, 'uploads')
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER_PATH
 app.config['MAIL_SERVER'] = 'smtp.gmail.com'
 app.config['MAIL_PORT'] = 465
 app.config['MAIL_USE_SSL'] = True
@@ -124,17 +130,14 @@ injury_group_map = {
 }
 
 
-performance_model = joblib.load('modelCareer/performance_model.pkl')
-longevity_model = joblib.load('modelCareer/longevity_model.pkl')
-imputer = joblib.load('modelCareer/imputer.pkl')
-with open('modelCareer/model_metadata.json', 'r') as f:
-    metadata = json.load(f)
-    feature_names = metadata['feature_names']
+class Follow(db.Model):
+    __tablename__ = 'follow'
+    follower_id = db.Column(db.Integer, db.ForeignKey('user.id'), primary_key=True)
+    followed_id = db.Column(db.Integer, db.ForeignKey('user.id'), primary_key=True)
+    timestamp = db.Column(db.DateTime, default=datetime.utcnow)
 
-DATA_PATH = os.path.join(os.path.dirname(__file__), 'modelCareer/player_stats_with_positions.csv')
-
-def allowed_file(filename):
-    return '.' in filename and filename.rsplit('.', 1)[1].lower() in app.config['ALLOWED_EXTENSIONS']
+    def __repr__(self):
+        return f'<Follow {self.follower_id} follows {self.followed_id}>'
 
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -387,7 +390,38 @@ class ManagerProfile(db.Model):
     user = db.relationship('User', back_populates='manager_profile')
     club = db.relationship('ClubProfile', back_populates='managers')
 
+    following = db.relationship(
+        'User', 
+        secondary='follow', 
+        primaryjoin=(id == Follow.follower_id), 
+        secondaryjoin=(id == Follow.followed_id), 
+        backref=db.backref('followers', lazy='dynamic'), 
+        lazy='dynamic'
+    )
 
+    def follow(self, user_to_follow):
+        if not self.is_following(user_to_follow) and self.id != user_to_follow.id:
+            follow_instance = Follow(follower_id=self.id, followed_id=user_to_follow.id)
+            db.session.add(follow_instance)
+            return True
+        return False
+
+    def unfollow(self, user_to_unfollow):
+        if self.is_following(user_to_unfollow) and self.id != user_to_unfollow.id:
+            follow_instance = Follow.query.filter_by(
+                follower_id=self.id,
+                followed_id=user_to_unfollow.id
+            ).first()
+            if follow_instance:
+                db.session.delete(follow_instance)
+                return True 
+        return False
+
+    def is_following(self, user_to_check):
+        return Follow.query.filter_by(
+            follower_id=self.id,
+            followed_id=user_to_check.id
+        ).first() is not None
 
 class Post(db.Model):
     post_id = db.Column(db.Integer, primary_key=True, autoincrement=True)
@@ -694,16 +728,83 @@ class Match(db.Model):
             'heatmaps_generated': self.heatmaps_generated
         }
     
+class SavedPost(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    post_id = db.Column(db.Integer, db.ForeignKey('post.post_id'), nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    user = db.relationship('User', backref=db.backref('saved_posts_assoc', lazy=True))
+    post = db.relationship('Post', backref=db.backref('savers_assoc', lazy=True))
+
+    __table_args__ = (db.UniqueConstraint('user_id', 'post_id', name='_user_post_uc'),)
+
+    def __repr__(self):
+        return f'<SavedPost user_id={self.user_id} post_id={self.post_id}>'
+class PostMention(db.Model):
+    __tablename__ = 'post_mention'
+    id = db.Column(db.Integer, primary_key=True)
+    post_id = db.Column(db.Integer, db.ForeignKey('post.post_id'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False) # The user who is mentioned
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    post = db.relationship('Post', backref=db.backref('mentions', lazy='dynamic'))
+    mentioned_user = db.relationship('User', foreign_keys=[user_id])
+
+    __table_args__ = (db.UniqueConstraint('post_id', 'user_id', name='_post_user_mention_uc'),)
+
+    def __repr__(self):
+        return f'<PostMention post_id={self.post_id} user_id={self.user_id}>'
+
+class CommentMention(db.Model):
+    __tablename__ = 'comment_mention'
+    id = db.Column(db.Integer, primary_key=True)
+    comment_id = db.Column(db.Integer, db.ForeignKey('comment.comment_id'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False) # The user who is mentioned
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    comment = db.relationship('Comment', backref=db.backref('mentions', lazy='dynamic'))
+    mentioned_user = db.relationship('User', foreign_keys=[user_id])
+
+    __table_args__ = (db.UniqueConstraint('comment_id', 'user_id', name='_comment_user_mention_uc'),)
+
+    def __repr__(self):
+        return f'<CommentMention comment_id={self.comment_id} user_id={self.user_id}>'
+
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in app.config['ALLOWED_EXTENSIONS']
+
+def user_to_dict_simple(user):
+    if not user:
+        return None
+    return {
+        'id': user.id,
+        'username': user.username,
+        'name': user.name,
+        'profile_image': user.profile_image 
+    }
+def are_mutual_followers(user1_id, user2_id):
+    user1 = User.query.get(user1_id)
+    user2 = User.query.get(user2_id)
+    if not user1 or not user2 or user1_id == user2_id: # Cannot be mutual with self
+        return False
+    return user1.is_following(user2) and user2.is_following(user1)
+
+performance_model = joblib.load('modelCareer/performance_model.pkl')
+longevity_model = joblib.load('modelCareer/longevity_model.pkl')
+imputer = joblib.load('modelCareer/imputer.pkl')
+with open('modelCareer/model_metadata.json', 'r') as f:
+    metadata = json.load(f)
+    feature_names = metadata['feature_names']
+
+DATA_PATH = os.path.join(os.path.dirname(__file__), 'modelCareer/player_stats_with_positions.csv')
+
 def process_new_player_data(career_stats):
     df = pd.DataFrame(career_stats)
-
-    # Convert key statistical columns to numeric types
-    # These might come as strings from the frontend form
-    numeric_cols = ['age', 'matches', 'minutes', 'goals', 'assists']
-    for col in numeric_cols:
-        if col in df.columns: # Check if column exists before trying to convert
-            df[col] = pd.to_numeric(df[col], errors='coerce') # errors='coerce' will turn unparseable strings into NaN
-
+    # Convert relevant columns to numeric
+    for col in ['goals', 'assists', 'minutes', 'matches', 'age']:
+        if col in df.columns:
+            df[col] = pd.to_numeric(df[col], errors='coerce').fillna(0)
     df['position'] = df['position'].str.upper().str.strip()
     valid_positions = ['DF', 'MF', 'FW']
     df['position'] = df['position'].apply(lambda x: x if x in valid_positions else 'FW')
@@ -1729,8 +1830,35 @@ def get_user(user_id):
             }), 200
 
     except Exception as e:
-        print(f"Error fetching user data: {e}")
-        return jsonify({'message': 'User not found'}), 404
+        print(f"Error fetching user data for username {user_id}: {e}")
+        return jsonify({'message': 'Error fetching user data'}), 500
+    
+
+@app.route('/users/username/<string:username>', methods=['GET'])
+def get_user_by_username(username):
+    try:
+        user = User.query.filter_by(username=username).first()
+        if not user:
+            return jsonify({'message': f'User "{username}" not found'}), 404
+        
+        profile_image_filename = None
+        if user.profile_image:
+            # Ensure consistent path format (e.g., 'uploads/filename.png')
+            profile_image_filename = user.profile_image.replace("\\", "/")
+
+        return jsonify({
+            'id': user.id,
+            'username': user.username,
+            'email': user.email,
+            'name': user.name,
+            'profile_image': profile_image_filename
+            # Add any other fields the frontend Profile.js component might expect
+        }), 200
+    
+    except Exception as e:
+        print(f"Error fetching user data for username {username}: {e}")
+        return jsonify({'message': 'Error fetching user data'}), 500
+
 
 @app.route('/get_clubs', methods=['GET'])
 def get_clubs():
@@ -1770,7 +1898,7 @@ def register():
         # Profile image
         profile_image = request.files.get('profile_image')
         profile_image_path = None
-        if profile_image and allowed_file(profile_image.filename):
+        if profile_image and allowed_file(profile_image.filename): # Added allowed_file check for consistency
             filename = secure_filename(profile_image.filename)
             profile_image_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
             profile_image.save(profile_image_path)
@@ -2057,12 +2185,24 @@ def uploaded_file(filename):
     return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
 
 @app.route('/create_post', methods=['POST'])
-def create_post():
+@token_required # Ensure user is logged in
+def create_post(current_user): # token_required provides current_user
     if 'text' not in request.form:
         return jsonify({'error': 'No text content provided'}), 400
 
     post_content = request.form['text']
-    user_id = request.form['user_id']
+    user_id = current_user.id # Use ID from token
+
+    mentioned_user_ids_str = request.form.get('mentioned_user_ids', '[]') # Expect JSON string array e.g., "[1,2,3]"
+    mentioned_user_ids = []
+    try:
+        parsed_ids = json.loads(mentioned_user_ids_str)
+        if isinstance(parsed_ids, list):
+            mentioned_user_ids = [int(uid) for uid in parsed_ids if isinstance(uid, (int, str)) and str(uid).isdigit()]
+    except (std_json.JSONDecodeError, ValueError):
+        # Log error or handle as needed, for now, proceed without mentions if parsing fails
+        print(f"Warning: Could not parse mentioned_user_ids: {mentioned_user_ids_str}")
+        mentioned_user_ids = []
 
     uploaded_image = None
     uploaded_video = None
@@ -2073,7 +2213,7 @@ def create_post():
             image_filename = secure_filename(image_file.filename)
             image_path = os.path.join(app.config['UPLOAD_FOLDER'], image_filename)
             image_file.save(image_path)
-            uploaded_image = url_for('uploaded_file', filename=image_filename)
+            uploaded_image = url_for('uploaded_file', filename=image_filename, _external=True)
 
     if 'video' in request.files:
         video_file = request.files['video']
@@ -2081,7 +2221,7 @@ def create_post():
             video_filename = secure_filename(video_file.filename)
             video_path = os.path.join(app.config['UPLOAD_FOLDER'], video_filename)
             video_file.save(video_path)
-            uploaded_video = url_for('uploaded_file', filename=video_filename)
+            uploaded_video = url_for('uploaded_file', filename=video_filename, _external=True)
 
     post = Post(user_id=user_id, content=post_content, image_url=uploaded_image, video_url=uploaded_video)
     db.session.add(post)
@@ -2096,14 +2236,38 @@ def create_post():
     except Exception as e:
         print(f"Error while handling hashtags: {str(e)}")
         return jsonify({'error': 'Error processing hashtags'}), 500
+    db.session.flush()  # To get post.post_id for mentions
+
+    valid_mentions_added_count = 0
+    
+    if post.post_id:
+        for mentioned_id in mentioned_user_ids:
+            if are_mutual_followers(current_user.id, mentioned_id):
+                mention = PostMention(post_id=post.post_id, user_id=mentioned_id)
+                db.session.add(mention)
+                valid_mentions_added_count += 1
+            else:
+                print(f"User {current_user.id} cannot mention user {mentioned_id} (not mutual or self) in post {post.post_id}")
+
     db.session.commit()
 
     return jsonify({
-        'message': 'Post created successfully',
+        'message': f'Post created successfully' + (f' with {valid_mentions_added_count} valid mentions.' if valid_mentions_added_count > 0 else '.'),
+        'post_id': post.post_id,
         'post_content': post_content,
         'image_url': uploaded_image,
         'video_url': uploaded_video
-    })
+    }), 201
+
+# Helper to get mentioned users for a post
+def get_post_mentions_data(post_id):
+    mentions = PostMention.query.filter_by(post_id=post_id).all()
+    return [user_to_dict_simple(mention.mentioned_user) for mention in mentions if mention.mentioned_user]
+
+# Helper to get mentioned users for a comment
+def get_comment_mentions_data(comment_id):
+    mentions = CommentMention.query.filter_by(comment_id=comment_id).all()
+    return [user_to_dict_simple(mention.mentioned_user) for mention in mentions if mention.mentioned_user]
 
 
 @app.route('/hashtag/<string:hashtag>')
@@ -2167,38 +2331,93 @@ def get_jobs_by_hashtag(hashtag):
 
 @app.route('/get_posts', methods=['GET'])
 def get_posts():
-    posts = Post.query.all()
+    current_user_id = None
+    auth_header = request.headers.get('Authorization')
+    if auth_header and auth_header.startswith('Bearer '):
+        token = auth_header.split(" ")[1]
+        try:
+            decoded_token = jwt.decode(token, app.config['SECRET_KEY'], algorithms=['HS256'])
+            current_user_id = decoded_token.get('user_id') 
+        except jwt.ExpiredSignatureError:
+            # Token expired, treat as anonymous
+            pass 
+        except jwt.InvalidTokenError:
+            # Invalid token, treat as anonymous
+            pass 
+
+    posts_query = Post.query # Start with a base query
+
+    if current_user_id:
+        current_user = User.query.get(current_user_id)
+        if current_user:
+            following_ids = [user.id for user in current_user.following.all()]
+            # If the user is following at least one person, filter by those IDs.
+            # Also include the current user's own posts.
+            if following_ids:
+                posts_query = posts_query.filter(Post.user_id.in_(following_ids + [current_user_id]))
+            else:
+                # If the user is not following anyone, only show their own posts on the home feed.
+                posts_query = posts_query.filter(Post.user_id == current_user_id)
+        else:
+            # Should not happen if token is valid, but as a fallback, show no posts if user not found
+            return jsonify([]), 200
+    else:
+        # If no user is logged in (no token or invalid token), return no posts or all posts.
+        # For "only see his following posts", returning an empty list is more appropriate.
+        return jsonify([]), 200
+
+
+    posts = posts_query.order_by(Post.created_at.desc()).all() 
     posts_data = []
 
-    # Fetch all reactions in a single query to optimize performance
+    if not posts: # If no posts after filtering, return empty list
+        return jsonify([]), 200
+
+    # Efficiently fetch necessary related data
+    post_ids = [post.post_id for post in posts]
+    user_ids = list(set(post.user_id for post in posts)) # Get unique user IDs from the posts
+
+    # Fetch users involved in these posts
+    users_dict = {user.id: user for user in User.query.filter(User.id.in_(user_ids)).all()}
+
     reactions_data = db.session.query(
         Reaction.post_id,
         Reaction.reaction_type,
         db.func.count(Reaction.reaction_id)
-    ).group_by(Reaction.post_id, Reaction.reaction_type).all()
+    ).filter(Reaction.post_id.in_(post_ids)).group_by(Reaction.post_id, Reaction.reaction_type).all()
 
-    # Organize reactions into a dictionary for quick lookup
     reactions_dict = {}
-    for post_id, reaction_type, count in reactions_data:
-        if post_id not in reactions_dict:
-            reactions_dict[post_id] = {}
-        reactions_dict[post_id][reaction_type] = count
+    for post_id_rx, reaction_type, count in reactions_data:
+        if post_id_rx not in reactions_dict:
+            reactions_dict[post_id_rx] = {}
+        reactions_dict[post_id_rx][reaction_type] = count
+    
+    comments_count_data = db.session.query(
+        Comment.post_id,
+        db.func.count(Comment.comment_id)
+    ).filter(Comment.post_id.in_(post_ids)).group_by(Comment.post_id).all()
+    
+    comments_count_dict = {post_id_cc: count for post_id_cc, count in comments_count_data}
+
+    saved_posts_by_current_user = set()
+    if current_user_id: # Only fetch saved posts if a user is logged in
+        saved_posts_by_current_user = {
+            sp.post_id for sp in SavedPost.query.filter_by(user_id=current_user_id).filter(SavedPost.post_id.in_(post_ids)).all()
+        }
 
     for post in posts:
+        post_user = users_dict.get(post.user_id) # Get user from pre-fetched dict
+        if not post_user: # Should not happen if data is consistent
+            continue
+
         post_reactions = reactions_dict.get(post.post_id, {})
-
-        # Fetch comments for the current post
-        comments = Comment.query.filter_by(post_id=post.post_id).all()
-        comments_data = [{
-            'user_id': comment.user_id,
-            'comment_text': comment.comment_text,
-            'created_at': comment.created_at
-        } for comment in comments]
-
+        post_mentions = get_post_mentions_data(post.post_id)
         posts_data.append({
             'id': post.post_id,
             'user_id': post.user_id,
-            'user_name': post.user.name,
+            'user_name': post_user.name, 
+            'user_profile_image': post_user.profile_image, 
+            'username': post_user.username, # Added username for linking to profile
             'content': post.content,
             'image_url': post.image_url,
             'video_url': post.video_url,
@@ -2208,26 +2427,38 @@ def get_posts():
             'wows': post_reactions.get('wow', 0),
             'angrys': post_reactions.get('angry', 0),
             'sads': post_reactions.get('sad', 0),
-            'created_at': post.created_at,
-            'comments': comments_data  # Add comments data
+            'created_at': post.created_at.strftime('%Y-%m-%d %H:%M:%S'), 
+            'comments_count': comments_count_dict.get(post.post_id, 0), 
+            'is_saved': post.post_id in saved_posts_by_current_user,
+            'mentions': post_mentions
         })
 
     return jsonify(posts_data), 200
 
 @app.route('/get_comments/<int:post_id>', methods=['GET'])
 def get_comments(post_id):
-    comments = Comment.query.filter_by(post_id=post_id).all()
+    comments_query = Comment.query.filter_by(post_id=post_id).order_by(Comment.created_at.asc()).all()
     
-    comments_data = [
-        {
+    user_ids_in_comments = list(set(c.user_id for c in comments_query))
+    users_in_comments_dict = {
+        user.id: user_to_dict_simple(user) 
+        for user in User.query.filter(User.id.in_(user_ids_in_comments)).all()
+    }
+
+    comments_data = []
+    for comment in comments_query:
+        commenting_user_data = users_in_comments_dict.get(comment.user_id)
+        comment_mentions = get_comment_mentions_data(comment.comment_id) # Use comment.comment_id
+        comments_data.append({
             'id': comment.comment_id,
             'post_id': comment.post_id,
             'user_id': comment.user_id,
+            'user_name': commenting_user_data['name'] if commenting_user_data else "Unknown User",
+            'user_profile_image': commenting_user_data['profile_image'] if commenting_user_data else None,
             'comment_text': comment.comment_text,
-            'created_at': comment.created_at
-        }
-        for comment in comments
-    ]
+            'created_at': comment.created_at.strftime('%Y-%m-%d %H:%M:%S'),
+            'mentions': comment_mentions # ADDED
+        })
     
     return jsonify(comments_data), 200
 
@@ -2246,10 +2477,10 @@ def react_to_post():
 
     if reaction:
         if reaction.reaction_type == reaction_type:
-            db.session.delete(reaction)  # Remove reaction if it's the same
+            db.session.delete(reaction)  
             message = "Reaction removed"
         else:
-            reaction.reaction_type = reaction_type  # Update reaction type
+            reaction.reaction_type = reaction_type  
             message = "Reaction updated"
     else:
         new_reaction = Reaction(user_id=user_id, post_id=post_id, reaction_type=reaction_type)
@@ -2261,12 +2492,105 @@ def react_to_post():
 
 
 @app.route('/add_comment', methods=['POST'])
-def add_comment():
+@token_required # Ensure user is logged in
+def add_comment(current_user): # token_required provides current_user
     data = request.json
-    new_comment = Comment(**data)
+    post_id = data.get('post_id')
+    comment_text = data.get('comment_text')
+    user_id = current_user.id # Use ID from token
+    
+    mentioned_user_ids = data.get('mentioned_user_ids', []) # Expect a list of integers
+    if not isinstance(mentioned_user_ids, list):
+        return jsonify({'error': 'mentioned_user_ids must be a list'}), 400
+
+    if not post_id or not comment_text:
+        return jsonify({'error': 'Missing post_id or comment_text'}), 400
+
+    post_exists = Post.query.get(post_id)
+    if not post_exists:
+        return jsonify({'error': 'Post not found'}), 404
+
+    new_comment = Comment(post_id=post_id, user_id=user_id, comment_text=comment_text)
     db.session.add(new_comment)
+    db.session.flush() # To get new_comment.comment_id for mentions
+
+    valid_mentions_added_count = 0
+    if new_comment.comment_id:
+        for mentioned_id in mentioned_user_ids:
+            try:
+                m_id = int(mentioned_id)
+                if are_mutual_followers(current_user.id, m_id):
+                    mention = CommentMention(comment_id=new_comment.comment_id, user_id=m_id)
+                    db.session.add(mention)
+                    valid_mentions_added_count += 1
+                else:
+                    print(f"User {current_user.id} cannot mention user {m_id} (not mutual or self) in comment {new_comment.comment_id}")
+            except ValueError:
+                print(f"Invalid mentioned user ID format: {mentioned_id}")
+
     db.session.commit()
-    return jsonify({'message': 'Comment added'})
+    return jsonify({
+        'message': f'Comment added successfully' + (f' with {valid_mentions_added_count} valid mentions.' if valid_mentions_added_count > 0 else '.'),
+        'comment_id': new_comment.comment_id,
+        'comment_text': new_comment.comment_text,
+        'user_id': new_comment.user_id,
+        'post_id': new_comment.post_id,
+        'created_at': new_comment.created_at.strftime('%Y-%m-%d %H:%M:%S')
+    }), 201
+
+@app.route('/posts/<int:post_id>/save', methods=['POST'])
+@token_required
+def save_post(current_user, post_id):
+    post = Post.query.get_or_404(post_id)
+    existing_save = SavedPost.query.filter_by(user_id=current_user.id, post_id=post_id).first()
+
+    if existing_save:
+        return jsonify({'message': 'Post already saved'}), 409
+
+    new_save = SavedPost(user_id=current_user.id, post_id=post_id)
+    db.session.add(new_save)
+    db.session.commit()
+    return jsonify({'message': 'Post saved successfully'}), 201
+
+@app.route('/posts/<int:post_id>/unsave', methods=['DELETE'])
+@token_required
+def unsave_post(current_user, post_id):
+    saved_post = SavedPost.query.filter_by(user_id=current_user.id, post_id=post_id).first()
+
+    if not saved_post:
+        return jsonify({'message': 'Post not saved by this user'}), 404
+
+    db.session.delete(saved_post)
+    db.session.commit()
+    return jsonify({'message': 'Post unsaved successfully'}), 200
+
+@app.route('/users/<int:user_id>/saved_posts', methods=['GET'])
+@token_required 
+def get_saved_posts(current_user, user_id):
+    if current_user.id != user_id:
+        target_user = User.query.get_or_404(user_id)
+    else:
+        target_user = current_user
+
+    saved_post_associations = SavedPost.query.filter_by(user_id=target_user.id).order_by(SavedPost.created_at.desc()).all()
+    
+    posts_data = []
+    for assoc in saved_post_associations:
+        post = assoc.post 
+        if post: 
+            user_who_posted = User.query.get(post.user_id) 
+            posts_data.append({
+                'id': post.post_id,
+                'user_id': post.user_id,
+                'user_name': user_who_posted.name if user_who_posted else "Unknown User",
+                'user_profile_image': user_who_posted.profile_image if user_who_posted else None,
+                'content': post.content,
+                'image_url': post.image_url,
+                'video_url': post.video_url,
+                'created_at': post.created_at.strftime('%Y-%m-%d %H:%M:%S'),
+                'is_saved': True 
+            })
+    return jsonify(posts_data), 200
 
 @app.route('/create_group', methods=['POST'])
 def create_group():
@@ -5312,13 +5636,19 @@ def predict_player(player_name):
     features_imputed = imputer.transform(features_df)
     perf_pred = performance_model.predict(features_imputed)[0]
     longevity_prob = longevity_model.predict_proba(features_imputed)[0][1]
+
+    goals = max(0, float(perf_pred[0]))
+    assists = max(0, float(perf_pred[1]))
+    matches = max(0, float(perf_pred[2]))
+    minutes = max(0, float(perf_pred[3]))
+
     return jsonify({
         "player_name": player_name,
         "predictions": {
-            "goals": float(perf_pred[0]),
-            "assists": float(perf_pred[1]),
-            "matches": float(perf_pred[2]),
-            "minutes": float(perf_pred[3])
+            "goals": goals,
+            "assists": assists,
+            "matches": matches,
+            "minutes": minutes
         },
         "probability_playing_next_season": float(longevity_prob)
     })
@@ -5332,13 +5662,19 @@ def predict_new_player():
     features_imputed = imputer.transform(features_df)
     perf_pred = performance_model.predict(features_imputed)[0]
     longevity_prob = longevity_model.predict_proba(features_imputed)[0][1]
+
+    goals = max(0, float(perf_pred[0]))
+    assists = max(0, float(perf_pred[1]))
+    matches = max(0, float(perf_pred[2]))
+    minutes = max(0, float(perf_pred[3]))
+
     return jsonify({
         "player_name": data.get('name', 'New Player'),
         "predictions": {
-            "goals": float(perf_pred[0]),
-            "assists": float(perf_pred[1]),
-            "matches": float(perf_pred[2]),
-            "minutes": float(perf_pred[3])
+            "goals": goals,
+            "assists": assists,
+            "matches": matches,
+            "minutes": minutes
         },
         "probability_playing_next_season": float(longevity_prob)
     })
@@ -5364,19 +5700,209 @@ def get_players2():
 @app.route('/player/<name>/career', methods=['GET'])
 def player_career(name):
     import pandas as pd
-    df = pd.read_csv(DATA_PATH)
+    df = pd.read_csv(DATA_PATH,  thousands=',', quotechar='"')
     df.columns = df.columns.str.strip()
     player_df = df[df['player_name'] == name]
     if player_df.empty:
         return jsonify({"error": "Player not found"}), 404
+
+    player_df = player_df[player_df['season'].notna()]
+
+    player_df['age'] = player_df['age'].fillna(0).astype(int)
+    player_df['team'] = player_df['team'].fillna('Unknown')
+
     player_df = player_df.sort_values('season')
     info = player_df.iloc[-1][['player_name', 'age', 'position', 'team']].to_dict()
+
+
+    player_df['goals'] = pd.to_numeric(player_df['goals'], errors='coerce').fillna(0)
+    player_df['assists'] = pd.to_numeric(player_df['assists'], errors='coerce').fillna(0)
+    player_df['minutes'] = player_df['minutes'].astype(str).str.replace(',', '').astype(float).fillna(0).astype(int)
+    player_df['mp'] = pd.to_numeric(player_df['mp'], errors='coerce').fillna(0)
+
     career = player_df[['season', 'goals', 'assists', 'minutes', 'mp']].to_dict(orient='records')
     return jsonify({'info': info, 'career': career})
 
-import manage  # Add this line
+@app.route('/users/<int:user_id_to_follow>/follow', methods=['POST'])
+@token_required
+def follow_user_route(current_user, user_id_to_follow):
+    user_to_follow = User.query.get(user_id_to_follow)
+
+    if not user_to_follow:
+        return jsonify({'message': 'User not found'}), 404
+    
+    if current_user.id == user_to_follow.id:
+        return jsonify({'message': 'You cannot follow yourself'}), 400
+
+    if current_user.is_following(user_to_follow):
+        return jsonify({'message': 'You are already following this user'}), 409 
+
+    if current_user.follow(user_to_follow):
+        db.session.commit()
+        return jsonify({'message': f'Successfully followed {user_to_follow.username}'}), 200
+    else:
+        return jsonify({'message': 'Could not follow user'}), 500
+
+@app.route('/users/<int:user_id_to_unfollow>/unfollow', methods=['POST'])
+@token_required
+def unfollow_user_route(current_user, user_id_to_unfollow):
+    user_to_unfollow = User.query.get(user_id_to_unfollow)
+
+    if not user_to_unfollow:
+        return jsonify({'message': 'User not found'}), 404
+
+    if current_user.id == user_to_unfollow.id:
+        return jsonify({'message': 'You cannot unfollow yourself'}), 400 
+
+    if not current_user.is_following(user_to_unfollow):
+        return jsonify({'message': 'You are not following this user'}), 400
+
+    if current_user.unfollow(user_to_unfollow):
+        db.session.commit()
+        return jsonify({'message': f'Successfully unfollowed {user_to_unfollow.username}'}), 200
+    else:
+        return jsonify({'message': 'Could not unfollow user'}), 500
+
+@app.route('/users/<int:user_id>/followers', methods=['GET'])
+def get_user_followers_route(user_id):
+    user = User.query.get(user_id)
+    if not user:
+        return jsonify({'message': 'User not found'}), 404
+    
+    followers_list = user.followers.all() 
+    return jsonify([user_to_dict_simple(f) for f in followers_list]), 200
+
+@app.route('/users/<int:user_id>/following', methods=['GET'])
+def get_user_following_route(user_id):
+    user = User.query.get(user_id)
+    if not user:
+        return jsonify({'message': 'User not found'}), 404
+        
+    following_list = user.following.all() 
+    return jsonify([user_to_dict_simple(f) for f in following_list]), 200
+
+@app.route('/users/<int:user_id_to_check>/is-following', methods=['GET'])
+@token_required
+def get_is_following_status_route(current_user, user_id_to_check):
+    user_to_check = User.query.get(user_id_to_check)
+    if not user_to_check:
+        return jsonify({'message': 'User to check not found'}), 404
+
+    if current_user.id == user_to_check.id:
+        return jsonify({'is_following': False, 'is_self': True, 'message': 'This is you'}), 200
+        
+    status = current_user.is_following(user_to_check)
+    return jsonify({'is_following': status, 'user_id': user_id_to_check}), 200
+
+@app.route('/users/<int:profile_user_id>/posts', methods=['GET'])
+def get_user_posts(profile_user_id):
+    current_user_id = None
+    auth_header = request.headers.get('Authorization')
+    if auth_header and auth_header.startswith('Bearer '):
+        token = auth_header.split(" ")[1]
+        try:
+            decoded_token = jwt.decode(token, app.config['SECRET_KEY'], algorithms=['HS256'])
+            current_user_id = decoded_token.get('user_id')
+        except (jwt.ExpiredSignatureError, jwt.InvalidTokenError):
+            pass
+
+    profile_user = User.query.get(profile_user_id)
+    if not profile_user:
+        return jsonify({'message': 'User not found'}), 404
+
+    posts = Post.query.filter_by(user_id=profile_user_id).order_by(Post.created_at.desc()).all()
+    posts_data = []
+
+    post_ids = [post.post_id for post in posts]
+    if not post_ids:
+        return jsonify(posts_data), 200
+
+    reactions_data = db.session.query(
+        Reaction.post_id,
+        Reaction.reaction_type,
+        db.func.count(Reaction.reaction_id)
+    ).filter(Reaction.post_id.in_(post_ids)).group_by(Reaction.post_id, Reaction.reaction_type).all()
+
+    reactions_dict = {}
+    for p_id, reaction_type, count in reactions_data:
+        if p_id not in reactions_dict:
+            reactions_dict[p_id] = {}
+        reactions_dict[p_id][reaction_type] = count
+
+    saved_posts_by_current_user = set()
+    if current_user_id:
+        saved_posts_by_current_user = {
+            sp.post_id for sp in SavedPost.query.filter_by(user_id=current_user_id).filter(SavedPost.post_id.in_(post_ids)).all()
+        }
+    
+    comments_count_data = db.session.query(
+        Comment.post_id,
+        db.func.count(Comment.comment_id)
+    ).filter(Comment.post_id.in_(post_ids)).group_by(Comment.post_id).all()
+    
+    comments_count_dict = {post_id_cc: count for post_id_cc, count in comments_count_data}
+
+    for post in posts:
+        post_reactions = reactions_dict.get(post.post_id, {})
+        post_mentions = get_post_mentions_data(post.post_id)
+        
+        posts_data.append({
+            'id': post.post_id,
+            'user_id': post.user_id,
+            'user_name': profile_user.name,
+            'user_profile_image': profile_user.profile_image,
+            'username': profile_user.username, 
+            'content': post.content,
+            'image_url': post.image_url,
+            'video_url': post.video_url,
+            'likes': post_reactions.get('like', 0),
+            'loves': post_reactions.get('love', 0),
+            'laughs': post_reactions.get('laugh', 0),
+            'wows': post_reactions.get('wow', 0),
+            'angrys': post_reactions.get('angry', 0),
+            'sads': post_reactions.get('sad', 0),
+            'created_at': post.created_at.strftime('%Y-%m-%d %H:%M:%S'),
+            'comments_count': comments_count_dict.get(post.post_id, 0),
+            'is_saved': post.post_id in saved_posts_by_current_user if current_user_id else False,
+            'mentions': post_mentions
+        })
+
+    return jsonify(posts_data), 200
 
 
-#app.app_context().push()
+@app.route('/users/search', methods=['GET'])
+def search_users_route():
+    query = request.args.get('q', '').strip()
+    if not query:
+        return jsonify({'message': 'Search query cannot be empty'}), 400
+
+    search_term = f"%{query}%"
+    users_found = User.query.filter(
+        or_(User.username.ilike(search_term), User.name.ilike(search_term))
+    ).limit(20).all() 
+    
+    return jsonify([user_to_dict_simple(u) for u in users_found]), 200
+@app.route('/users/taggable', methods=['GET'])
+@token_required
+def get_taggable_users(current_user):
+    query = request.args.get('q', '').strip().lower()
+    
+    # Users current_user is following
+    following_users = current_user.following
+    
+    taggable_users = []
+    for followed_user in following_users:
+        # Check if the followed_user is also following current_user (mutual)
+        if followed_user.is_following(current_user):
+            if not query or query in followed_user.username.lower() or query in followed_user.name.lower():
+                taggable_users.append(user_to_dict_simple(followed_user))
+    
+    return jsonify(taggable_users[:10]), 200 # Limit results for suggestion list
+
+# app.app_context().push()
 if __name__ == '__main__':
+    with app.app_context(): 
+        print("Attempting to create database tables...")
+        db.create_all()
+        print("Database tables should be created (if they didn't exist).")
     app.run(debug=True)

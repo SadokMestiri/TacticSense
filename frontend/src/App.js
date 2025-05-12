@@ -22,6 +22,7 @@ import ClubProfile from "./components/ClubProfile";
 import ManagerProfile from "./components/ManagerProfile";
 import ManagerProfileView from "./components/ManagerProfileView";
 import CoachProfileView from "./components/CoachProfileView";
+import myPosts from "./components/myPosts";
 
 // Main Pages
 import Home from "./components/Home";
@@ -35,6 +36,11 @@ import Jobs from "./components/Jobs";
 import JobDetails from "./components/JobDetails";
 import JobApplications from "./components/JobApplications";
 import PostJob from "./components/PostJob";
+import PlayerPredictor from './components/PlayerPredictor';
+import ExistingPlayerPredictor from './components/ExistingPlayerPredictor';
+import PlayerProfile from './components/PlayerProfile';
+import SavedPosts from './components/SavedPosts';
+import Profile from './components/Profile';
 
 // Prediction Tools
 import InjuryPredictor from "./components/InjuryPredictor";
@@ -113,6 +119,9 @@ function App() {
                 <Route path="/analysis-hub/players" element={isAuthenticated ? <ExistingPlayerPredictor header={header} footer={footer}/> : <Navigate to="/" />} />
                 <Route path="/analysis-hub/players/new" element={isAuthenticated ? <PlayerPredictor header={header} footer={footer}/> : <Navigate to="/" />} />
                 <Route path="/analysis-hub/players/:name" element={isAuthenticated ? <PlayerProfile header={header} footer={footer}/> : <Navigate to="/" />} />
+
+                <Route path="/saved-posts" element={<SavedPosts header={header} />} />
+                <Route path="/profile/:username" element={ <myPosts header={header} />} />
 
                 {/* Fallback */}
                 <Route path="*" element={<Navigate to={isAuthenticated ? "/home" : "/"} />} />

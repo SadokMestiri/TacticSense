@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import './Header.css';
 import axios from 'axios';
 import Cookies from 'js-cookie';
@@ -6,6 +6,7 @@ import jwt_decode from 'jwt-decode';
 import { useNavigate, NavLink  ,Link} from "react-router-dom";
 import {useLocation } from "react-router-dom";
 import useDebounce from '../hooks/useDebounce';
+import FollowButton from './FollowButton';
 
 // Recent searches utility functions
 function addSearch(user) {
@@ -39,6 +40,10 @@ const Header = () => {
   const [playerId, setPlayerId] = useState(null);
   const user = Cookies.get('user') ? JSON.parse(Cookies.get('user')) : null;
   const token = Cookies.get('token');
+  const [isSearchLoading, setIsSearchLoading] = useState(false);
+  const [isSearchResultsVisible, setIsSearchResultsVisible] = useState(false);
+  const searchContainerRef = useRef(null); // For detecting clicks outside
+
   let decodedToken = null;
   let exp = null;
   const user_id = user.id;
@@ -92,6 +97,69 @@ const Header = () => {
       fetchPlayerId();
     }
   }, [user_id]);
+  // Debounce function
+    const debounce = (func, delay) => {
+      let timeout;
+      return (...args) => {
+        clearTimeout(timeout);
+        timeout = setTimeout(() => func.apply(this, args), delay);
+      };
+    };
+
+    // API call for searching users
+    const fetchUsers = async (query) => {
+      if (!query.trim()) {
+        setSearchResults([]);
+        setIsSearchResultsVisible(false);
+        return;
+      }
+      setIsSearchLoading(true);
+      setIsSearchResultsVisible(true);
+      try {
+        const response = await axios.get(
+          `${process.env.REACT_APP_BASE_URL}/users/search?q=${encodeURIComponent(query)}`
+          // No token needed for public search as per backend, but include if your API requires it
+          // { headers: { Authorization: `Bearer ${token}` } }
+        );
+        setSearchResults(response.data || []);
+      } catch (err) {
+        console.error("Error searching users:", err);
+        setSearchResults([]);
+        // setError("Failed to search users."); // You can use an error state if needed
+      } finally {
+        setIsSearchLoading(false);
+      }
+    };
+
+  // Debounced version of fetchUsers
+  const debouncedFetchUsers = useCallback(debounce(fetchUsers, 500), []); // 500ms debounce
+
+  useEffect(() => {
+    debouncedFetchUsers(searchQuery);
+  }, [searchQuery, debouncedFetchUsers]);
+
+  // Handle click outside for search results
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (searchContainerRef.current && !searchContainerRef.current.contains(event.target)) {
+        setIsSearchResultsVisible(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
+
+
+  const handleSearchChange = (e) => {
+    setSearchQuery(e.target.value);
+  };
+
+  const handleResultClick = () => {
+    setIsSearchResultsVisible(false); // Hide results when a user is clicked
+    setSearchQuery(''); // Optionally clear search query
+  };
 
   useEffect(() => {
         const fetchNotifications = async () => {
@@ -217,24 +285,24 @@ const Header = () => {
               {/* Add more options as needed */}
             </select>
 
-            {(searchQuery || isSearchHovered) && (
+             {(searchQuery || isSearchHovered) && (
               <div className="search-dropdown">
                 {isSearching ? (
                   <div className="search-loading">Searching...</div>
                 ) : searchResults.length > 0 ? (
                   <ul className="user-suggestions-list">
                     {searchResults.map((user) => (
-                      <li 
-                        key={user.id} 
+                      <li
+                        key={user.id}
                         className="user-suggestion-item"
                         onClick={() => handleUserClick(user)}
                       >
-                        <img 
+                        <img
                           src={`${process.env.REACT_APP_BASE_URL}/${user.profile_image}`}
                           alt={user.username}
                           className="user-profile-image"
                           onError={(e) => {
-                            e.target.onerror = null;
+                            e.target.onerror = null; // Prevents infinite loop if default also fails
                             e.target.src = `${process.env.PUBLIC_URL}/assets/images/default-profile.png`;
                           }}
                         />
@@ -252,7 +320,7 @@ const Header = () => {
                     <div className="dropdown-header">
                       <span>Recent Searches</span>
                       {suggestedUsers.length > 0 && (
-                        <button 
+                        <button
                           className="clear-recent-btn"
                           onClick={handleClearRecent}
                         >
@@ -262,17 +330,17 @@ const Header = () => {
                     </div>
                     <ul className="user-suggestions-list">
                       {suggestedUsers.map((user, index) => (
-                        <li 
-                          key={index} 
+                        <li
+                          key={index} // Consider using a more stable key if available (e.g., user.id or user.username if unique for recent)
                           className="user-suggestion-item"
                           onClick={() => handleUserClick(user)}
                         >
-                          <img 
+                          <img
                             src={`${process.env.REACT_APP_BASE_URL}/${user.profile_image}`}
                             alt={user.username}
                             className="user-profile-image"
                             onError={(e) => {
-                              e.target.onerror = null;
+                              e.target.onerror = null; // Prevents infinite loop if default also fails
                               e.target.src = `${process.env.PUBLIC_URL}/assets/images/default-profile.png`;
                             }}
                           />
@@ -287,57 +355,57 @@ const Header = () => {
                 )}
               </div>
             )}
-          </div>
+          </div> 
         </div>
-
         <div className="navbar-center">
           <ul>
             <li>
-              <NavLink 
-                to="/home" 
+              <NavLink
+                to="/home"
                 className={({ isActive }) => isActive ? 'active-link' : ''}
               >
-                <img src="assets/images/home.png" alt="home" /> <span style={{color:"#000"}}>Home</span>
+                <img src={`${process.env.PUBLIC_URL}/assets/images/home.png`} alt="home" /> <span style={{ color: "#000" }}>Home</span>
               </NavLink>
             </li>
             <li>
-              <NavLink 
-                to="/jobs" 
+              <NavLink
+                to="/jobs"
                 className={({ isActive }) => isActive ? 'active-link' : ''}
               >
-                <img src="assets/images/jobs.png" alt="jobs" /> <span style={{color:"#000"}}>Jobs</span>
+                <img src={`${process.env.PUBLIC_URL}/assets/images/jobs.png`} alt="jobs" /> <span style={{ color: "#000" }}>Jobs</span>
               </NavLink>
             </li>
             <li>
-              <NavLink 
-                to="/Chat" 
+              <NavLink
+                to="/Chat"
                 className={({ isActive }) => isActive ? 'active-link' : ''}
               >
-                <img src="assets/images/message.png" alt="message" /> <span style={{color:"#000"}}>Messaging</span>
+                <img src={`${process.env.PUBLIC_URL}/assets/images/message.png`} alt="message" /> <span style={{ color: "#000" }}>Messaging</span>
               </NavLink>
             </li>
             <li>
-              <a href="/players">
-                <img src="assets/images/network.png" alt="network" /> <span>Players</span>
-              </a>
+              {/* Assuming /players is a distinct page and not part of NavLink active state logic */}
+              <Link to="/players">
+                <img src={`${process.env.PUBLIC_URL}/assets/images/network.png`} alt="network" /> <span>Players</span>
+              </Link>
             </li>
             <li>
-              <a href="/gpt">
-                <img src="assets/images/message.png" alt="message" /> <span>Ask AI</span>
-              </a>
+              <Link to="/gpt">
+                <img src={`${process.env.PUBLIC_URL}/assets/images/message.png`} alt="message" /> <span>Ask AI</span>
+              </Link>
             </li>
             <li className="notif-icon-wrapper">
-              <a href="/notifications" className="notif-icon-link">
-                <img src="assets/images/notification.png" alt="notification" />
+              <Link to="/notifications" className="notif-icon-link">
+                <img src={`${process.env.PUBLIC_URL}/assets/images/notification.png`} alt="notification" />
                 {unreadCount > 0 && (
                   <span className="notif-badge">{unreadCount}</span>
                 )}
                 <span>Notifications</span>
-              </a>
+              </Link>
             </li>
             <li>
-              <Link to="/analysis-hub" className={window.location.pathname.startsWith('/matches') ? 'active-link' : ''}>
-                <img src="assets/images/analysis.png" alt="matches" /> <span>Analysis Hub</span>
+              <Link to="/analysis-hub" className={location.pathname.startsWith('/matches') || location.pathname.startsWith('/analysis-hub') ? 'active-link' : ''}>
+                <img src={`${process.env.PUBLIC_URL}/assets/images/analysis.png`} alt="matches" /> <span>Analysis Hub</span>
               </Link>
             </li>
           </ul>
@@ -347,10 +415,11 @@ const Header = () => {
           {user && (
             <div className="online">
               <img
-                src={`${process.env.REACT_APP_BASE_URL}/${user.profile_image}`}
+                src={user.profile_image ? `${process.env.REACT_APP_BASE_URL}/${user.profile_image}` : `${process.env.PUBLIC_URL}/assets/images/default-avatar.png`}
                 className="nav-profile-img"
                 alt="profile"
                 onClick={toggleDropdown}
+                onError={(e) => e.target.src = `${process.env.PUBLIC_URL}/assets/images/default-avatar.png`}
               />
             </div>
           )}
@@ -359,27 +428,20 @@ const Header = () => {
             <div className="drop-menu">
               <div className="dropdown-header">
                 <img
-                  src={`${process.env.REACT_APP_BASE_URL}/${user.profile_image}`}
+                  src={user.profile_image ? `${process.env.REACT_APP_BASE_URL}/${user.profile_image}` : `${process.env.PUBLIC_URL}/assets/images/default-avatar.png`}
                   alt="Profile"
                   className="dropdown-avatar"
+                  onError={(e) => e.target.src = `${process.env.PUBLIC_URL}/assets/images/default-avatar.png`}
                 />
                 <div className="dropdown-info">
                   <div className="name">{user.name}</div>
-                  <div className="desc">{user.role}</div>
+                  <div className="desc">{user.role || "User"}</div> {/* Display role or a default */}
                 </div>
               </div>
-              {user.role === "Player" ? (
-                <a href="/Profile" className="profile-btn">See your profile</a>
-              ) : user.role === ("Coach" || "Agent" || "Staff" || "Scout") ? (
-                <a href="/CoachProfile" className="profile-btn">See your profile</a>
-              ) : user.role === ("Manager") ? (
-                <a href="/ManagerProfile" className="profile-btn">See your profile</a>
-              ) : user.role === ("Club") ? (
-                <a href="/ClubProfile" className="profile-btn">See your profile</a>
-              ) : (
-                <a href="/Profile_View" className="profile-btn">See your profile</a>
-              )}
-              <a href="/" className="logout-btn" onClick={handleLogout}>Logout</a>
+              {/* Choosing origin/Sadok version for profile links as it uses <Link> */}
+              <Link to={`/profile/${user.username}`} className="profile-btn" onClick={() => setDropdownOpen(false)}>See your profile</Link>
+              <Link to="/saved-posts" className="profile-btn" onClick={() => setDropdownOpen(false)}>Saved Posts</Link>
+              <a href="#" className="logout-btn" onClick={handleLogout}>Logout</a>
             </div>
           )}
         </div>
