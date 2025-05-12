@@ -4,6 +4,8 @@ import Cookies from 'js-cookie';
 import { useNavigate, useParams, Link } from "react-router-dom";
 import './Home.css'; // Assuming common styles are here
 import './UserListModal.css'; // Styles for the new modal
+import './Profile.css'; // Create or use an existing CSS file for profile specific styles
+import MentionInput from './MentionInput'; // Add this import
 
 const Profile = ({ header }) => {
   const navigate = useNavigate();
@@ -27,14 +29,16 @@ const Profile = ({ header }) => {
   const [text, setText] = useState('');
   const [image, setImage] = useState(null);
   const [video, setVideo] = useState(null);
+  const [mentionedUsersInPost, setMentionedUsersInPost] = useState([]); // For new post
 
   // States for comments and reactions
   const [comments, setComments] = useState([]);
   const [selectedPostForComments, setSelectedPostForComments] = useState(null);
   const [isCommentsVisible, setIsCommentsVisible] = useState(false);
   const [commentText, setCommentText] = useState('');
-  const [isCommentingOnPost, setIsCommentingOnPost] = useState(null);
-  const [showReactions, setShowReactions] = useState(null);
+  const [mentionedUsersInComment, setMentionedUsersInComment] = useState([]); 
+  const [isCommentingOnPost, setIsCommentingOnPost] = useState(null); // Stores post ID
+  const [showReactions, setShowReactions] = useState(null); // Stores post ID
   const reactions = [
     { name: "like", icon: "assets/images/post-like.png" },
     { name: "love", icon: "assets/images/love.png" },
@@ -68,6 +72,23 @@ const Profile = ({ header }) => {
     }
   }, [navigate]);
 
+  // Helper function to render content with mentions as links
+  const renderContentWithMentions = (content, mentions) => {
+    if (!content) return <p></p>; // Return empty paragraph or null if content is empty
+    let processedContent = content;
+    if (mentions && mentions.length > 0) {
+        mentions.forEach(mention => {
+            if (mention && mention.username) {
+                const mentionTag = `@${mention.username}`;
+                // Regex to match @username not inside an HTML tag
+                const regex = new RegExp(mentionTag.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '(?![^<]*?>|[^<>]*?</\\w+>)', 'g');
+                processedContent = processedContent.replace(regex, `<a href="/profile/${mention.username}" class="mention-link">${mentionTag}</a>`);
+            }
+        });
+    }
+    return <p dangerouslySetInnerHTML={{ __html: processedContent }} />;
+  };
+
   // Fetch profile user data based on username from URL
   useEffect(() => {
     if (!profileUsername) return;
@@ -82,7 +103,6 @@ const Profile = ({ header }) => {
 
     const fetchProfileData = async () => {
       try {
-        // 1. Fetch user by username
         const userRes = await axios.get(`${process.env.REACT_APP_BASE_URL}/users/username/${profileUsername}`);
         if (!userRes.data) {
             throw new Error(`User "${profileUsername}" not found.`);
@@ -96,29 +116,22 @@ const Profile = ({ header }) => {
             return;
         }
 
-        // 2. Fetch Follower Count
         const followersRes = await axios.get(`${process.env.REACT_APP_BASE_URL}/users/${fetchedProfileUser.id}/followers`);
-        setFollowersCount(followersRes.data.length); // Assuming endpoint returns an array of followers
+        setFollowersCount(followersRes.data.length);
 
-        // 3. Fetch Following Count
         const followingRes = await axios.get(`${process.env.REACT_APP_BASE_URL}/users/${fetchedProfileUser.id}/following`);
-        setFollowingCount(followingRes.data.length); // Assuming endpoint returns an array of followed users
+        setFollowingCount(followingRes.data.length);
 
-        // 4. Fetch Posts for this user
         const token = Cookies.get('token');
         const headers = token ? { Authorization: `Bearer ${token}` } : {};
-        // Assuming /get_posts returns all posts, and we filter client-side.
-        // Or, ideally, have an endpoint like /users/:userId/posts
-        const postsRes = await axios.get(`${process.env.REACT_APP_BASE_URL}/get_posts`, { headers });
+        const postsRes = await axios.get(`${process.env.REACT_APP_BASE_URL}/users/${fetchedProfileUser.id}/posts`, { headers });
         
-        const userPosts = postsRes.data
-          .filter(post => post.user_id === fetchedProfileUser.id)
-          .map(p => ({
-            ...p, 
-            user_name: fetchedProfileUser.name, // Add user info to posts for consistency
-            user_profile_image: fetchedProfileUser.profile_image,
-            username: fetchedProfileUser.username // For linking back to profile from post
-          }));
+        const userPosts = postsRes.data.map(p => ({
+          ...p, 
+          user_name: fetchedProfileUser.name,
+          user_profile_image: fetchedProfileUser.profile_image,
+          username: fetchedProfileUser.username
+        }));
         setMyPosts(userPosts);
 
       } catch (err) {
@@ -135,7 +148,7 @@ const Profile = ({ header }) => {
 
     fetchProfileData();
     
-  }, [profileUsername, navigate]); // Rerun if username changes
+  }, [profileUsername, navigate]);
 
   // Effect to check follow status
   useEffect(() => {
@@ -151,20 +164,19 @@ const Profile = ({ header }) => {
           setIsFollowing(response.data.is_following);
         } catch (error) {
           console.error("Error fetching follow status:", error);
-          // Optionally set an error state or default to false
           setIsFollowing(false);
         } finally {
           setFollowInProgress(false);
         }
       } else {
-        setIsFollowing(false); // Not applicable or own profile
+        setIsFollowing(false); 
       }
     };
 
     if (profileUser && loggedInUser) {
       checkFollowingStatus();
     }
-  }, [loggedInUser, profileUser, profileUsername]); // Rerun if any of these change
+  }, [loggedInUser, profileUser]);
 
 
   const handleFollowToggle = async () => {
@@ -180,10 +192,7 @@ const Profile = ({ header }) => {
     try {
       await axios.post(url, {}, { headers });
       setIsFollowing(!isFollowing);
-      // Update followers count of the profileUser
-      setFollowersCount(prevCount => action === 'follow' ? prevCount + 1 : prevCount - 1);
-      // If you also want to update the loggedInUser's followingCount (if displayed elsewhere),
-      // you might need to trigger a refetch or manage that state globally.
+      setFollowersCount(prevCount => action === 'follow' ? prevCount + 1 : Math.max(0, prevCount - 1));
     } catch (error) {
       console.error(`Error ${action}ing user:`, error);
       alert(`Could not ${action} user. Please try again.`);
@@ -199,11 +208,10 @@ const Profile = ({ header }) => {
     setIsUserListModalVisible(true);
     try {
       const res = await axios.get(`${process.env.REACT_APP_BASE_URL}/users/${profileUser.id}/followers`);
-      setUserList(res.data); // Expects an array of user objects
+      setUserList(res.data);
     } catch (err) {
       console.error("Error fetching followers list:", err);
       setUserList([]);
-      // Optionally, set an error message for the modal
     } finally {
       setIsUserListLoading(false);
     }
@@ -216,7 +224,7 @@ const Profile = ({ header }) => {
     setIsUserListModalVisible(true);
     try {
       const res = await axios.get(`${process.env.REACT_APP_BASE_URL}/users/${profileUser.id}/following`);
-      setUserList(res.data); // Expects an array of user objects
+      setUserList(res.data);
     } catch (err) {
       console.error("Error fetching following list:", err);
       setUserList([]);
@@ -234,7 +242,7 @@ const Profile = ({ header }) => {
   const getTimeAgo = (createdAt) => {
     const now = new Date();
     const postDate = new Date(createdAt);
-    const timeDiff = now - postDate; // difference in milliseconds
+    const timeDiff = now - postDate;
     const seconds = Math.floor(timeDiff / 1000);
     const minutes = Math.floor(seconds / 60);
     const hours = Math.floor(minutes / 60);
@@ -251,10 +259,8 @@ const Profile = ({ header }) => {
     const token = Cookies.get('token');
     const headers = token ? { Authorization: `Bearer ${token}` } : {};
     try {
-        const postsRes = await axios.get(`${process.env.REACT_APP_BASE_URL}/get_posts`, { headers });
-        const userPosts = postsRes.data
-            .filter(post => post.user_id === profileUser.id)
-            .map(p => ({
+        const postsRes = await axios.get(`${process.env.REACT_APP_BASE_URL}/users/${profileUser.id}/posts`, { headers });
+        const userPosts = postsRes.data.map(p => ({
                 ...p, 
                 user_name: profileUser.name, 
                 user_profile_image: profileUser.profile_image,
@@ -262,49 +268,61 @@ const Profile = ({ header }) => {
             }));
         setMyPosts(userPosts);
     } catch (error) {
-        console.error("Error refetching posts:", error);
+        console.error("Error refetching posts for profile:", error);
     }
-  }, [profileUser]); // Dependency on profileUser
+  }, [profileUser]);
 
   const handleReaction = async (postId, reactionType) => {
     if (!loggedInUser) return;
+    const token = Cookies.get('token');
+    if (!token) { navigate('/login'); return; }
     try {
       await axios.post(`${process.env.REACT_APP_BASE_URL}/react_to_post`, {
-        user_id: loggedInUser.id,
+        // user_id: loggedInUser.id, // Backend uses token
         post_id: postId,
         reaction_type: reactionType,
+      }, {
+        headers: { 'Authorization': `Bearer ${token}` }
       });
       fetchPostsAgain();
     } catch (error) {
       console.error('Error adding reaction:', error);
+      alert('Failed to react to post. ' + (error.response?.data?.error || ''));
     }
   };
 
   const handleCommentSubmit = async (postId) => {
     if (commentText.trim() === '' || !loggedInUser) return;
+    const token = Cookies.get('token');
+    if (!token) { navigate('/login'); return; }
+
+    const mentionIds = mentionedUsersInComment.map(user => user.id);
+
     try {
       await axios.post(`${process.env.REACT_APP_BASE_URL}/add_comment`, {
         post_id: postId,
-        user_id: loggedInUser.id,
+        // user_id: loggedInUser.id, // Backend uses token
         comment_text: commentText,
+        mentioned_user_ids: mentionIds,
+      }, {
+        headers: { 'Authorization': `Bearer ${token}` }
       });
       setCommentText('');
+      setMentionedUsersInComment([]);
       setIsCommentingOnPost(null);
       fetchComments(postId);
-      fetchPostsAgain();
+      fetchPostsAgain(); // To update comment count on the post
     } catch (error) {
       console.error('Error adding comment:', error);
+      alert('Failed to add comment. ' + (error.response?.data?.error || ''));
     }
   };
   
   const fetchComments = async (postId) => {
     try {
       const response = await axios.get(`${process.env.REACT_APP_BASE_URL}/get_comments/${postId}`);
-      const commentsWithUsers = await Promise.all(response.data.map(async (comment) => {
-        const userRes = await axios.get(`${process.env.REACT_APP_BASE_URL}/get_user/${comment.user_id}`);
-        return { ...comment, user_name: userRes.data.name, user_profile_image: userRes.data.profile_image };
-      }));
-      setComments(commentsWithUsers);
+      // Assuming get_comments already returns user details with each comment
+      setComments(response.data);
     } catch (error) {
       console.error("Error fetching comments:", error);
       setComments([]);
@@ -327,6 +345,7 @@ const Profile = ({ header }) => {
       );
     } catch (error) {
       console.error('Error saving/unsaving post:', error);
+      alert('Failed to save/unsave post. ' + (error.response?.data?.error || ''));
     }
   };
 
@@ -336,22 +355,32 @@ const Profile = ({ header }) => {
 
   const handleSubmitPost = async (e) => {
     e.preventDefault();
-    if (!loggedInUser) return;
+    if (!loggedInUser || text.trim() === '') return;
+    const token = Cookies.get('token');
+    if (!token) { navigate('/login'); return; }
+
     const formData = new FormData();
-    formData.append('user_id', loggedInUser.id);
+    // formData.append('user_id', loggedInUser.id); // Backend uses token
     formData.append('text', text);
     if (image) formData.append('image', image);
     if (video) formData.append('video', video);
 
+    const mentionIds = mentionedUsersInPost.map(user => user.id);
+    formData.append('mentioned_user_ids', JSON.stringify(mentionIds));
+
     try {
       await axios.post(`${process.env.REACT_APP_BASE_URL}/create_post`, formData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
+        headers: { 
+          'Content-Type': 'multipart/form-data',
+          'Authorization': `Bearer ${token}` 
+        },
       });
       setText(''); setImage(null); setVideo(null);
+      setMentionedUsersInPost([]);
       fetchPostsAgain();
     } catch (error) {
       console.error('Error creating post:', error);
-      alert('There was an error creating the post');
+      alert('There was an error creating the post. ' + (error.response?.data?.error || ''));
     }
   };
 
@@ -363,9 +392,14 @@ const Profile = ({ header }) => {
 
   const constructMediaUrl = (urlPath) => {
     if (!urlPath) return '';
-    // Ensure no double slashes if urlPath already starts with one
+    if (urlPath.startsWith('http://') || urlPath.startsWith('https://')) {
+        return urlPath; // Already a full URL
+    }
     return `${process.env.REACT_APP_BASE_URL}${urlPath.startsWith('/') ? '' : '/'}${urlPath}`;
   };
+
+  // TODO: Implement UI for selecting users to mention (e.g., a dropdown when typing @)
+  // For now, mentionedUsersInPost and mentionedUsersInComment would be populated by such a UI.
 
   return (
     <div>
@@ -380,8 +414,8 @@ const Profile = ({ header }) => {
                 alt="profile" 
                 onError={(e) => e.target.src = '/assets/images/default-avatar.png'}
               />
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', /* Removed flexWrap: 'wrap' */ gap: '10px', width: '100%' }}>
-                <h1 style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', minWidth: 0 /* Allow h1 to shrink and show ellipsis */ }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px', width: '100%' }}>
+                <h1 style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', minWidth: 0 }}>
                   {profileUser.name}
                 </h1>
                 {!isMyProfile && loggedInUser && profileUser && (
@@ -398,7 +432,7 @@ const Profile = ({ header }) => {
                       fontSize: '0.9rem',
                       fontWeight: 'bold',
                       whiteSpace: 'nowrap',
-                      flexShrink: 0 // Prevent button from shrinking
+                      flexShrink: 0 
                     }}
                   >
                     {followInProgress ? '...' : (isFollowing ? 'Unfollow' : 'Follow')}
@@ -424,9 +458,22 @@ const Profile = ({ header }) => {
                   alt="profile" 
                   onError={(e) => e.target.src = '/assets/images/default-avatar.png'}
                 />
-                <textarea rows="2" placeholder="Write Something" value={text} onChange={handleTextChange}></textarea>
+                <MentionInput
+                  value={text}
+                  onChange={setText}
+                  onMentionsChange={setMentionedUsersInPost}
+                  placeholder="Write Something..."
+                  className="create-post-textarea-wrapper" // Optional
+                />
               </div>
+              {/* Placeholder for mention selection UI */}
+              {/* <div>Selected mentions for post: {mentionedUsersInPost.map(u => u.username).join(', ')}</div> */}
               <div className="create-post-links">
+                {mentionedUsersInPost.length > 0 && (
+                  <div style={{ fontSize: '0.8em', color: '#555', padding: '5px 0' }}>
+                      Tagging: {mentionedUsersInPost.map(u => `@${u.username}`).join(', ')}
+                  </div>
+                )}
                 <li onClick={() => document.getElementById('profile-image-upload')?.click()}>
                   <img src="/assets/images/photo.svg" alt="photo" /> Photo
                   <input type="file" id="profile-image-upload" onChange={handleImageChange} accept="image/*" style={{ display: 'none' }} />
@@ -436,13 +483,16 @@ const Profile = ({ header }) => {
                   <input type="file" id="profile-video-upload" onChange={handleVideoChange} accept="video/*" style={{ display: 'none' }} />
                 </li>
                 <li><img src="/assets/images/event.svg" alt="event" /> Event</li>
-                <li onClick={handleSubmitPost}>Post</li>
+                <li onClick={handleSubmitPost} style={{cursor: 'pointer'}}>Post</li>
               </div>
-                {image && <div className="uploaded-files-preview"><img src={URL.createObjectURL(image)} alt="Uploaded" style={{ maxWidth: '150px', marginTop: '10px' }} /></div>}
+                {image && <div className="uploaded-files-preview"><img src={URL.createObjectURL(image)} alt="Uploaded Preview" style={{ maxWidth: '150px', marginTop: '10px' }} /></div>}
                 {video && <div className="uploaded-files-preview"><video controls src={URL.createObjectURL(video)} style={{ maxWidth: '150px', marginTop: '10px' }} /></div>}
             </div>
           )}
-
+          <div className="sort-by">
+            <hr />
+            <p>Sort by : <span>top <img src="/assets/images/down-arrow.png" alt="down-arrow" /></span> </p>
+          </div>
           {myPosts.length === 0 && <p style={{textAlign: 'center', marginTop: '20px'}}>No posts yet.</p>}
 
           {myPosts.map((post) => (
@@ -463,16 +513,16 @@ const Profile = ({ header }) => {
                     <button 
                         onClick={() => handleSavePost(post.id || post.post_id, post.is_saved)}
                         className={`save-button ${post.is_saved ? 'saved' : ''}`}
-                        style={{ marginLeft: 'auto', padding: '5px 10px', cursor: 'pointer' }}
+                        style={{ marginLeft: 'auto', padding: '5px 10px', cursor: 'pointer', background: 'none', border: 'none', fontSize: '1.2em' }}
                         title={post.is_saved ? 'Unsave Post' : 'Save Post'}
                     >
-                        {post.is_saved ? '❤️ Saved' : '🤍 Save'}
+                        {post.is_saved ? '❤️' : '🤍'}
                     </button>
                 )}
               </div>
-              <p>{post.content}</p>
-              {post.image_url && <img src={constructMediaUrl(post.image_url)} alt="post" style={{ width: '100%' }} />}
-              {post.video_url && <video autoPlay muted controls style={{ width: '100%' }}><source src={constructMediaUrl(post.video_url)} type="video/mp4" />Your browser does not support the video tag.</video>}
+              {renderContentWithMentions(post.content, post.mentions)}
+              {post.image_url && <img src={constructMediaUrl(post.image_url)} alt="post content" style={{ width: '100%', marginTop: '10px', borderRadius: '4px' }} />}
+              {post.video_url && <video autoPlay muted controls style={{ width: '100%', marginTop: '10px', borderRadius: '4px' }}><source src={constructMediaUrl(post.video_url)} type="video/mp4" />Your browser does not support the video tag.</video>}
               
               <div className="post-stats">
                 <div>
@@ -504,13 +554,24 @@ const Profile = ({ header }) => {
                     </div>
                   )}
                 </div>
-                <div className="post-activity-link" onClick={() => { setIsCommentingOnPost(post.id || post.post_id); setCommentText(''); }}>
+                <div className="post-activity-link" onClick={() => { setIsCommentingOnPost(post.id || post.post_id); setCommentText(''); setMentionedUsersInComment([]); }}>
                   <img src="/assets/images/comment.png" alt="comment-icon" /><span>Comment</span>
                 </div>
               </div>
               {isCommentingOnPost === (post.id || post.post_id) && (
                 <div className="comment-input-wrapper">
-                  <textarea value={commentText} onChange={(e) => setCommentText(e.target.value)} placeholder="Write a comment..." rows="2" className="comment-input" />
+                  <MentionInput
+                    value={commentText}
+                    onChange={setCommentText}
+                    onMentionsChange={setMentionedUsersInComment}
+                    placeholder="Write a comment..."
+                    className="comment-textarea-wrapper"
+                  />
+                  {mentionedUsersInComment.length > 0 && (
+                    <div style={{ fontSize: '0.7em', color: '#555', padding: '3px 0' }}>
+                        Tagging: {mentionedUsersInComment.map(u => `@${u.username}`).join(', ')}
+                    </div>
+                  )}
                   <button onClick={() => handleCommentSubmit(post.id || post.post_id)} className="comment-send-btn">
                     <img src="/assets/images/send-comment.png" alt="send" className="send-icon" />
                   </button>
@@ -536,7 +597,7 @@ const Profile = ({ header }) => {
           </div>
 
           <div className="sidebar-ad">
-            <small>Ad &middot; &middot; &midd;</small>
+            <small>Ad &middot; &middot; &middot;</small>
             <p>Master Web Development</p>
             <div>
               <img 
@@ -579,7 +640,7 @@ const Profile = ({ header }) => {
                   <img src={comment.user_profile_image ? constructMediaUrl(comment.user_profile_image) : '/assets/images/default-avatar.png'} alt="User" className="comment-avatar" onError={(e) => e.target.src = '/assets/images/default-avatar.png'}/>
                   <div className="comment-content">
                     <strong>{comment.user_name || "User"}</strong>
-                    <p>{comment.comment_text}</p>
+                    {renderContentWithMentions(comment.comment_text, comment.mentions)}
                   </div>
                   <div className="comment-meta">{getTimeAgo(comment.created_at)}</div>
                 </div>

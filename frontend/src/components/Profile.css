@@ -1,0 +1,8 @@
+.mention-link {
+  color: #007bff; /* Or your app's link color */
+  font-weight: bold;
+  text-decoration: none;
+}
+.mention-link:hover {
+  text-decoration: underline;
+}

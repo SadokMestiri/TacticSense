@@ -165,6 +165,35 @@ class SavedPost(db.Model):
 
     def __repr__(self):
         return f'<SavedPost user_id={self.user_id} post_id={self.post_id}>'
+class PostMention(db.Model):
+    __tablename__ = 'post_mention'
+    id = db.Column(db.Integer, primary_key=True)
+    post_id = db.Column(db.Integer, db.ForeignKey('post.post_id'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False) # The user who is mentioned
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    post = db.relationship('Post', backref=db.backref('mentions', lazy='dynamic'))
+    mentioned_user = db.relationship('User', foreign_keys=[user_id])
+
+    __table_args__ = (db.UniqueConstraint('post_id', 'user_id', name='_post_user_mention_uc'),)
+
+    def __repr__(self):
+        return f'<PostMention post_id={self.post_id} user_id={self.user_id}>'
+
+class CommentMention(db.Model):
+    __tablename__ = 'comment_mention'
+    id = db.Column(db.Integer, primary_key=True)
+    comment_id = db.Column(db.Integer, db.ForeignKey('comment.comment_id'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False) # The user who is mentioned
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    comment = db.relationship('Comment', backref=db.backref('mentions', lazy='dynamic'))
+    mentioned_user = db.relationship('User', foreign_keys=[user_id])
+
+    __table_args__ = (db.UniqueConstraint('comment_id', 'user_id', name='_comment_user_mention_uc'),)
+
+    def __repr__(self):
+        return f'<CommentMention comment_id={self.comment_id} user_id={self.user_id}>'
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in app.config['ALLOWED_EXTENSIONS']
@@ -178,6 +207,12 @@ def user_to_dict_simple(user):
         'name': user.name,
         'profile_image': user.profile_image 
     }
+def are_mutual_followers(user1_id, user2_id):
+    user1 = User.query.get(user1_id)
+    user2 = User.query.get(user2_id)
+    if not user1 or not user2 or user1_id == user2_id: # Cannot be mutual with self
+        return False
+    return user1.is_following(user2) and user2.is_following(user1)
 
 performance_model = joblib.load('modelCareer/performance_model.pkl')
 longevity_model = joblib.load('modelCareer/longevity_model.pkl')
@@ -699,12 +734,24 @@ def uploaded_file(filename):
     return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
 
 @app.route('/create_post', methods=['POST'])
-def create_post():
+@token_required # Ensure user is logged in
+def create_post(current_user): # token_required provides current_user
     if 'text' not in request.form:
         return jsonify({'error': 'No text content provided'}), 400
 
     post_content = request.form['text']
-    user_id = request.form['user_id']
+    user_id = current_user.id # Use ID from token
+
+    mentioned_user_ids_str = request.form.get('mentioned_user_ids', '[]') # Expect JSON string array e.g., "[1,2,3]"
+    mentioned_user_ids = []
+    try:
+        parsed_ids = json.loads(mentioned_user_ids_str)
+        if isinstance(parsed_ids, list):
+            mentioned_user_ids = [int(uid) for uid in parsed_ids if isinstance(uid, (int, str)) and str(uid).isdigit()]
+    except (json.JSONDecodeError, ValueError):
+        # Log error or handle as needed, for now, proceed without mentions if parsing fails
+        print(f"Warning: Could not parse mentioned_user_ids: {mentioned_user_ids_str}")
+        mentioned_user_ids = []
 
     uploaded_image = None
     uploaded_video = None
@@ -715,7 +762,7 @@ def create_post():
             image_filename = secure_filename(image_file.filename)
             image_path = os.path.join(app.config['UPLOAD_FOLDER'], image_filename)
             image_file.save(image_path)
-            uploaded_image = url_for('uploaded_file', filename=image_filename)
+            uploaded_image = url_for('uploaded_file', filename=image_filename, _external=True)
 
     if 'video' in request.files:
         video_file = request.files['video']
@@ -723,18 +770,41 @@ def create_post():
             video_filename = secure_filename(video_file.filename)
             video_path = os.path.join(app.config['UPLOAD_FOLDER'], video_filename)
             video_file.save(video_path)
-            uploaded_video = url_for('uploaded_file', filename=video_filename)
+            uploaded_video = url_for('uploaded_file', filename=video_filename, _external=True)
 
     post = Post(user_id=user_id, content=post_content, image_url=uploaded_image, video_url=uploaded_video)
     db.session.add(post)
+    db.session.flush()  # To get post.post_id for mentions
+
+    valid_mentions_added_count = 0
+    if post.post_id:
+        for mentioned_id in mentioned_user_ids:
+            if are_mutual_followers(current_user.id, mentioned_id):
+                mention = PostMention(post_id=post.post_id, user_id=mentioned_id)
+                db.session.add(mention)
+                valid_mentions_added_count += 1
+            else:
+                print(f"User {current_user.id} cannot mention user {mentioned_id} (not mutual or self) in post {post.post_id}")
+
     db.session.commit()
 
     return jsonify({
-        'message': 'Post created successfully',
+        'message': f'Post created successfully' + (f' with {valid_mentions_added_count} valid mentions.' if valid_mentions_added_count > 0 else '.'),
+        'post_id': post.post_id,
         'post_content': post_content,
         'image_url': uploaded_image,
         'video_url': uploaded_video
-    })
+    }), 201
+
+# Helper to get mentioned users for a post
+def get_post_mentions_data(post_id):
+    mentions = PostMention.query.filter_by(post_id=post_id).all()
+    return [user_to_dict_simple(mention.mentioned_user) for mention in mentions if mention.mentioned_user]
+
+# Helper to get mentioned users for a comment
+def get_comment_mentions_data(comment_id):
+    mentions = CommentMention.query.filter_by(comment_id=comment_id).all()
+    return [user_to_dict_simple(mention.mentioned_user) for mention in mentions if mention.mentioned_user]
 
 @app.route('/get_posts', methods=['GET'])
 def get_posts():
@@ -818,7 +888,7 @@ def get_posts():
             continue
 
         post_reactions = reactions_dict.get(post.post_id, {})
-
+        post_mentions = get_post_mentions_data(post.post_id)
         posts_data.append({
             'id': post.post_id,
             'user_id': post.user_id,
@@ -836,25 +906,36 @@ def get_posts():
             'sads': post_reactions.get('sad', 0),
             'created_at': post.created_at.strftime('%Y-%m-%d %H:%M:%S'), 
             'comments_count': comments_count_dict.get(post.post_id, 0), 
-            'is_saved': post.post_id in saved_posts_by_current_user
+            'is_saved': post.post_id in saved_posts_by_current_user,
+            'mentions': post_mentions
         })
 
     return jsonify(posts_data), 200
 
 @app.route('/get_comments/<int:post_id>', methods=['GET'])
 def get_comments(post_id):
-    comments = Comment.query.filter_by(post_id=post_id).all()
+    comments_query = Comment.query.filter_by(post_id=post_id).order_by(Comment.created_at.asc()).all()
     
-    comments_data = [
-        {
+    user_ids_in_comments = list(set(c.user_id for c in comments_query))
+    users_in_comments_dict = {
+        user.id: user_to_dict_simple(user) 
+        for user in User.query.filter(User.id.in_(user_ids_in_comments)).all()
+    }
+
+    comments_data = []
+    for comment in comments_query:
+        commenting_user_data = users_in_comments_dict.get(comment.user_id)
+        comment_mentions = get_comment_mentions_data(comment.comment_id) # Use comment.comment_id
+        comments_data.append({
             'id': comment.comment_id,
             'post_id': comment.post_id,
             'user_id': comment.user_id,
+            'user_name': commenting_user_data['name'] if commenting_user_data else "Unknown User",
+            'user_profile_image': commenting_user_data['profile_image'] if commenting_user_data else None,
             'comment_text': comment.comment_text,
-            'created_at': comment.created_at
-        }
-        for comment in comments
-    ]
+            'created_at': comment.created_at.strftime('%Y-%m-%d %H:%M:%S'),
+            'mentions': comment_mentions # ADDED
+        })
     
     return jsonify(comments_data), 200
 
@@ -888,12 +969,51 @@ def react_to_post():
 
 
 @app.route('/add_comment', methods=['POST'])
-def add_comment():
+@token_required # Ensure user is logged in
+def add_comment(current_user): # token_required provides current_user
     data = request.json
-    new_comment = Comment(**data)
+    post_id = data.get('post_id')
+    comment_text = data.get('comment_text')
+    user_id = current_user.id # Use ID from token
+    
+    mentioned_user_ids = data.get('mentioned_user_ids', []) # Expect a list of integers
+    if not isinstance(mentioned_user_ids, list):
+        return jsonify({'error': 'mentioned_user_ids must be a list'}), 400
+
+    if not post_id or not comment_text:
+        return jsonify({'error': 'Missing post_id or comment_text'}), 400
+
+    post_exists = Post.query.get(post_id)
+    if not post_exists:
+        return jsonify({'error': 'Post not found'}), 404
+
+    new_comment = Comment(post_id=post_id, user_id=user_id, comment_text=comment_text)
     db.session.add(new_comment)
+    db.session.flush() # To get new_comment.comment_id for mentions
+
+    valid_mentions_added_count = 0
+    if new_comment.comment_id:
+        for mentioned_id in mentioned_user_ids:
+            try:
+                m_id = int(mentioned_id)
+                if are_mutual_followers(current_user.id, m_id):
+                    mention = CommentMention(comment_id=new_comment.comment_id, user_id=m_id)
+                    db.session.add(mention)
+                    valid_mentions_added_count += 1
+                else:
+                    print(f"User {current_user.id} cannot mention user {m_id} (not mutual or self) in comment {new_comment.comment_id}")
+            except ValueError:
+                print(f"Invalid mentioned user ID format: {mentioned_id}")
+
     db.session.commit()
-    return jsonify({'message': 'Comment added'})
+    return jsonify({
+        'message': f'Comment added successfully' + (f' with {valid_mentions_added_count} valid mentions.' if valid_mentions_added_count > 0 else '.'),
+        'comment_id': new_comment.comment_id,
+        'comment_text': new_comment.comment_text,
+        'user_id': new_comment.user_id,
+        'post_id': new_comment.post_id,
+        'created_at': new_comment.created_at.strftime('%Y-%m-%d %H:%M:%S')
+    }), 201
 
 @app.route('/posts/<int:post_id>/save', methods=['POST'])
 @token_required
@@ -1165,6 +1285,7 @@ def get_user_posts(profile_user_id):
 
     for post in posts:
         post_reactions = reactions_dict.get(post.post_id, {})
+        post_mentions = get_post_mentions_data(post.post_id)
         
         posts_data.append({
             'id': post.post_id,
@@ -1183,7 +1304,8 @@ def get_user_posts(profile_user_id):
             'sads': post_reactions.get('sad', 0),
             'created_at': post.created_at.strftime('%Y-%m-%d %H:%M:%S'),
             'comments_count': comments_count_dict.get(post.post_id, 0),
-            'is_saved': post.post_id in saved_posts_by_current_user if current_user_id else False
+            'is_saved': post.post_id in saved_posts_by_current_user if current_user_id else False,
+            'mentions': post_mentions
         })
 
     return jsonify(posts_data), 200
@@ -1201,6 +1323,22 @@ def search_users_route():
     ).limit(20).all() 
     
     return jsonify([user_to_dict_simple(u) for u in users_found]), 200
+@app.route('/users/taggable', methods=['GET'])
+@token_required
+def get_taggable_users(current_user):
+    query = request.args.get('q', '').strip().lower()
+    
+    # Users current_user is following
+    following_users = current_user.following
+    
+    taggable_users = []
+    for followed_user in following_users:
+        # Check if the followed_user is also following current_user (mutual)
+        if followed_user.is_following(current_user):
+            if not query or query in followed_user.username.lower() or query in followed_user.name.lower():
+                taggable_users.append(user_to_dict_simple(followed_user))
+    
+    return jsonify(taggable_users[:10]), 200 # Limit results for suggestion list
 
 app.app_context().push()
 if __name__ == '__main__':

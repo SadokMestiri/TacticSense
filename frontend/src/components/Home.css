@@ -135,3 +135,30 @@
   padding: 20px;
   color: #606770;
 }
+/* In Home.css or App.css */
+.create-post-textarea-wrapper,
+.comment-textarea-wrapper {
+  flex-grow: 1; /* If inside a flex container */
+}
+
+/* Styling for the suggestion list items (already inline, but can be moved to CSS) */
+.mention-suggestion-item {
+  padding: 8px 12px;
+  cursor: pointer;
+  border-bottom: 1px solid #eee;
+  display: flex;
+  align-items: center;
+}
+.mention-suggestion-item:hover {
+  background-color: #f0f0f0;
+}
+.mention-suggestion-avatar {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  margin-right: 8px;
+}
+.mention-suggestion-username {
+  color: #555;
+  margin-left: 4px;
+}
