@@ -10,7 +10,7 @@
     z-index: 1000;
     padding: 10px;
   }
-  
+
   @keyframes slideDown {
     from {
         opacity: 0;
@@ -21,7 +21,7 @@
         transform: translateY(0);
     }
   }
-  
+
   .dropdown-header {
     display: flex;
     align-items: center;
@@ -29,7 +29,7 @@
     border-bottom: 1px solid #eee;
     margin-bottom: 10px;
   }
-  
+
   .dropdown-avatar {
     width: 50px;
     height: 50px;
@@ -37,7 +37,7 @@
     margin-right: 10px;
     margin-top:10px;
   }
-  
+
   .dropdown-info {
     font-size: 14px;
     color: #333;
@@ -45,12 +45,12 @@
     margin-top:-50px;
     margin-bottom:30px;
   }
-  
+
   .dropdown-info .name {
     font-weight: bold;
     margin-bottom: 5px;
   }
-  
+
   .profile-btn, .logout-btn {
     display: block;
     text-decoration: none;
@@ -59,22 +59,22 @@
     border-radius: 4px;
     margin-bottom: 8px;
   }
-  
+
   .profile-btn {
     background-color: #0073b1;
     color: #fff;
   }
-  
+
   .logout-btn {
     background-color: #e60000;
     color: #fff;
   }
-  
+
   /* Existing styles */
   .navbar-right {
     position: relative;
   }
-  
+
   .dropdown-info .name {
     font-weight: bold;
     margin-bottom: 5px;
@@ -94,12 +94,12 @@
     font-weight: 600;
     transition: background-color 0.3s, color 0.3s;
   }
-  
+
   .profile-btn:hover {
     background-color: #0073b1;
     color: #fff;
   }
-  
+
   .logout-btn {
     background-color: transparent;
     border: none;
@@ -114,7 +114,7 @@
     font-weight: 600;
     transition: background-color 0.3s;
   }
-  
+
   .logout-btn:hover {
     background-color: rgba(0, 115, 177, 0.1);
   }
@@ -123,3 +123,82 @@
     margin-right: 70px;
     margin-top: -15px; /* Adjust the value as needed to move the image to the left */
   }
+  .search-box {
+  position: relative; /* Needed for absolute positioning of dropdown */
+  }
+  .search-results-dropdown {
+  position: absolute;
+  top: 100%; /* Position below the search box */
+  left: 0;
+  width: 100%; /* Or a fixed width like 300px */
+  max-height: 350px;
+  overflow-y: auto;
+  background-color: #fff;
+  border: 1px solid #ccc;
+  border-top: none;
+  border-radius: 0 0 4px 4px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  z-index: 1000; /* Ensure it's above other content */
+}
+
+.search-result-item {
+  display: flex;
+  align-items: center;
+  padding: 10px;
+  border-bottom: 1px solid #eee;
+  justify-content: space-between; /* To push FollowButton to the right */
+}
+
+.search-result-item:last-child {
+  border-bottom: none;
+}
+
+.search-result-link {
+  display: flex;
+  align-items: center;
+  text-decoration: none;
+  color: inherit;
+  flex-grow: 1; /* Allow link to take available space */
+}
+
+.search-result-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  margin-right: 10px;
+  object-fit: cover;
+}
+
+.search-result-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.search-result-name {
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: #333;
+}
+
+.search-result-username {
+  font-size: 0.8rem;
+  color: #666;
+}
+
+.search-result-item .follow-button { /* Style FollowButton specifically within search results */
+  margin-left: 10px; /* Add some space between user info and button */
+  padding: 4px 8px; /* Smaller button */
+  font-size: 0.8rem;
+}
+
+.login-prompt-button {
+  background-color: #007bff;
+  color: white;
+  padding: 8px 15px;
+  border-radius: 4px;
+  text-decoration: none;
+  font-weight: 500;
+}
+.login-prompt-button:hover {
+  background-color: #0056b3;
+}

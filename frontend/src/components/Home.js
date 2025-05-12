@@ -195,20 +195,33 @@ useEffect(() => {
       const response = await axios.get(`${process.env.REACT_APP_BASE_URL}/get_posts`, { headers });
       const postsData = response.data;
 
-      for (let post of postsData) {
-        if (post.user_id && !users[post.user_id]) { // Fetch user only if not already fetched
-          await fetchUsers(post.user_id);
-        }
+      // Ensure postsData is an array before proceeding
+      if (Array.isArray(postsData)) {
+          const userIdsToFetch = new Set();
+          postsData.forEach(post => {
+            if (post.user_id && !users[post.user_id]) {
+              userIdsToFetch.add(post.user_id);
+            }
+          });
+
+          // Batch fetch user data if needed
+          for (let userId of userIdsToFetch) {
+            await fetchUsers(userId); // Assuming fetchUsers updates the 'users' state
+          }
+          setPosts(postsData);
+      } else {
+          console.error("Error fetching posts: API did not return an array.", postsData);
+          setPosts([]); // Set to empty array if data is not as expected
       }
 
-      setPosts(postsData);
     } catch (error) {
       console.error('Error fetching posts:', error);
-      // Handle error (e.g., if token expired and backend returned 401)
       if (error.response && error.response.status === 401) {
         Cookies.remove('token');
         Cookies.remove('user');
         navigate('/login');
+      } else {
+        setPosts([]); // Set to empty array on other errors as well
       }
     }
   };
@@ -415,6 +428,12 @@ console.log(user)
           </div>
 
           {/* Posts */}
+          {posts.length === 0 && (
+            <div style={{ textAlign: 'center', marginTop: '20px', color: '#666' }}>
+              <p>No posts to show.</p>
+              <p>Follow other users to see their posts here, or create your own!</p>
+            </div>
+          )}
           {posts.map((post, index) => (
             <div key={post.id || index} className="post"> {/* Ensure post.id is used for key */}
               <div className="post-author">

@@ -10,6 +10,8 @@ const SavedPosts = ({ header }) => {
   const [savedPosts, setSavedPosts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [followersCount, setFollowersCount] = useState(0);
+  const [followingCount, setFollowingCount] = useState(0);
   
   const userCookie = Cookies.get('user');
   const currentUser = useMemo(() => {
@@ -61,10 +63,30 @@ const SavedPosts = ({ header }) => {
         setLoading(false);
       }
     };
+      const fetchFollowCounts = async () => {
+      if (currentUser && currentUser.id) {
+        try {
+          // Assuming you have endpoints like these:
+          const followersResponse = await axios.get(`${process.env.REACT_APP_BASE_URL}/users/${currentUser.id}/followers`, {
+            headers: { Authorization: `Bearer ${token}` },
+          });
+          setFollowersCount(followersResponse.data.count || followersResponse.data.length); // Adjust based on your API response
+
+          const followingResponse = await axios.get(`${process.env.REACT_APP_BASE_URL}/users/${currentUser.id}/following`, {
+            headers: { Authorization: `Bearer ${token}` },
+          });
+          setFollowingCount(followingResponse.data.count || followingResponse.data.length); // Adjust based on your API response
+        } catch (err) {
+          console.error('Error fetching follow counts:', err);
+          // Optionally set an error state for follow counts
+        }
+      }
+    };
 
     fetchSavedPosts();
+    fetchFollowCounts();
   }, [token, currentUser, navigate]);
-
+  
   const handleUnsavePost = async (postId) => {
     if (!currentUser || !token) {
       alert('Please log in.');
@@ -98,10 +120,32 @@ const SavedPosts = ({ header }) => {
     <div>
       {header}
       <div className="container">
-        {/* You can reuse the left and right sidebar structure from Home.js if desired */}
-        {/* For simplicity, this example focuses on the main content area */}
+        <div className="left-sidebar">
+          {currentUser && (
+            <div className="sidebar-profile-box">
+              {/* You can use a generic cover or remove it */}
+              <img src="/assets/images/cover-pic.jpg" alt="cover" width="100%" />
+              <div className="sidebar-profile-info">
+                <img
+                  src={currentUser.profile_image ? `${process.env.REACT_APP_BASE_URL}/${currentUser.profile_image}` : 'assets/images/default-avatar.png'}
+                  alt="profile"
+                  onError={(e) => e.target.src = 'assets/images/default-avatar.png'}
+                />
+                <h1>{currentUser.name}</h1>
+                <ul>
+                  {/* Assuming you want to display counts similar to Profile.js */}
+                  {/* You might want to make these clickable to a list later */}
+                  <li>Followers <span>{followersCount}</span></li>
+                  <li>Following <span>{followingCount}</span></li>
+                  <li>Saved Posts <span>{savedPosts.length}</span></li>
+                </ul>
+              </div>
+            </div>
+          )}
+          {/* You can add other sections like 'sidebar-activity' from Home.js if needed */}
+        </div>
         <div className="main-content">
-          <h2>My Saved Posts</h2>
+          <h2 style={{ color: 'black' }}>My Saved Posts</h2>
           {savedPosts.length === 0 ? (
             <p>You haven't saved any posts yet.</p>
           ) : (
@@ -140,11 +184,6 @@ const SavedPosts = ({ header }) => {
                     Your browser does not support the video tag.
                   </video>
                 )}
-                {/* 
-                  Displaying full reactions, comments, and comment input 
-                  would require the /users/<id>/saved_posts endpoint to return more data 
-                  or making additional calls. For now, this is a simplified view.
-                */}
                 <div className="post-activity">
                   {/* Simplified activity: Link to original post or view comments could be added here */}
                   {/* Example: <a href={`/post/${post.id}`}>View Post Details</a> */}
@@ -152,6 +191,50 @@ const SavedPosts = ({ header }) => {
               </div>
             ))
           )}
+        </div>
+        <div className="right-sidebar">
+          <div className="sidebar-news">
+            <img src="assets/images/more.svg" className="info-icon" alt="more" />
+            <h3>Trending News</h3>
+            <a href="#">High Demand for Skilled Employees</a>
+            <span>1d ago &middot; 10,934 readers</span>
+            <a href="#">Inflation in Canada Affects the Workforce</a>
+            <span>2d ago &middot; 7,043 readers</span>
+            <a href="#">Mass Recruiters fire Employees</a>
+            <span>4d ago &middot; 17,789 readers</span>
+            <a href="#">Crypto predicted to Boom this year</a>
+            <span>9d ago &middot; 2,436 readers</span>
+            <a href="#" className="read-more-link">Read More</a>
+          </div>
+
+          <div className="sidebar-ad">
+            <small>Ad &middot; &middot; &midd;</small>
+            <p>Master Web Development</p>
+            <div>
+              <img 
+                src={currentUser?.profile_image ? `${process.env.REACT_APP_BASE_URL}/${currentUser.profile_image}` : 'assets/images/default-avatar.png'}  
+                alt="user" 
+                onError={(e) => e.target.src = 'assets/images/default-avatar.png'}
+              />
+              <img src="assets/images/mi-logo.png" alt="mi logo" />
+            </div>
+            <b>Brand and Demand in Xiaomi</b>
+            <a href="#" className="ad-link">Learn More</a>
+          </div>
+
+          <div className="sidebar-useful-links">
+            <a href="#">About</a>
+            <a href="#">Accessibility</a>
+            <a href="#">Help Center</a>
+            <a href="#">Privacy Policy</a>
+            <a href="#">Advertising</a>
+            <a href="#">Get the App</a>
+            <a href="#">More</a>
+            <div className="copyright-msg">
+              <img src="assets/images/logo.png" alt="logo" />
+              <p>MetaScout &#169; 2025. All Rights Reserved</p>
+            </div>
+          </div>
         </div>
       </div>
     </div>
