@@ -14,21 +14,21 @@ const Profile = () => {
   const [email, setEmail] = useState('');
   const [message, setMessage] = useState('');
   const [activeTab, setActiveTab] = useState(0);
-  const [uploadedVideos, setUploadedVideos] = useState({});
-  const [currentPage, setCurrentPage] = useState({});
-  const [age, setAge] = useState({});
-  const [nationality, setNationality] = useState({});
-  const [position, setPosition] = useState({});
-  const [matches, setMatches] = useState({});
-  const [minutes, setMinutes] = useState({});
-  const [goals, setGoals] = useState({});
-  const [assists, setAssists] = useState({});
-  const [club, setClub] = useState({});
-  const [market_value, setMarket_value] = useState({});
-  const [total_yellow_cards, setTotal_yellow_cards] = useState({});
-  const [total_red_cards, setTotal_red_cards] = useState({});
-  const [performance_metrics, setPerformance_metrics] = useState({});
-  const [media_sentiment, setMedia_sentiment] = useState({});
+  const [uploadedVideos, setUploadedVideos] = useState('');
+  const [currentPage, setCurrentPage] = useState('');
+  const [age, setAge] = useState('');
+  const [nationality, setNationality] = useState('');
+  const [position, setPosition] = useState('');
+  const [matches, setMatches] = useState('');
+  const [minutes, setMinutes] = useState('');
+  const [goals, setGoals] = useState('');
+  const [assists, setAssists] = useState('');
+  const [club, setClub] = useState('');
+  const [market_value, setMarket_value] = useState('');
+  const [total_yellow_cards, setTotal_yellow_cards] = useState('');
+  const [total_red_cards, setTotal_red_cards] = useState('');
+  const [performance_metrics, setPerformance_metrics] = useState('');
+  const [media_sentiment, setMedia_sentiment] = useState('');
   const [aggression, setAggression] = useState(50);
   const [reactions, setReecation] = useState(50);
   const [long_pass, setLong_pass] = useState(50);
@@ -40,8 +40,10 @@ const Profile = () => {
   const [heading, setHeading] = useState(50);
   const [free_kick_accuracy, setFree_kick_accuracy] = useState(50);
   const [volleys, setVolleys] = useState(50);
-  const [ratings, setRatings] = useState({}); // State to store ratings for each skill
-  const [averageRatings, setAverageRatings] = useState({}); // State to store average ratings for each skill
+  const [ratings, setRatings] = useState(''); // State to store ratings for each skill
+  const [averageRatings, setAverageRatings] = useState(''); // State to store average ratings for each skill
+  const [club_id, setClub_id] = useState(''); // State to store club information
+  const [agency_id, setAgency_id] = useState(''); // State to store agency information
 
   const handleTabChange = (event, newValue) => {
     setActiveTab(newValue);
@@ -93,6 +95,8 @@ const Profile = () => {
           setHeading(userData.heading);
           setFree_kick_accuracy(userData.free_kick_accuracy);
           setVolleys(userData.volleys);
+          setClub_id(userData.club_id);
+          setAgency_id(userData.agency_id);
           console.log('User data:', userData);
         } catch (error) {
           console.error('Error fetching user data:', error);
@@ -118,119 +122,6 @@ const Profile = () => {
 
     fetchAverageRatings();
   }, []);
-
-  const handleImageChange = async (event) => {
-    const file = event.target.files[0];
-    if (file) {
-      const imageUrl = URL.createObjectURL(file);
-      setProfileImage(imageUrl); // Set the new image locally
-      setMessage('Profile image updated locally. Save changes to update in the database.');
-    }
-  };
-
-  const handleProfileUpdate = async () => {
-  const token = Cookies.get('token');
-  if (!token) {
-    setMessage('No token found. Please log in again.');
-    return;
-  }
-
-  // Create a FormData object to include the profile image and other fields
-  const formData = new FormData();
-  formData.append('username', username);
-  formData.append('name', name);
-  formData.append('email', email);
-  formData.append('role', role);
-  formData.append('age', age);
-  formData.append('nationality', nationality);
-  formData.append('position', position);
-  formData.append('matches', matches);
-  formData.append('minutes', minutes);
-  formData.append('goals', goals);
-  formData.append('assists', assists);
-  formData.append('club', club);
-  formData.append('market_value', market_value);
-  formData.append('total_yellow_cards', total_yellow_cards);
-  formData.append('total_red_cards', total_red_cards);
-  formData.append('performance_metrics', performance_metrics);
-  formData.append('media_sentiment', media_sentiment);
-  formData.append('aggression', aggression);
-  formData.append('reactions', reactions);
-  formData.append('long_pass', long_pass);
-  formData.append('stamina', stamina);
-  formData.append('strength', strength);
-  formData.append('sprint_speed', sprint_speed);
-  formData.append('agility', agility);
-  formData.append('jumping', jumping);
-  formData.append('heading', heading);
-  formData.append('free_kick_accuracy', free_kick_accuracy);
-  formData.append('volleys', volleys);
-
-  // Add the profile image if it is a local blob URL
-  if (profileImage.startsWith('blob:')) {
-    const response = await fetch(profileImage);
-    const blob = await response.blob();
-    formData.append('profile_image', blob, 'profile_image.jpg');
-  }
-
-  try {
-    const response = await axios.put(`${process.env.REACT_APP_BASE_URL}/update_profile`, formData, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-        // Do not set 'Content-Type' manually
-      },
-    });
-
-    if (response.status === 200) {
-      setMessage('Profile updated successfully');
-    } else {
-      setMessage('Unexpected response from the server.');
-    }
-  } catch (error) {
-    if (error.response) {
-      if (error.response.status === 401) {
-        setMessage('Unauthorized. Please log in again.');
-      } else {
-        setMessage(`Error: ${error.response.data.message || 'Failed to update profile.'}`);
-      }
-    } else {
-      setMessage('Network error. Please try again later.');
-    }
-  }
-};
-
-  const handleVideoUpload = (event, skill) => {
-    const files = Array.from(event.target.files);
-    const videoURLs = files.map((file) => URL.createObjectURL(file));
-
-    setUploadedVideos((prev) => ({
-      ...prev,
-      [skill]: [...(prev[skill] || []), ...videoURLs].slice(0, 3), // Limit to 3 videos per skill
-    }));
-  };
-
-  const handleDeleteVideo = (skill, index) => {
-    setUploadedVideos((prev) => {
-      const updatedVideos = [...(prev[skill] || [])];
-      updatedVideos.splice(index, 1); // Remove the video at the specified index
-
-      // Adjust the current page if necessary
-      setCurrentPage((prevPage) => {
-        const currentPageIndex = prevPage[skill] || 0;
-        const newPageIndex = Math.min(currentPageIndex, Math.max(0, updatedVideos.length - 1));
-        return {
-          ...prevPage,
-          [skill]: newPageIndex,
-        };
-      });
-
-      return {
-        ...prev,
-        [skill]: updatedVideos,
-      };
-    });
-  };
-
   const handlePageChange = (skill, direction) => {
     setCurrentPage((prev) => {
       const newPage = Math.max(0, (prev[skill] || 0) + direction);
@@ -240,6 +131,16 @@ const Profile = () => {
         [skill]: Math.min(newPage, maxPage),
       };
     });
+  };
+
+  const handleVideoUpload = (event, skill) => {
+    const files = Array.from(event.target.files);
+    const videoURLs = files.map((file) => URL.createObjectURL(file));
+
+    setUploadedVideos((prev) => ({
+      ...prev,
+      [skill]: [...(prev[skill] || []), ...videoURLs].slice(0, 3), // Limit to 3 videos per skill
+    }));
   };
 
   const MarketValuePredictor = () => {
@@ -327,6 +228,19 @@ const Profile = () => {
                   width: '100%',
                 }}
               >
+                {/* Display Videos */}
+        {/* {videoList[skill] && videoList[skill].length > 0 ? (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            {videoList[skill].map((videoUrl, idx) => (
+              <video key={idx} width="400" height="250" controls>
+                <source src={videoUrl} type="video/mp4" />
+                Your browser does not support the video tag.
+              </video>
+            ))}
+          </div>
+        ) : (
+          <p>No videos uploaded for this skill.</p>
+        )} */}
                 <button
                   onClick={() => handlePageChange(skill, -1)}
                   disabled={(currentPage[skill] || 0) === 0}
@@ -341,7 +255,7 @@ const Profile = () => {
                 >
                   Previous
                 </button>
-                {(uploadedVideos[skill]?.length < 3 ) && uploadedVideos[skill]?.[currentPage[skill] || 0] && (
+                {/* {(uploadedVideos[skill]?.length < 3 ) && uploadedVideos[skill]?.[currentPage[skill] || 0] && (
                   <button
                     className="upload-placeholder"
                     onClick={() =>
@@ -357,8 +271,8 @@ const Profile = () => {
                   >
                     + Upload Video
                   </button>
-                )}
-                {uploadedVideos[skill]?.[currentPage[skill] || 0] && (
+                )} */}
+                {/* {uploadedVideos[skill]?.[currentPage[skill] || 0] && (
                   <button
                     className="remove-placeholder"
                     onClick={() => handleDeleteVideo(skill, currentPage[skill] || 0)}
@@ -371,7 +285,7 @@ const Profile = () => {
                   >
                     - Remove Video
                   </button>
-                )}
+                )} */}
                 <button
                   onClick={() => handlePageChange(skill, 1)}
                   disabled={
@@ -391,7 +305,9 @@ const Profile = () => {
                 </button>
               </div>
               <div style={{ marginTop: '20px' }}>
-                <p>Rating: {averageRatings[skill] || 'Not rated yet'}</p>
+                {/* <p>Rating: {averageRatings[skill] || 'Not rated yet'}</p> */}
+                <p>Rating: {(averageRatings && averageRatings[skill]) || 'Not rated yet'}</p>
+
               </div>
             </div>
             <input

@@ -1,20 +1,81 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Header from './Header';
+import { Tabs, Tab, Container} from '@mui/material';
 import './Profile.css';
+import axios from 'axios';
+import Cookies from 'js-cookie';
+import jwt_decode from 'jwt-decode';
 
-const CoachProfileView = ({
-  profileImage,
-  username,
-  name,
-  role,
-  email,
-  nationality,
-  dateOfAppointment,
-  dateOfEndContract,
-  yearsOfExperience,
-  qualification,
-  availability
-}) => {
+const CoachProfileView = () => {
+  const [message, setMessage] = useState('');
+    const [profileImage, setProfileImage] = useState('');
+    const [username, setUsername] = useState('');
+    const [name, setName] = useState('');
+    const [role, setRole] = useState('');
+    const [email, setEmail] = useState('');
+    const [nationality, setNationality] = useState('');
+    const [dateOfAppointment, setDateOfAppointment] = useState('');
+    const [dateOfEndContract, setDateOfEndContract] = useState('');
+    const [yearsOfExperience, setYearsOfExperience] = useState('');
+    const [qualification, setQualification] = useState('');
+    const [availability, setAvailability] = useState(true);
+    const [club_id, setClub_id] = useState('');
+    const [clubs, setClubs] = useState([]);
+
+    useEffect(() => {
+      const fetchClubs = async () => {
+        try {
+          const response = await axios.get(`${process.env.REACT_APP_BASE_URL}/get_clubs`);
+          setClubs(response.data);
+          console.log('Clubs:', response.data);
+        } catch (error) {
+          console.error('Error fetching clubs:', error);
+        }
+      };
+    
+      fetchClubs();
+    }, []);
+
+    useEffect(() => {
+        const fetchUserData = async () => {
+          const userCookie = Cookies.get('user');
+          if (userCookie) {
+            const parsedUser = JSON.parse(userCookie);
+            const userId = parsedUser.id; // Assuming `id` is stored in the cookie
+    
+            try {
+              const response = await axios.get(`${process.env.REACT_APP_BASE_URL}/get_user/${userId}`, {
+                headers: {
+                  Authorization: `Bearer ${Cookies.get('token')}`, // Include the token for authentication
+                },
+              });
+    
+              const userData = response.data;
+    
+              // Update state with the fetched user data
+              setProfileImage(userData.profile_image);
+              setUsername(userData.username);
+              setName(userData.name);
+              setEmail(userData.email);
+              setRole(userData.role);
+              setNationality(userData.nationality);
+              setDateOfAppointment(userData.date_of_appointment);
+              setDateOfEndContract(userData.date_of_end_contract);
+              setYearsOfExperience(userData.years_of_experience);
+              setQualification(userData.qualification);
+              setAvailability(userData.availability);
+              setClub_id(userData.club_id);
+              console.log('User data:', userData);
+            } catch (error) {
+              console.error('Error fetching user data:', error);
+              setMessage('Failed to fetch user data. Please try again.');
+            }
+          }
+        };
+    
+        fetchUserData();
+      }, []);
+
   return (
     <div>
       <Header />
@@ -74,6 +135,12 @@ const CoachProfileView = ({
               <span className="details-value">{nationality || 'N/A'}</span>
             </div>
             <div className="details-item">
+              <label>Club:</label>
+              <span>
+                {clubs.find((club) => club.id === club_id)?.name || 'No club selected'}
+              </span>
+            </div>
+            <div className="details-item">
               <label>Date of Appointment:</label>
               <span className="details-value">{dateOfAppointment || 'N/A'}</span>
             </div>
@@ -103,5 +170,4 @@ const CoachProfileView = ({
     </div>
   );
 };
-
 export default CoachProfileView;

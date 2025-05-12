@@ -8,6 +8,8 @@ import Coach_View from "./components/CoachProfileView";
 import CoachProfile from "./components/CoachProfile";
 import ClubProfile from "./components/ClubProfile";
 import ManagerProfile from "./components/ManagerProfile";
+import AgentProfile from "./components/AgentProfile";
+import AgencyProfile from "./components/AgencyProfile";
 import {Routes, Route } from "react-router-dom";
 import Login from "./components/Login";
 import Register from "./components/Register";
@@ -42,6 +44,8 @@ export default function App() {
       <Route path="/CoachProfile" element={<CoachProfile header={header}/>} />
       <Route path="/ClubProfile" element={<ClubProfile header={header}/>} />
       <Route path="/ManagerProfile" element={<ManagerProfile header={header}/>} />
+      <Route path="/AgentProfile" element={<AgentProfile header={header}/>} />
+      <Route path="/AgencyProfile" element={<AgencyProfile header={header}/>} />
       <Route path="/Register" element={<Register/>} />
       <Route path="/header" element={<Header />} />
       <Route path="/footer" element={<Footer />} />

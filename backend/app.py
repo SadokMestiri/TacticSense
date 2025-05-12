@@ -15,6 +15,7 @@ from flask_cors import CORS
 import torch
 import torch.nn as nn
 import numpy as np
+import joblib
 
 
 app = Flask(__name__,template_folder='templates')
@@ -65,8 +66,8 @@ class PlayerProfile(db.Model):
     id = db.Column(db.Integer, primary_key=True)
 
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), unique=True, nullable=False)
-    club_id = db.Column(db.Integer, db.ForeignKey('club__profile.id'), unique=False, nullable=True)  # Fixed table name
-    agency_id = db.Column(db.Integer, db.ForeignKey('agency__profile.id'), unique=False, nullable=True)
+    club_id = db.Column(db.Integer, nullable=True)#db.Integer, db.ForeignKey('club__profile.id'), unique=False, nullable=True)  # Fixed table name
+    agency_id = db.Column(db.Integer, nullable=True)#db.Integer, db.ForeignKey('agency__profile.id'), unique=False, nullable=True)
 
     # Infos générales
     name = db.Column(db.String(20), nullable=True)
@@ -108,13 +109,13 @@ class PlayerProfile(db.Model):
     gk_kicking = db.Column(db.Integer, nullable=True)
     gk_reflexes = db.Column(db.Integer, nullable=True)
     user = db.relationship('User', backref=db.backref('player_profile', uselist=False))
-    club = db.relationship('Club_Profile', foreign_keys=[club_id], backref=db.backref('player_profile', uselist=False))  # Explicit foreign key
-    agency = db.relationship('Agency_Profile', foreign_keys=[agency_id], backref=db.backref('player_profile', uselist=False))
+    #club = db.relationship('Club_Profile', foreign_keys=[club_id], backref=db.backref('player_profile', uselist=False))  # Explicit foreign key
+    #agency = db.relationship('Agency_Profile', foreign_keys=[agency_id], backref=db.backref('player_profile', uselist=False))
 
 class Coach_Profile(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), unique=True, nullable=False)
-    club_id = db.Column(db.Integer, db.ForeignKey('club__profile.id'), unique=False, nullable=True)  # Fixed table name
+    club_id = db.Column(db.Integer, nullable=True)#db.Integer, db.ForeignKey('club__profile.id'), unique=False, nullable=True)  # Fixed table name
     name = db.Column(db.String(80), nullable=True)
 
     nationality = db.Column(db.String(80), nullable=True)
@@ -125,12 +126,12 @@ class Coach_Profile(db.Model):
     availability = db.Column(db.Boolean, default=True)
 
     user = db.relationship('User', backref=db.backref('coach_profile', uselist=False))
-    club = db.relationship('Club_Profile', backref=db.backref('coach_profile', uselist=False))  # Fixed relationship
+    #club = db.relationship('Club_Profile', backref=db.backref('coach_profile', uselist=False))  # Fixed relationship
 
 class Agent_Profile(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), unique=True, nullable=False)
-    agency_id = db.Column(db.Integer, db.ForeignKey('agency__profile.id'), unique=False, nullable=True)
+    agency_id = db.Column(db.Integer, nullable=True)#db.Integer, db.ForeignKey('agency__profile.id'), unique=False, nullable=True)
     name = db.Column(db.String(80), nullable=True)
 
     nationality = db.Column(db.String(80), nullable=True)
@@ -141,12 +142,12 @@ class Agent_Profile(db.Model):
     availability = db.Column(db.Boolean, default=True)
 
     user = db.relationship('User', backref=db.backref('agent_profile', uselist=False))
-    agency = db.relationship('Agency_Profile', foreign_keys=[agency_id], backref=db.backref('agent_profile', uselist=False))
+    #agency = db.relationship('Agency_Profile', foreign_keys=[agency_id], backref=db.backref('agent_profile', uselist=False))
 
 class Staff_Profile(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), unique=True, nullable=False)
-    club_id = db.Column(db.Integer, db.ForeignKey('club__profile.id'), unique=False, nullable=True)  # Fixed table name
+    club_id = db.Column(db.Integer, nullable=True)#db.Integer, db.ForeignKey('club__profile.id'), unique=False, nullable=True)  # Fixed table name
     name = db.Column(db.String(80), nullable=True)
 
     nationality = db.Column(db.String(80), nullable=True)
@@ -157,12 +158,12 @@ class Staff_Profile(db.Model):
     availability = db.Column(db.Boolean, default=True)
 
     user = db.relationship('User', backref=db.backref('staff_profile', uselist=False))
-    club = db.relationship('Club_Profile', foreign_keys=[club_id], backref=db.backref('staff_profile', uselist=False))  # Fixed relationship
+    #club = db.relationship('Club_Profile', foreign_keys=[club_id], backref=db.backref('staff_profile', uselist=False))  # Fixed relationship
 
 class Scout_Profile(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), unique=True, nullable=False)
-    club_id = db.Column(db.Integer, db.ForeignKey('club__profile.id'), unique=False, nullable=True)  # Fixed table name
+    club_id = db.Column(db.Integer, nullable=True)#db.Integer, db.ForeignKey('club__profile.id'), unique=False, nullable=True)  # Fixed table name
     name = db.Column(db.String(80), nullable=True)
 
     nationality = db.Column(db.String(80), nullable=True)
@@ -173,12 +174,12 @@ class Scout_Profile(db.Model):
     availability = db.Column(db.Boolean, default=True)
 
     user = db.relationship('User', backref=db.backref('scout_profile', uselist=False))
-    club = db.relationship('Club_Profile', backref=db.backref('scout_profile', uselist=False))  # Fixed relationship
+    #club = db.relationship('Club_Profile', backref=db.backref('scout_profile', uselist=False))  # Fixed relationship
 
 class Manager_Profile(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), unique=True, nullable=False)
-    club_id = db.Column(db.Integer, db.ForeignKey('club__profile.id'), unique=False, nullable=True)  # Fixed table name
+    club_id = db.Column(db.Integer, nullable=True)#db.Integer, db.ForeignKey('club__profile.id'), unique=False, nullable=True)  # Fixed table name
     name = db.Column(db.String(80), nullable=True)
 
     nationality = db.Column(db.String(80), nullable=True)
@@ -195,37 +196,37 @@ class Manager_Profile(db.Model):
     ppg = db.Column(db.Float, nullable=True)  # Points per game
 
     user = db.relationship('User', backref=db.backref('manager_profile', uselist=False))
-    club = db.relationship('Club_Profile', backref=db.backref('manager_profile', uselist=False))  # Fixed relationship
+    #club = db.relationship('Club_Profile', backref=db.backref('manager_profile', uselist=False))  # Fixed relationship
 
 class Agency_Profile(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), unique=True, nullable=False)
-    player_id = db.Column(db.Integer, db.ForeignKey('player_profile.id'), unique=False, nullable=True)
-    club_id = db.Column(db.Integer, db.ForeignKey('club__profile.id'), unique=False, nullable=True)  # Fixed table name
-    agent_id = db.Column(db.Integer, db.ForeignKey('agent__profile.id'), unique=False, nullable=True)  # Fixed table name
+    player_id = db.Column(db.Integer, nullable=True)#db.Integer, db.ForeignKey('player_profile.id'), unique=False, nullable=True)
+    club_id = db.Column(db.Integer, nullable=True)#db.Integer, db.ForeignKey('club__profile.id'), unique=False, nullable=True)  # Fixed table name
+    agent_id = db.Column(db.Integer, nullable=True)#db.Integer, db.ForeignKey('agent__profile.id'), unique=False, nullable=True)  # Fixed table name
 
     country = db.Column(db.String(80), nullable=True)
 
     user = db.relationship('User', backref=db.backref('agency_profile', uselist=False))
-    player = db.relationship('PlayerProfile', foreign_keys=[player_id], backref=db.backref('agency_profile', uselist=False))
-    club = db.relationship('Club_Profile', foreign_keys=[club_id], backref=db.backref('agency_profile', uselist=False))  # Fixed relationship
-    agent = db.relationship('Agent_Profile', foreign_keys=[agent_id], backref=db.backref('agency_profile', uselist=False))  # Fixed relationship
+    #player = db.relationship('PlayerProfile', foreign_keys=[player_id], backref=db.backref('agency_profile', uselist=False))
+    #club = db.relationship('Club_Profile', foreign_keys=[club_id], backref=db.backref('agency_profile', uselist=False))  # Fixed relationship
+    #agent = db.relationship('Agent_Profile', foreign_keys=[agent_id], backref=db.backref('agency_profile', uselist=False))  # Fixed relationship
 
 class Club_Profile(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), unique=True, nullable=False)
-    player_id = db.Column(db.Integer, db.ForeignKey('player_profile.id'), unique=False, nullable=True)
-    agency_id = db.Column(db.Integer, db.ForeignKey('agency__profile.id'), unique=False, nullable=True)
-    staff_id = db.Column(db.Integer, db.ForeignKey('staff__profile.id'), unique=False, nullable=True)
+    player_id = db.Column(db.Integer, nullable=True)#db.Integer, db.ForeignKey('player_profile.id'), unique=False, nullable=True)
+    agency_id = db.Column(db.Integer, nullable=True)#db.Integer, db.ForeignKey('agency__profile.id'), unique=False, nullable=True)
+    staff_id = db.Column(db.Integer, nullable=True)#db.Integer, db.ForeignKey('staff__profile.id'), unique=False, nullable=True)
 
     country = db.Column(db.String(80), nullable=True)
     competition = db.Column(db.String(100), nullable=True)
     squad_size = db.Column(db.Integer, nullable=True)
 
     user = db.relationship('User', backref=db.backref('club_profile', uselist=False))
-    player = db.relationship('PlayerProfile', foreign_keys=[player_id], backref=db.backref('club_profile', uselist=False))
-    agency = db.relationship('Agency_Profile', foreign_keys=[agency_id], backref=db.backref('club_profile', uselist=False))
-    staff = db.relationship('Staff_Profile', foreign_keys=[staff_id], backref=db.backref('club_profile', uselist=False))
+    #player = db.relationship('PlayerProfile', foreign_keys=[player_id], backref=db.backref('club_profile', uselist=False))
+    #agency = db.relationship('Agency_Profile', foreign_keys=[agency_id], backref=db.backref('club_profile', uselist=False))
+    #staff = db.relationship('Staff_Profile', foreign_keys=[staff_id], backref=db.backref('club_profile', uselist=False))
     
 class Play(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -501,7 +502,7 @@ def get_user(user_id):
             user_skills = Skills.query.filter_by(user_id=user.id).first()
             return jsonify({
                 'id': user.id,
-                'agency_id': user_profile.agency,
+                'agency_id': user_profile.agency_id,
                 'club_id': user_profile.club_id,
                 'username': user.username,
                 'email': user.email,
@@ -545,6 +546,7 @@ def get_user(user_id):
             Coach = Coach_Profile.query.filter_by(user_id=user.id).first()
             return jsonify({
                 'id': user.id,
+                'club_id': Coach.club_id,
                 'username': user.username,
                 'email': user.email,
                 'name': user.name,
@@ -561,6 +563,7 @@ def get_user(user_id):
             Agent = Agent_Profile.query.filter_by(user_id=user.id).first()
             return jsonify({
                 'id': user.id,
+                'agency_id': Agent.agency_id,
                 'username': user.username,
                 'email': user.email,
                 'name': user.name,
@@ -577,6 +580,7 @@ def get_user(user_id):
             Staff = Staff_Profile.query.filter_by(user_id=user.id).first()
             return jsonify({
                 'id': user.id,
+                'club_id': Staff.club_id,
                 'username': user.username,
                 'email': user.email,
                 'name': user.name,
@@ -593,6 +597,7 @@ def get_user(user_id):
             Scout = Scout_Profile.query.filter_by(user_id=user.id).first()
             return jsonify({
                 'id': user.id,
+                'club_id': Scout.club_id,
                 'username': user.username,
                 'email': user.email,
                 'name': user.name,
@@ -609,6 +614,7 @@ def get_user(user_id):
             Manager = Manager_Profile.query.filter_by(user_id=user.id).first()
             return jsonify({
                 'id': user.id,
+                'club_id': Manager.club_id,
                 'username': user.username,
                 'email': user.email,
                 'name': user.name,
@@ -625,6 +631,31 @@ def get_user(user_id):
                 'draws': Manager.draws,
                 'losses': Manager.losses,
                 'ppg': Manager.ppg
+            }), 200
+        elif user.role == 'Club':
+            Club = Club_Profile.query.filter_by(user_id=user.id).first()
+            return jsonify({
+                'id': user.id,
+                'username': user.username,
+                'email': user.email,
+                'name': user.name,
+                'profile_image': profile_image,
+                'role': user.role,
+                'country': Club.country,
+                'competition': Club.competition,
+                'squad_size': Club.squad_size
+            }), 200
+        elif user.role == 'Agency':
+            Agency = Agency_Profile.query.filter_by(user_id=user.id).first()
+            return jsonify({
+                'id': user.id,
+                'club_id': Agency.club_id,
+                'username': user.username,
+                'email': user.email,
+                'name': user.name,
+                'profile_image': profile_image,
+                'role': user.role,
+                'country': Agency.country
             }), 200
         else:
             user_profile = None  # Handle cases where the role doesn't match any known profiles
@@ -644,12 +675,21 @@ def get_user(user_id):
 @app.route('/get_clubs', methods=['GET'])
 def get_clubs():
     try:
-        clubs = Club_Profile.query.all()
-        club_list = [{'id': club.id, 'name': club.country} for club in clubs]  # Replace 'country' with the actual club name field
+        clubs = User.query.filter_by(role="Club").all() #Club_Profile.query.all()
+        club_list = [{'id': club.id, 'name': club.name} for club in clubs]  # Replace 'country' with the actual club name field
         return jsonify(club_list), 200
     except Exception as e:
         return jsonify({'error': 'Failed to fetch clubs', 'details': str(e)}), 500
     
+@app.route('/get_agencies', methods=['GET'])
+def get_agencies():
+    try:
+        agencies = User.query.filter_by(role="Agency").all() #Agency_Profile.query.all()
+        agency_list = [{'id': agency.id, 'name': agency.name} for agency in agencies]  # Replace 'country' with the actual agency name field
+        return jsonify(agency_list), 200
+    except Exception as e:
+        return jsonify({'error': 'Failed to fetch agencies', 'details': str(e)}), 500
+
 @app.route('/register', methods=['POST'])
 def register():
     try:
@@ -959,11 +999,22 @@ def add_comment():
 @app.route('/update_profile', methods=['PUT'])
 @token_required
 def update_profile(current_user):
-    data = request.json  # Use request.json to handle JSON data
+    data = request.form  # Use request.json to handle JSON data
 
     # Debug: Log incoming data
     print(f"Request data: {data}")
+    
+# Handle profile image upload (if applicable)
+    if 'profile_image' in request.files:
+        profile_image = request.files.get('profile_image')
+        print(f"Profile image: {profile_image}")
+        if profile_image and allowed_file(profile_image.filename):
+            filename = secure_filename(profile_image.filename)
+            profile_image_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+            profile_image.save(profile_image_path)
+            current_user.profile_image = profile_image_path
 
+    data = request.json  # Use request.json to handle JSON data 
     # Update user fields
     if 'username' in data:
         current_user.username = data['username']
@@ -976,14 +1027,16 @@ def update_profile(current_user):
     if 'password' in data:
         current_user.password = generate_password_hash(data['password'], method='pbkdf2:sha256')
 
-    # Handle profile image upload (if applicable)
-    if 'profile_image' in request.files:
-        profile_image = request.files['profile_image']
-        if profile_image and allowed_file(profile_image.filename):
-            filename = secure_filename(profile_image.filename)
-            profile_image_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-            profile_image.save(profile_image_path)
-            current_user.profile_image = profile_image_path
+
+    
+    def convert_value(value, target_type):
+        """Helper function to convert values to the correct type or None."""
+        if value in ['null', 'undefined', '']:
+            return None
+        try:
+            return target_type(value)
+        except ValueError:
+            return None
 
     try:
         # Fetch the user's profile
@@ -993,15 +1046,17 @@ def update_profile(current_user):
             if not user_profile:
                 return jsonify({'error': 'Player profile not found'}), 404
 
-            # Update PlayerProfile fields
-            if 'season' in data:
-                user_profile.season = data['season']
-            if 'age' in data:
-                user_profile.age = data['age']
+            # Update PlayerProfile fields with type conversion
+            if 'club_id' in data:
+                user_profile.club_id = data['club_id']
+            if 'agency_id' in data:
+                user_profile.agency_id = data['agency_id']
             if 'nationality' in data:
                 user_profile.nationality = data['nationality']
             if 'position' in data:
                 user_profile.position = data['position']
+            if 'age' in data:
+                user_profile.age = data['age']
             if 'matches' in data:
                 user_profile.matches = data['matches']
             if 'minutes' in data:
@@ -1010,8 +1065,6 @@ def update_profile(current_user):
                 user_profile.goals = data['goals']
             if 'assists' in data:
                 user_profile.assists = data['assists']
-            if 'club' in data:
-                user_profile.club = data['club']
             if 'market_value' in data:
                 user_profile.market_value = data['market_value']
             if 'total_yellow_cards' in data:
@@ -1044,6 +1097,7 @@ def update_profile(current_user):
                 user_profile.free_kick_accuracy = data['free_kick_accuracy']
             if 'volleys' in data:
                 user_profile.volleys = data['volleys']
+
         elif current_user.role == 'Coach':
             user_profile = Coach_Profile.query.filter_by(user_id=current_user.id).first()
 
@@ -1051,12 +1105,14 @@ def update_profile(current_user):
                 return jsonify({'error': 'Coach profile not found'}), 404
 
             # Update Coach_Profile fields
+            if 'club_id' in data:
+                user_profile.club_id = data['club_id']
             if 'nationality' in data:
                 user_profile.nationality = data['nationality']
             if 'date_of_appointment' in data:
-                user_profile.date_of_appointment = data['date_of_appointment']
+                user_profile.date_of_appointment = datetime.strptime(data['date_of_appointment'], '%Y-%m-%d').date()
             if 'date_of_end_contract' in data:
-                user_profile.date_of_end_contract = data['date_of_end_contract']
+                user_profile.date_of_end_contract = datetime.strptime(data['date_of_end_contract'], '%Y-%m-%d').date()
             if 'years_of_experience' in data:
                 user_profile.years_of_experience = data['years_of_experience']
             if 'qualification' in data:
@@ -1071,12 +1127,14 @@ def update_profile(current_user):
                 return jsonify({'error': 'Agent profile not found'}), 404
 
             # Update Agent_Profile fields
+            if 'agency_id' in data:
+                user_profile.agency_id = data['agency_id']
             if 'nationality' in data:
                 user_profile.nationality = data['nationality']
             if 'date_of_appointment' in data:
-                user_profile.date_of_appointment = data['date_of_appointment']
+                user_profile.date_of_appointment = datetime.strptime(data['date_of_appointment'], '%Y-%m-%d').date()
             if 'date_of_end_contract' in data:
-                user_profile.date_of_end_contract = data['date_of_end_contract']
+                user_profile.date_of_end_contract = datetime.strptime(data['date_of_end_contract'], '%Y-%m-%d').date()
             if 'years_of_experience' in data:
                 user_profile.years_of_experience = data['years_of_experience']
             if 'qualification' in data:
@@ -1091,12 +1149,14 @@ def update_profile(current_user):
                 return jsonify({'error': 'Staff profile not found'}), 404
 
             # Update Staff_Profile fields
+            if 'club_id' in data:
+                user_profile.club_id = data['club_id']
             if 'nationality' in data:
                 user_profile.nationality = data['nationality']
             if 'date_of_appointment' in data:
-                user_profile.date_of_appointment = data['date_of_appointment']
+                user_profile.date_of_appointment = datetime.strptime(data['date_of_appointment'], '%Y-%m-%d').date()
             if 'date_of_end_contract' in data:
-                user_profile.date_of_end_contract = data['date_of_end_contract']
+                user_profile.date_of_end_contract = datetime.strptime(data['date_of_end_contract'], '%Y-%m-%d').date()
             if 'years_of_experience' in data:
                 user_profile.years_of_experience = data['years_of_experience']
             if 'qualification' in data:
@@ -1109,14 +1169,19 @@ def update_profile(current_user):
 
             if not user_profile:
                 return jsonify({'error': 'Scout profile not found'}), 404
+            
+            print(f"Updating profile for role: {current_user.role}")
+            print(f"Incoming data: {data}")
 
             # Update Scout_Profile fields
+            if 'club_id' in data:
+                user_profile.club_id = data['club_id']
             if 'nationality' in data:
                 user_profile.nationality = data['nationality']
             if 'date_of_appointment' in data:
-                user_profile.date_of_appointment = data['date_of_appointment']
+                user_profile.date_of_appointment = datetime.strptime(data['date_of_appointment'], '%Y-%m-%d').date()
             if 'date_of_end_contract' in data:
-                user_profile.date_of_end_contract = data['date_of_end_contract']
+                user_profile.date_of_end_contract = datetime.strptime(data['date_of_end_contract'], '%Y-%m-%d').date()
             if 'years_of_experience' in data:
                 user_profile.years_of_experience = data['years_of_experience']
             if 'qualification' in data:
@@ -1131,12 +1196,14 @@ def update_profile(current_user):
                 return jsonify({'error': 'Manager profile not found'}), 404
 
             # Update Manager_Profile fields
+            if 'club_id' in data:
+                user_profile.club_id = data['club_id']
             if 'nationality' in data:
                 user_profile.nationality = data['nationality']
             if 'date_of_appointment' in data:
-                user_profile.date_of_appointment = data['date_of_appointment']
+                user_profile.date_of_appointment = datetime.strptime(data['date_of_appointment'], '%Y-%m-%d').date()
             if 'date_of_end_contract' in data:
-                user_profile.date_of_end_contract = data['date_of_end_contract']
+                user_profile.date_of_end_contract = datetime.strptime(data['date_of_end_contract'], '%Y-%m-%d').date()
             if 'years_of_experience' in data:
                 user_profile.years_of_experience = data['years_of_experience']
             if 'qualification' in data:
@@ -1153,6 +1220,30 @@ def update_profile(current_user):
                 user_profile.losses = data['losses']
             if 'ppg' in data:
                 user_profile.ppg = data['ppg']
+        elif current_user.role == 'Club':
+            user_profile = Club_Profile.query.filter_by(user_id=current_user.id).first()
+
+            if not user_profile:
+                return jsonify({'error': 'Club profile not found'}), 404
+
+            # Update Club_Profile fields
+            if 'country' in data:
+                user_profile.country = data['country']
+            if 'competition' in data:
+                user_profile.competition = data['competition']
+            if 'squad_size' in data:
+                user_profile.squad_size = data['squad_size']
+        elif current_user.role == 'Agency':
+            user_profile = Agency_Profile.query.filter_by(user_id=current_user.id).first()
+
+            if not user_profile:
+                return jsonify({'error': 'Agency profile not found'}), 404
+
+            # Update Agency_Profile fields
+            if 'club_id' in data:
+                user_profile.club_id = data['club_id']
+            if 'country' in data:
+                user_profile.country = data['country']
 
         else:
             return jsonify({'error': 'Invalid role'}), 400
@@ -1212,7 +1303,7 @@ def predict():
 
     # Load the state dictionary
     model.load_state_dict(torch.load('uploads/marketValuemodel/market_value_predictor.pth'))
-
+    scaler = joblib.load("uploads\marketValuemodel\scaler_market_value.pkl")
     # Set the model to evaluation mode
     model.eval()
 
@@ -1228,6 +1319,7 @@ def predict():
         if not isinstance(input_data, list) or not all(isinstance(i, (int, float)) for i in input_data):
             return jsonify({'error': 'Invalid input format. Expected a list of numbers.'}), 400
 
+        
         input_tensor = torch.tensor([input_data], dtype=torch.float32) # Convert to tensor
         input_tensor = torch.tensor([input_data], dtype=torch.float32)  # Shape: [1, 39]
         # Perform prediction
@@ -1235,8 +1327,15 @@ def predict():
             prediction = model(input_tensor)
         
         # Convert prediction to a list and return as JSON
-        prediction_list = prediction.numpy().tolist()
-        return jsonify({'prediction': prediction_list})
+        #prediction_list = prediction.numpy().tolist()
+        prediction_array = prediction.numpy()
+
+        # Apply reverse scaling using the scaler
+        scaled_prediction = scaler.inverse_transform(prediction_array)
+
+        # Convert the scaled prediction to a list and return as JSON
+        scaled_prediction_list = scaled_prediction.tolist()
+        return jsonify({'prediction': scaled_prediction_list})
     except Exception as e:
         return jsonify({'error': str(e)}), 400
 

@@ -19,6 +19,22 @@ const CoachProfile = () => {
     const [yearsOfExperience, setYearsOfExperience] = useState('');
     const [qualification, setQualification] = useState('');
     const [availability, setAvailability] = useState(true);
+    const [club_id, setClub_id] = useState('');
+    const [clubs, setClubs] = useState([]);
+
+    useEffect(() => {
+      const fetchClubs = async () => {
+        try {
+          const response = await axios.get(`${process.env.REACT_APP_BASE_URL}/get_clubs`);
+          setClubs(response.data);
+          console.log('Clubs:', response.data);
+        } catch (error) {
+          console.error('Error fetching clubs:', error);
+        }
+      };
+    
+      fetchClubs();
+    }, []);
 
     useEffect(() => {
         const fetchUserData = async () => {
@@ -48,6 +64,7 @@ const CoachProfile = () => {
               setYearsOfExperience(userData.years_of_experience);
               setQualification(userData.qualification);
               setAvailability(userData.availability);
+              setClub_id(userData.club_id);
               console.log('User data:', userData);
             } catch (error) {
               console.error('Error fetching user data:', error);
@@ -60,33 +77,30 @@ const CoachProfile = () => {
       }, []);
 
     const handleImageChange = async (event) => {
-        const file = event.target.files[0];
+    const file = event.target.files[0];
         if (file) {
-        const formData = new FormData();
-        formData.append('profile_image', file);
+            const formData = new FormData();
+            formData.append('profile_image', file);
 
-        const token = Cookies.get('token');
-        if (!token) {
-        setMessage('No token found. Please log in again.');
-        // window.location.href = '/login';
-        return;
-        }
-        console.log('Token:', token);
+            const token = Cookies.get('token');
+            if (!token) {
+                setMessage('No token found. Please log in again.');
+                return;
+            }
 
-        try {
-            const response = await axios.put(`${process.env.REACT_APP_BASE_URL}/update_profile`, formData, {
-            headers: {
-                // 'Content-Type': 'multipart/form-data',
-                Authorization: `Bearer ${token}`,
-            },
-            });
-            setProfileImage(response.data.profile_image);
-            setMessage('Profile image updated successfully');
-        } catch (error) {
-            setMessage('Error updating profile image');
+            try {
+                const response = await axios.put(`${process.env.REACT_APP_BASE_URL}/update_profile`, formData, {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
+                });
+                setProfileImage(response.data.profile_image);
+                setMessage('Profile image updated successfully');
+            } catch (error) {
+                setMessage('Error updating profile image');
+            }
         }
-        }
-    };
+  };
 
     const handleProfileUpdate = async () => {
         const updatedProfile = {
@@ -100,6 +114,7 @@ const CoachProfile = () => {
         yearsOfExperience,
         qualification,
         availability,
+        club_id,
         };
 
         const token = Cookies.get('token');
@@ -134,6 +149,7 @@ const CoachProfile = () => {
         const response = await axios.put(`${process.env.REACT_APP_BASE_URL}/update_profile`, updatedProfile, {
             headers: {
             Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
             },
         });
 
@@ -270,6 +286,22 @@ const CoachProfile = () => {
                 onChange={(e) => setNationality(e.target.value)}
                 placeholder="Enter nationality"
               />
+            </div>
+
+            <div className="form-group">
+              <label>Club</label>
+              <select
+                className="form-control"
+                value={club_id || ''}
+                onChange={(e) => setClub_id(e.target.value)}
+              >
+                <option value="">Select a club</option>
+                {clubs.map((club) => (
+                  <option key={club.id} value={club.id}>
+                    {club.name}
+                  </option>
+                ))}
+              </select>
             </div>
 
             <div className="form-group">

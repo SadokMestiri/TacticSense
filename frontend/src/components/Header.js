@@ -120,10 +120,14 @@ const Header = () => {
               </div>
               {user.role === "Player" ? (
                 <a href="/Profile" className="profile-btn">See your profile</a>
-              ) : user.role === ("Coach" || "Agent" || "Staff" || "Scout") ? (
+              ) : ["Coach", "Staff", "Scout"].includes(user.role) ? (
                 <a href="/CoachProfile" className="profile-btn">See your profile</a>
               ) : user.role === ("Manager") ? (
                 <a href="/ManagerProfile" className="profile-btn">See your profile</a>
+              ) : user.role === ("Agent") ? (
+                <a href="/AgentProfile" className="profile-btn">See your profile</a>
+              ) : user.role === ("Agency") ? (
+                <a href="/AgencyProfile" className="profile-btn">See your profile</a>
               ) : user.role === ("Club") ? (
                 <a href="/ClubProfile" className="profile-btn">See your profile</a>
               ) : (

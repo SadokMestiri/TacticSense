@@ -1,25 +1,92 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Header from './Header';
+import { Tabs, Tab, Container} from '@mui/material';
 import './Profile.css';
+import axios from 'axios';
+import Cookies from 'js-cookie';
+import jwt_decode from 'jwt-decode';
 
-const ManagerProfileView = ({
-  profileImage,
-  username,
-  name,
-  role,
-  email,
-  nationality,
-  dateOfAppointment,
-  dateOfEndContract,
-  yearsOfExperience,
-  qualification,
-  availability,
-  matches,
-  wins,
-  losses,
-  draws,
-  ppg
-}) => {
+const ManagerProfileView = () => {
+    const [message, setMessage] = useState('');
+    const [profileImage, setProfileImage] = useState('');
+    const [username, setUsername] = useState('');
+    const [name, setName] = useState('');
+    const [role, setRole] = useState('');
+    const [email, setEmail] = useState('');
+    const [nationality, setNationality] = useState('');
+    const [dateOfAppointment, setDateOfAppointment] = useState('');
+    const [dateOfEndContract, setDateOfEndContract] = useState('');
+    const [yearsOfExperience, setYearsOfExperience] = useState('');
+    const [qualification, setQualification] = useState('');
+    const [availability, setAvailability] = useState(true);
+    const [matches, setMatches] = useState('');
+    const [wins, setWins] = useState('');
+    const [losses, setLosss] = useState('');
+    const [draws, setDraws] = useState('');
+    const [ppg, setPpg] = useState('');
+    const [club_id, setClub_id] = useState('');
+    const [clubs, setClubs] = useState([]);
+
+    useEffect(() => {
+      const fetchClubs = async () => {
+        try {
+          const response = await axios.get(`${process.env.REACT_APP_BASE_URL}/get_clubs`);
+          setClubs(response.data);
+          console.log('Clubs:', response.data);
+        } catch (error) {
+          console.error('Error fetching clubs:', error);
+        }
+      };
+    
+      fetchClubs();
+    }, []);
+
+    useEffect(() => {
+        const fetchUserData = async () => {
+          const userCookie = Cookies.get('user');
+          if (userCookie) {
+            const parsedUser = JSON.parse(userCookie);
+            const userId = parsedUser.id; // Assuming `id` is stored in the cookie
+    
+            try {
+              const response = await axios.get(`${process.env.REACT_APP_BASE_URL}/get_user/${userId}`, {
+                headers: {
+                  Authorization: `Bearer ${Cookies.get('token')}`, // Include the token for authentication
+                },
+              });
+    
+              const userData = response.data;
+    
+              // Update state with the fetched user data
+              setProfileImage(userData.profile_image);
+              setUsername(userData.username);
+              setName(userData.name);
+              setEmail(userData.email);
+              setRole(userData.role);
+              setNationality(userData.nationality);
+              setDateOfAppointment(userData.date_of_appointment);
+              setDateOfEndContract(userData.date_of_end_contract);
+              setYearsOfExperience(userData.years_of_experience);
+              setQualification(userData.qualification);
+              setAvailability(userData.availability);
+              setMatches(userData.matches);
+              setWins(userData.wins);
+              setLosss(userData.losses);
+              setDraws(userData.draws);
+              setPpg(userData.ppg);
+              setClub_id(userData.club_id);
+              setClubs(userData.clubs); // Assuming clubs are part of the user data
+              console.log('User data:', userData);
+            } catch (error) {
+              console.error('Error fetching user data:', error);
+              setMessage('Failed to fetch user data. Please try again.');
+            }
+          }
+        };
+    
+        fetchUserData();
+      }, []);
+
   return (
     <div>
       <Header />
@@ -77,6 +144,12 @@ const ManagerProfileView = ({
             <div className="details-item">
               <label>Nationality:</label>
               <span className="details-value">{nationality || 'N/A'}</span>
+            </div>
+            <div className="details-item">
+              <label>Club:</label>
+              <span>
+                {clubs.find((club) => club.id === club_id)?.name || 'No club selected'}
+              </span>
             </div>
             <div className="details-item">
               <label>Date of Appointment:</label>

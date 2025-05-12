@@ -9,7 +9,8 @@ import jwt_decode from 'jwt-decode';
 const Profile = () => {
   const [profileImage, setProfileImage] = useState('');
   const [username, setUsername] = useState('');
-  const [club_id, setClub_id] = useState('');
+  const [club_id, setClub_id] = useState({});
+  const [agency_id, setAgency_id] = useState({});
   const [name, setName] = useState('');
   const [role, setRole] = useState('');
   const [email, setEmail] = useState('');
@@ -44,18 +45,33 @@ const Profile = () => {
   const [ratings, setRatings] = useState({}); // State to store ratings for each skill
   const [averageRatings, setAverageRatings] = useState(1); // State to store average ratings for each skill
   const [clubs, setClubs] = useState([]);
+  const [agencies, setAgencies] = useState([]);
+  const [file, setFile] = useState([]);
 
 useEffect(() => {
   const fetchClubs = async () => {
     try {
       const response = await axios.get(`${process.env.REACT_APP_BASE_URL}/get_clubs`);
       setClubs(response.data);
+      console.log('Clubs:', response.data);
     } catch (error) {
       console.error('Error fetching clubs:', error);
     }
   };
 
   fetchClubs();
+}, []);
+useEffect(() => {
+  const fetchAgencies = async () => {
+    try {
+      const response = await axios.get(`${process.env.REACT_APP_BASE_URL}/get_agencies`);
+      setAgencies(response.data);
+    } catch (error) {
+      console.error('Error fetching agencies:', error);
+    }
+  };
+
+  fetchAgencies();
 }, []);
 
   const handleTabChange = (event, newValue) => {
@@ -79,6 +95,8 @@ useEffect(() => {
           const userData = response.data;
 
           // Update state with the fetched user data
+          setClub_id(userData.club_id);
+          setAgency_id(userData.agency_id);
           setProfileImage(userData.profile_image);
           setUsername(userData.username);
           setName(userData.name);
@@ -135,13 +153,40 @@ useEffect(() => {
     fetchAverageRatings();
   }, []);
 
+  // const handleImageChange = (e) => {
+  //   setFile(e.target.files[0]);
+  //   if (file) {
+  //     const imageUrl = URL.createObjectURL(file);
+  //     setProfileImage(file);
+  //     console.log('fssdfssf', file);
+  //     setMessage('Profile image updated locally. Save changes to update in the database.');
+  //   };
+  // };
+
   const handleImageChange = async (event) => {
     const file = event.target.files[0];
-    if (file) {
-      const imageUrl = URL.createObjectURL(file);
-      setProfileImage(imageUrl); // Set the new image locally
-      setMessage('Profile image updated locally. Save changes to update in the database.');
-    }
+        if (file) {
+            const formData = new FormData();
+            formData.append('profile_image', file);
+
+            const token = Cookies.get('token');
+            if (!token) {
+                setMessage('No token found. Please log in again.');
+                return;
+            }
+
+            try {
+                const response = await axios.put(`${process.env.REACT_APP_BASE_URL}/update_profile`, formData, {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
+                });
+                setProfileImage(response.data.profile_image);
+                setMessage('Profile image updated successfully');
+            } catch (error) {
+                setMessage('Error updating profile image');
+            }
+        }
   };
 
   const handleProfileUpdate = async () => {
@@ -150,50 +195,83 @@ useEffect(() => {
     setMessage('No token found. Please log in again.');
     return;
   }
-
+  const updatedProfile = {
+  username,
+  name,
+  email,
+  role,
+  nationality,
+  age,
+  position,
+  matches,
+  minutes,
+  goals,
+  assists,
+  club,
+  market_value,
+  total_yellow_cards,
+  total_red_cards,
+  performance_metrics,
+  media_sentiment,
+  aggression,
+  reactions,
+  long_pass,
+  stamina,
+  strength,
+  sprint_speed,
+  agility,
+  jumping,
+  heading,
+  free_kick_accuracy,
+  volleys,
+  club_id,
+  agency_id,
+};
   // Create a FormData object to include the profile image and other fields
-  const formData = new FormData();
-  formData.append('username', username);
-  formData.append('name', name);
-  formData.append('email', email);
-  formData.append('role', role);
-  formData.append('age', age);
-  formData.append('nationality', nationality);
-  formData.append('position', position);
-  formData.append('matches', matches);
-  formData.append('minutes', minutes);
-  formData.append('goals', goals);
-  formData.append('assists', assists);
-  formData.append('club', club);
-  formData.append('market_value', market_value);
-  formData.append('total_yellow_cards', total_yellow_cards);
-  formData.append('total_red_cards', total_red_cards);
-  formData.append('performance_metrics', performance_metrics);
-  formData.append('media_sentiment', media_sentiment);
-  formData.append('aggression', aggression);
-  formData.append('reactions', reactions);
-  formData.append('long_pass', long_pass);
-  formData.append('stamina', stamina);
-  formData.append('strength', strength);
-  formData.append('sprint_speed', sprint_speed);
-  formData.append('agility', agility);
-  formData.append('jumping', jumping);
-  formData.append('heading', heading);
-  formData.append('free_kick_accuracy', free_kick_accuracy);
-  formData.append('volleys', volleys);
+  // const formData = new FormData();
+  // formData.append('club_id', club_id);
+  // formData.append('agency_id', agency_id);
+  // formData.append('username', username);
+  // formData.append('name', name);
+  // formData.append('email', email);
+  // formData.append('role', role);
+  // formData.append('age', age);
+  // formData.append('nationality', nationality);
+  // formData.append('position', position);
+  // formData.append('matches', matches);
+  // formData.append('minutes', minutes);
+  // formData.append('goals', goals);
+  // formData.append('assists', assists);
+  // formData.append('club', club);
+  // formData.append('market_value', market_value);
+  // formData.append('total_yellow_cards', total_yellow_cards);
+  // formData.append('total_red_cards', total_red_cards);
+  // formData.append('performance_metrics', performance_metrics);
+  // formData.append('media_sentiment', media_sentiment);
+  // formData.append('aggression', aggression);
+  // formData.append('reactions', reactions);
+  // formData.append('long_pass', long_pass);
+  // formData.append('stamina', stamina);
+  // formData.append('strength', strength);
+  // formData.append('sprint_speed', sprint_speed);
+  // formData.append('agility', agility);
+  // formData.append('jumping', jumping);
+  // formData.append('heading', heading);
+  // formData.append('free_kick_accuracy', free_kick_accuracy);
+  // formData.append('volleys', volleys);
 
   // Add the profile image if it is a local blob URL
-  if (profileImage.startsWith('blob:')) {
-    const response = await fetch(profileImage);
-    const blob = await response.blob();
-    formData.append('profile_image', blob, 'profile_image.jpg');
-  }
+  // if (file) {
+  // //   const response = await fetch(profileImage);
+  // //   const blob = await response.blob();
+  //   formData.append('profile_image', file);
+  // }
 
   try {
-    const response = await axios.put(`${process.env.REACT_APP_BASE_URL}/update_profile`, formData, {
+    const response = await axios.put(`${process.env.REACT_APP_BASE_URL}/update_profile`, updatedProfile, {
       headers: {
         Authorization: `Bearer ${token}`,
-        // Do not set 'Content-Type' manually
+        // 'Content-Type': 'multipart/form-data',
       },
     });
 
@@ -519,13 +597,29 @@ useEffect(() => {
               <label>Club</label>
               <select
                 className="form-control"
-                value={club || ''}
+                value={club_id || ''}
                 onChange={(e) => setClub_id(e.target.value)}
               >
-                <option value={club_id || ''}>Select a club</option>
+                <option value="">Select a club</option>
                 {clubs.map((club) => (
                   <option key={club.id} value={club.id}>
                     {club.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="form-group">
+              <label>Agency</label>
+              <select
+                className="form-control"
+                value={agency_id || ''}
+                onChange={(e) => setAgency_id(e.target.value)}
+              >
+                <option value="">Select an agency</option>
+                {agencies.map((agency) => (
+                  <option key={agency.id} value={agency.id}>
+                    {agency.name}
                   </option>
                 ))}
               </select>
@@ -854,7 +948,7 @@ useEffect(() => {
             <div className="sidebar-profile-info">
               <div className="profile-image-wrapper">
                 <img
-                  src={profileImage.startsWith('blob:') ? profileImage : `${process.env.REACT_APP_BASE_URL}/${profileImage}`}
+                  src={`${process.env.REACT_APP_BASE_URL}/${profileImage}`}
                   alt="profile"
                   className="profile-image"
                 />
