@@ -41,7 +41,7 @@ const GPT = ({ header, footer }) => {
         e.preventDefault();
         setLoading(true);
         try {
-            const res = await axios.post('http://127.0.0.1:8001/generate', {
+            const res = await axios.post('http://127.0.0.1:8000/generate', {
                 prompt: question
             });
             console.log(prompt);
@@ -52,6 +52,11 @@ const GPT = ({ header, footer }) => {
         } finally {
             setLoading(false);
         }
+    };
+
+    const formatResponse = (text) => {
+        // Remplace les éléments entre *...* par du <strong>...</strong>
+        return text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
     };
 
     return (
@@ -131,9 +136,9 @@ const GPT = ({ header, footer }) => {
                             
                         </form>
                         {response && (
-                            <div className="mt-6 bg-white p-4 rounded shadow max-w-xl w-full" style={{ border:'1px solid green', maxHeight: '300px', overflowY: 'auto' }}>
+                            <div className="mt-6 bg-white p-4 rounded shadow max-w-xl w-full" style={{ border: '1px solid green', maxHeight: '300px', overflowY: 'auto' }}>
                                 <h2 className="font-semibold mb-2">Response :</h2>
-                                <p>{response}</p>
+                                <div dangerouslySetInnerHTML={{ __html: formatResponse(response) }} />
                             </div>
                         )}
                     </div>

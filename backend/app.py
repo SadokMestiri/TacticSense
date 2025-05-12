@@ -68,7 +68,7 @@ srt_formatter = SRTFormatter()
 app = Flask(__name__, template_folder='templates')
 CORS(app, resources={r"/*": {"origins": "http://localhost:3000", "supports_credentials": True}})
 app.config['SECRET_KEY'] = '59c9d8576f920846140e2a8985911bec588c08aebf4c7799ba0d5ae388393703'  
-app.config['SQLALCHEMY_DATABASE_URI'] = "postgresql://postgres:0000@localhost/metascout"
+app.config['SQLALCHEMY_DATABASE_URI'] = "postgresql://postgres:admin@localhost/metascout"
 db = SQLAlchemy(app)
 app.config['UPLOAD_FOLDER'] = 'uploads'
 app.config['MAIL_SERVER'] = 'smtp.gmail.com'
@@ -85,7 +85,7 @@ TACTICS_OUTPUT_FOLDER = os.path.join(os.getcwd(), 'results')
 os.makedirs(TACTICS_OUTPUT_FOLDER, exist_ok=True)
 app.config['ALLOWED_EXTENSIONS'] = {'png', 'jpg', 'jpeg', 'gif', 'mp4', 'mov', 'avi'}
 app.config['MAX_CONTENT_LENGTH'] = 100 * 1024 * 1024  
-pytesseract.pytesseract.tesseract_cmd =r'd:\programFiles\Tesseract-OCR\tesseract.exe'
+pytesseract.pytesseract.tesseract_cmd =r'C:\Program Files\Tesseract-OCR\tesseract.exe'
 w3 = Web3(Web3.HTTPProvider("https://sepolia.infura.io/v3/2264fb8767644f77889c230508451721"))
 
 with open('MetaCoinABI.json', 'r') as f:
@@ -1594,7 +1594,7 @@ def get_user(user_id):
             user_skills = Skills.query.filter_by(user_id=user.id).first()
             return jsonify({
                 'id': user.id,
-                'agency_id': user_profile.agency,
+                'agency_id': user_profile.agency_id,
                 'club_id': user_profile.club_id,
                 'username': user.username,
                 'email': user.email,
@@ -1630,9 +1630,7 @@ def get_user(user_id):
                 'gk_diving': user_profile.gk_diving,
                 'gk_handling': user_profile.gk_handling,
                 'gk_kicking': user_profile.gk_kicking,
-                'gk_reflexes': user_profile.gk_reflexes,
-                'ratingS1': user_skills.ratingS1,
-                'skill': user_skills.skill
+                'gk_reflexes': user_profile.gk_reflexes
             }), 200
         elif user.role == 'Coach':
             Coach = CoachProfile.query.filter_by(user_id=user.id).first()
@@ -3504,11 +3502,14 @@ def load_recommendation_models():
         
         if not os.path.exists(model_path):
             print("❌ Error: Model file not found")
+            recommendation_models = None
+            print("🏁🏁🏁 FINISHED load_recommendation_models() - FAILED (file not found) 🏁🏁🏁")
             return
             
         with open(model_path, 'rb') as f:
             recommendation_models = pickle.load(f)
-            
+            print("✅ Pickle file loaded successfully.")
+
             # Validate required keys
             required_keys = {
                 'club_model', 'player_model', 'club_dataset', 
@@ -5372,6 +5373,9 @@ def player_career(name):
     info = player_df.iloc[-1][['player_name', 'age', 'position', 'team']].to_dict()
     career = player_df[['season', 'goals', 'assists', 'minutes', 'mp']].to_dict(orient='records')
     return jsonify({'info': info, 'career': career})
+
+import manage  # Add this line
+
 
 #app.app_context().push()
 if __name__ == '__main__':
