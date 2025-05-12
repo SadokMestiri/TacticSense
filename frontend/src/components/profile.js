@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
+import Header from './Header';
 import { Tabs, Tab, Container} from '@mui/material';
 import './Profile.css';
 import axios from 'axios';
 import Cookies from 'js-cookie';
 import jwt_decode from 'jwt-decode';
 
-const Profile = () => {
+const Profile = ({ header,footer }) => {
   const [profileImage, setProfileImage] = useState('');
   const [username, setUsername] = useState('');
   const [club_id, setClub_id] = useState('');
@@ -845,6 +846,7 @@ useEffect(() => {
 
   return (
     <div>
+      <Header />
       <div className="container">
         <div className="left-sidebar">
           <div className="sidebar-profile-box">
