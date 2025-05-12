@@ -520,7 +520,7 @@ useEffect(() => {
               <select
                 className="form-control"
                 value={club || ''}
-                onChange={(e) => setClub(e.target.value)}
+                onChange={(e) => setClub_id(e.target.value)}
               >
                 <option value={club_id || ''}>Select a club</option>
                 {clubs.map((club) => (
