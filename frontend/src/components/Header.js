@@ -4,7 +4,7 @@ import axios from 'axios';
 import Cookies from 'js-cookie';
 import jwt_decode from 'jwt-decode';
 import { useNavigate, NavLink  ,Link} from "react-router-dom";
-import { useNavigate, useLocation } from "react-router-dom";
+import {useLocation } from "react-router-dom";
 import useDebounce from '../hooks/useDebounce';
 
 // Recent searches utility functions

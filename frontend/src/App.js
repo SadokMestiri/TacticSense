@@ -64,7 +64,7 @@ function App() {
 
     return (
         <div>
-            {header}
+
             <Routes>
                 {/* Public */}
                 <Route path="/" element={<Login />} />
@@ -81,13 +81,13 @@ function App() {
                 <Route path="/notifications" element={isAuthenticated ? <Notifications header={header} footer={footer} /> : <Navigate to="/" />} />
 
                 {/* Profile Views */}
-                <Route path="/profile" element={isAuthenticated ? <Profile header={header} /> : <Navigate to="/" />} />
-                <Route path="/profile_view" element={isAuthenticated ? <Profile_View header={header} /> : <Navigate to="/" />} />
-                <Route path="/manager_view" element={isAuthenticated ? <ManagerProfileView header={header} /> : <Navigate to="/" />} />
-                <Route path="/coach_view" element={isAuthenticated ? <CoachProfileView header={header} /> : <Navigate to="/" />} />
-                <Route path="/coachprofile" element={isAuthenticated ? <CoachProfile header={header} /> : <Navigate to="/" />} />
-                <Route path="/clubprofile" element={isAuthenticated ? <ClubProfile header={header} /> : <Navigate to="/" />} />
-                <Route path="/managerprofile" element={isAuthenticated ? <ManagerProfile header={header} /> : <Navigate to="/" />} />
+                <Route path="/profile" element={isAuthenticated ? <Profile header={header} footer={footer} /> : <Navigate to="/" />} />
+                <Route path="/profile_view" element={isAuthenticated ? <Profile_View header={header} footer={footer} /> : <Navigate to="/" />} />
+                <Route path="/manager_view" element={isAuthenticated ? <ManagerProfileView header={header} footer={footer} /> : <Navigate to="/" />} />
+                <Route path="/coach_view" element={isAuthenticated ? <CoachProfileView header={header} footer={footer} /> : <Navigate to="/" />} />
+                <Route path="/coachprofile" element={isAuthenticated ? <CoachProfile header={header} footer={footer} /> : <Navigate to="/" />} />
+                <Route path="/clubprofile" element={isAuthenticated ? <ClubProfile header={header} footer={footer} /> : <Navigate to="/" />} />
+                <Route path="/managerprofile" element={isAuthenticated ? <ManagerProfile header={header} footer={footer} /> : <Navigate to="/" />} />
 
                 {/* Jobs */}
                 <Route path="/jobs" element={isAuthenticated ? <Jobs header={header} footer={footer} /> : <Navigate to="/" />} />
@@ -102,17 +102,17 @@ function App() {
                 <Route path="/players" element={isAuthenticated ? <PlayersList header={header} footer={footer} /> : <Navigate to="/" />} />
 
                 {/* Match Analysis */}
-                <Route path="/matches" element={isAuthenticated ? <MatchesList /> : <Navigate to="/" />} />
-                <Route path="/matches/upload" element={isAuthenticated ? <MatchUpload /> : <Navigate to="/" />} />
-                <Route path="/matches/:matchId" element={isAuthenticated ? <VideoAnalysis /> : <Navigate to="/" />} />
+                <Route path="/matches" element={isAuthenticated ? <MatchesList header={header} footer={footer} /> : <Navigate to="/" />} />
+                <Route path="/matches/upload" element={isAuthenticated ? <MatchUpload header={header} footer={footer} /> : <Navigate to="/" />} />
+                <Route path="/matches/:matchId" element={isAuthenticated ? <VideoAnalysis header={header} footer={footer} /> : <Navigate to="/" />} />
 
                 {/* Analysis Hub */}
-                <Route path="/analysis-hub" element={isAuthenticated ? <AnalysisHubMain /> : <Navigate to="/" />} />
-                <Route path="/analysis-hub/matches" element={isAuthenticated ? <MatchesList /> : <Navigate to="/" />} />
-                <Route path="/analysis-hub/matches/:matchId/analysis" element={isAuthenticated ? <MatchAnalysisDetail /> : <Navigate to="/" />} />
-                <Route path="/analysis-hub/players" element={isAuthenticated ? <ExistingPlayerPredictor /> : <Navigate to="/" />} />
-                <Route path="/analysis-hub/players/new" element={isAuthenticated ? <PlayerPredictor /> : <Navigate to="/" />} />
-                <Route path="/analysis-hub/players/:name" element={isAuthenticated ? <PlayerProfile /> : <Navigate to="/" />} />
+                <Route path="/analysis-hub" element={isAuthenticated ? <AnalysisHubMain header={header} footer={footer} /> : <Navigate to="/" />} />
+                <Route path="/analysis-hub/matches" element={isAuthenticated ? <MatchesList header={header} footer={footer} /> : <Navigate to="/" />} />
+                <Route path="/analysis-hub/matches/:matchId/analysis" element={isAuthenticated ? <MatchAnalysisDetail header={header} footer={footer}/> : <Navigate to="/" />} />
+                <Route path="/analysis-hub/players" element={isAuthenticated ? <ExistingPlayerPredictor header={header} footer={footer}/> : <Navigate to="/" />} />
+                <Route path="/analysis-hub/players/new" element={isAuthenticated ? <PlayerPredictor header={header} footer={footer}/> : <Navigate to="/" />} />
+                <Route path="/analysis-hub/players/:name" element={isAuthenticated ? <PlayerProfile header={header} footer={footer}/> : <Navigate to="/" />} />
 
                 {/* Fallback */}
                 <Route path="*" element={<Navigate to={isAuthenticated ? "/home" : "/"} />} />

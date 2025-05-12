@@ -2,7 +2,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import './AnalysisHubMain.css'; // We'll create this CSS file next
 
-function AnalysisHubMain() {
+function AnalysisHubMain({ header,footer }) {
     return (
         <div className="analysis-hub-main-container">
             <header className="hub-main-header">

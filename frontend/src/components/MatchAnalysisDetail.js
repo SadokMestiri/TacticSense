@@ -100,7 +100,7 @@ const ImageCarousel = ({ images, title }) => {
     );
 };
 
-function MatchAnalysisDetail() {
+function MatchAnalysisDetail({ header,footer }) {
     const { matchId } = useParams();
     const navigate = useNavigate();
     const [matchDetails, setMatchDetails] = useState(null); // For general match info like title, teams

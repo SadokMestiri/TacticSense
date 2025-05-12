@@ -3,7 +3,7 @@ import axios from 'axios';
 import './PlayerPredictor.css'; // Assuming styles are shared or specific
 import { useNavigate, Link } from 'react-router-dom';
 
-const ExistingPlayerPredictor = () => {
+const ExistingPlayerPredictor = ({ header,footer }) => {
   const [players, setPlayers] = useState([]);
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState({ position: '', team: '', age: '' });

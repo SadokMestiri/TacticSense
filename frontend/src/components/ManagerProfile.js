@@ -6,7 +6,7 @@ import axios from 'axios';
 import Cookies from 'js-cookie';
 import jwt_decode from 'jwt-decode';
 
-const CoachProfile = () => {
+const CoachProfile = ({ header,footer }) => {
     const [message, setMessage] = useState('');
     const [profileImage, setProfileImage] = useState('');
     const [username, setUsername] = useState('');

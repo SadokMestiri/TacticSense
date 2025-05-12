@@ -47,8 +47,6 @@ import nltk
 import shutil
 import torch
 import torch.nn as nn
-from lightfm import LightFM
-from lightfm.data import Dataset
 import unicodedata
 from fuzzywuzzy import process
 import pickle
@@ -70,10 +68,7 @@ srt_formatter = SRTFormatter()
 app = Flask(__name__, template_folder='templates')
 CORS(app, resources={r"/*": {"origins": "http://localhost:3000", "supports_credentials": True}})
 app.config['SECRET_KEY'] = '59c9d8576f920846140e2a8985911bec588c08aebf4c7799ba0d5ae388393703'  
-app.config['SQLALCHEMY_DATABASE_URI'] = "postgresql://postgres:feres1@localhost/metascout"
-
-
-CORS(app, origins=["http://localhost:3000"])
+app.config['SQLALCHEMY_DATABASE_URI'] = "postgresql://postgres:0000@localhost/metascout"
 db = SQLAlchemy(app)
 app.config['UPLOAD_FOLDER'] = 'uploads'
 app.config['MAIL_SERVER'] = 'smtp.gmail.com'
@@ -103,7 +98,7 @@ owner_private_key="e8be4c05fe6f9bfa3fb7e64e75723d31d8a48dd2f327e1ff09e9dadecd3c3
 owner_address = w3.to_checksum_address("0x16c7cc09EBA8039EBE2d6d14B0dAA299F77C3FF1")
 contract = w3.eth.contract(address=contract_address, abi=abi)
 
-API_KEY = "R+mdo6B8CqEuCfg9VoS/OA.platformv01.eyJqdGkiOiJhNDJkYWIyOC1hZTMzLTQ5MjQtOTgwNC1mZjU5YmQ3YWZiNTIiLCJzdWIiOiJsQk5zNmI1RnVOYlQwVlJCaENrQ2pHTlo3aW8xIiwiaWF0IjoxNzQ2ODg1MTE2fQ.yKadXV4Xe+vVcfKDLg5Xg8y/oWX5WSdGJygS++XdX1k"
+API_KEY = "NNh90Pfy1FpqllYwQz9oQg.platformv01.eyJqdGkiOiIyN2VkNGM5Ny0wNGEwLTQ1YTQtOGM2Zi1hZWFmMWFiOWIwMDQiLCJzdWIiOiJsQk5zNmI1RnVOYlQwVlJCaENrQ2pHTlo3aW8xIiwiaWF0IjoxNzQ2OTk3NDQ5fQ.c5uuDJvVkLIuyznumKUbUvTDRlgg4OTtyn9e9tA1CNM"
 client = FutureHouseClient(api_key=API_KEY)
 # Load model and encoder
 model = joblib.load('modeling/injury_type_model.pkl')
@@ -147,10 +142,19 @@ class User(db.Model):
     email = db.Column(db.String(120), unique=True, nullable=False)
     password = db.Column(db.String(200), nullable=False)
     name = db.Column(db.String(80), nullable=False)
-    profile_image = db.Column(db.String(255), nullable=True) 
+    profile_image = db.Column(db.String(255))
     eth_address = db.Column(db.String(42), unique=True, nullable=False)
     private_key = db.Column(db.String(256), unique=True, nullable=False)
-    role = db.Column(db.String(50), nullable=False)  
+    role = db.Column(db.String(50), nullable=False)
+
+    player_profile = db.relationship('PlayerProfile', back_populates='user', uselist=False)
+    agency_profile = db.relationship('AgencyProfile', back_populates='user', uselist=False)
+    agent_profile = db.relationship('AgentProfile', back_populates='user', uselist=False)
+    coach_profile = db.relationship('CoachProfile', back_populates='user', uselist=False)
+    staff_profile = db.relationship('StaffProfile', back_populates='user', uselist=False)
+    scout_profile = db.relationship('ScoutProfile', back_populates='user', uselist=False)
+    manager_profile = db.relationship('ManagerProfile', back_populates='user', uselist=False)
+    club_profile = db.relationship('ClubProfile', back_populates='user', uselist=False)
 
     def __init__(self,username, email, password ,name, profile_image,eth_address,private_key, role):
         self.username = username
@@ -161,142 +165,6 @@ class User(db.Model):
         self.eth_address = eth_address
         self.private_key = private_key
         self.role = role
-
-
-class PlayerProfile(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), unique=True, nullable=False)
-
-    # Infos générales
-    name = db.Column(db.String(20), nullable=True)
-    season = db.Column(db.String(20), nullable=True)
-    age = db.Column(db.Integer, nullable=True)
-    nationality = db.Column(db.String(50), nullable=True)
-    position = db.Column(db.String(50), nullable=True)
-    matches = db.Column(db.Integer, nullable=True)
-    minutes = db.Column(db.Integer, nullable=True)
-    goals = db.Column(db.Integer, nullable=True)
-    assists = db.Column(db.Integer, nullable=True)
-    club = db.Column(db.String(100), nullable=True)
-    market_value = db.Column(db.Float, nullable=True)
-
-    total_yellow_cards = db.Column(db.Integer, nullable=True)
-    total_red_cards = db.Column(db.Integer, nullable=True)
-
-    # Métriques
-    performance_metrics = db.Column(db.Float, nullable=True)
-    media_sentiment = db.Column(db.Float, nullable=True)
-
-    # Attributs joueur
-    aggression = db.Column(db.Integer, nullable=True)
-    reactions = db.Column(db.Integer, nullable=True)
-    long_pass = db.Column(db.Integer, nullable=True)
-    stamina = db.Column(db.Integer, nullable=True)
-    strength = db.Column(db.Integer, nullable=True)
-    sprint_speed = db.Column(db.Integer, nullable=True)
-    agility = db.Column(db.Integer, nullable=True)
-    jumping = db.Column(db.Integer, nullable=True)
-    heading = db.Column(db.Integer, nullable=True)
-    free_kick_accuracy = db.Column(db.Integer, nullable=True)
-    volleys = db.Column(db.Integer, nullable=True)
-
-    # Gardien
-    gk_positioning = db.Column(db.Integer, nullable=True)
-    gk_diving = db.Column(db.Integer, nullable=True)
-    gk_handling = db.Column(db.Integer, nullable=True)
-    gk_kicking = db.Column(db.Integer, nullable=True)
-    gk_reflexes = db.Column(db.Integer, nullable=True)
-    photo = db.Column(db.String(255), nullable=True)
-    score = db.Column(db.Float, nullable=True)
-
-    user = db.relationship('User', backref=db.backref('player_profile', uselist=False))
-
-class Coach_Profile(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), unique=True, nullable=False)
-    name = db.Column(db.String(80), unique=True, nullable=False)
-
-    nationality = db.Column(db.String(80), nullable=True)
-    date_of_appointment = db.Column(db.Date, nullable=True)
-    date_of_end_contract = db.Column(db.Date, nullable=True)
-    years_of_experience = db.Column(db.Integer, nullable=True)
-    qualification = db.Column(db.String(120), nullable=True)
-    availability = db.Column(db.Boolean, default=True)
-    photo = db.Column(db.String(255), nullable=True)
-
-    user = db.relationship('User', backref=db.backref('coach_profile', uselist=False))
-
-class Agent_Profile(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), unique=True, nullable=False)
-    name = db.Column(db.String(80), unique=True, nullable=False)
-
-    nationality = db.Column(db.String(80), nullable=True)
-    date_of_appointment = db.Column(db.Date, nullable=True)
-    date_of_end_contract = db.Column(db.Date, nullable=True)
-    years_of_experience = db.Column(db.Integer, nullable=True)
-    qualification = db.Column(db.String(120), nullable=True)
-    availability = db.Column(db.Boolean, default=True)
-
-    user = db.relationship('User', backref=db.backref('agent_profile', uselist=False))
-
-class Staff_Profile(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), unique=True, nullable=False)
-    name = db.Column(db.String(80), unique=True, nullable=False)
-
-    nationality = db.Column(db.String(80), nullable=True)
-    date_of_appointment = db.Column(db.Date, nullable=True)
-    date_of_end_contract = db.Column(db.Date, nullable=True)
-    years_of_experience = db.Column(db.Integer, nullable=True)
-    qualification = db.Column(db.String(120), nullable=True)
-    availability = db.Column(db.Boolean, default=True)
-
-    user = db.relationship('User', backref=db.backref('staff_profile', uselist=False))
-
-class Scout_Profile(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), unique=True, nullable=False)
-    name = db.Column(db.String(80), unique=True, nullable=False)
-
-    nationality = db.Column(db.String(80), nullable=True)
-    date_of_appointment = db.Column(db.Date, nullable=True)
-    date_of_end_contract = db.Column(db.Date, nullable=True)
-    years_of_experience = db.Column(db.Integer, nullable=True)
-    qualification = db.Column(db.String(120), nullable=True)
-    availability = db.Column(db.Boolean, default=True)
-
-    user = db.relationship('User', backref=db.backref('scout_profile', uselist=False))
-
-class Manager_Profile(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), unique=True, nullable=False)
-    name = db.Column(db.String(80), unique=True, nullable=False)
-
-    nationality = db.Column(db.String(80), nullable=True)
-    date_of_appointment = db.Column(db.Date, nullable=True)
-    date_of_end_contract = db.Column(db.Date, nullable=True)
-    years_of_experience = db.Column(db.Integer, nullable=True)
-    qualification = db.Column(db.String(120), nullable=True)
-    availability = db.Column(db.Boolean, default=True)
-
-    total_matches = db.Column(db.Integer, nullable=True)
-    wins = db.Column(db.Integer, nullable=True)
-    draws = db.Column(db.Integer, nullable=True)
-    losses = db.Column(db.Integer, nullable=True)
-    ppg = db.Column(db.Float, nullable=True)  # Points per game
-
-    user = db.relationship('User', backref=db.backref('manager_profile', uselist=False))
-
-class Play(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(80), unique=True, nullable=False)
-    email = db.Column(db.String(120), unique=True, nullable=False)
-    password = db.Column(db.String(200), nullable=False)
-    name = db.Column(db.String(80), nullable=False)
-    profile_image = db.Column(db.String(255), nullable=True)
-    role = db.Column(db.String(50), nullable=False)  
 
 class UserStreak(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -343,180 +211,183 @@ class Skills(db.Model):
     skill = db.Column(db.Integer, nullable=True)
     ratingS1 = db.Column(db.Integer, unique=False, nullable=True)
 
+agency_club_association = db.Table(
+    'agency_club_association',
+    db.Column('agency_id', db.Integer, db.ForeignKey('agency_profile.id'), primary_key=True),
+    db.Column('club_id', db.Integer, db.ForeignKey('club_profile.id'), primary_key=True)
+)
+
+
 class PlayerProfile(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), unique=True, nullable=False)
-    club_id = db.Column(db.Integer, db.ForeignKey('club__profile.id'), unique=False, nullable=True)  # Fixed table name
-    agency_id = db.Column(db.Integer, db.ForeignKey('agency__profile.id'), unique=False, nullable=True)
+    club_id = db.Column(db.Integer, db.ForeignKey('club_profile.id'))
+    agency_id = db.Column(db.Integer, db.ForeignKey('agency_profile.id'))
 
-    # Infos générales
-    name = db.Column(db.String(20), nullable=True)
-    season = db.Column(db.String(20), nullable=True)
-    age = db.Column(db.Integer, nullable=True)
-    nationality = db.Column(db.String(50), nullable=True)
-    position = db.Column(db.String(50), nullable=True)
-    matches = db.Column(db.Integer, nullable=True)
-    minutes = db.Column(db.Integer, nullable=True)
-    goals = db.Column(db.Integer, nullable=True)
-    assists = db.Column(db.Integer, nullable=True)
-    club = db.Column(db.String(100), nullable=True)
-    market_value = db.Column(db.Float, nullable=True)
+    name = db.Column(db.String(20))
+    season = db.Column(db.String(20))
+    age = db.Column(db.Integer)
+    nationality = db.Column(db.String(50))
+    position = db.Column(db.String(50))
+    matches = db.Column(db.Integer)
+    minutes = db.Column(db.Integer)
+    goals = db.Column(db.Integer)
+    assists = db.Column(db.Integer)
+    club = db.Column(db.String(100))
+    market_value = db.Column(db.Float)
+    total_yellow_cards = db.Column(db.Integer)
+    total_red_cards = db.Column(db.Integer)
 
-    total_yellow_cards = db.Column(db.Integer, nullable=True)
-    total_red_cards = db.Column(db.Integer, nullable=True)
+    performance_metrics = db.Column(db.Float)
+    media_sentiment = db.Column(db.Float)
 
-    # Métriques
-    performance_metrics = db.Column(db.Float, nullable=True)
-    media_sentiment = db.Column(db.Float, nullable=True)
+    aggression = db.Column(db.Integer)
+    reactions = db.Column(db.Integer)
+    long_pass = db.Column(db.Integer)
+    stamina = db.Column(db.Integer)
+    strength = db.Column(db.Integer)
+    sprint_speed = db.Column(db.Integer)
+    agility = db.Column(db.Integer)
+    jumping = db.Column(db.Integer)
+    heading = db.Column(db.Integer)
+    free_kick_accuracy = db.Column(db.Integer)
+    volleys = db.Column(db.Integer)
 
-    # Attributs joueur
-    aggression = db.Column(db.Integer, nullable=True)
-    reactions = db.Column(db.Integer, nullable=True)
-    long_pass = db.Column(db.Integer, nullable=True)
-    stamina = db.Column(db.Integer, nullable=True)
-    strength = db.Column(db.Integer, nullable=True)
-    sprint_speed = db.Column(db.Integer, nullable=True)
-    agility = db.Column(db.Integer, nullable=True)
-    jumping = db.Column(db.Integer, nullable=True)
-    heading = db.Column(db.Integer, nullable=True)
-    free_kick_accuracy = db.Column(db.Integer, nullable=True)
-    volleys = db.Column(db.Integer, nullable=True)
+    gk_positioning = db.Column(db.Integer)
+    gk_diving = db.Column(db.Integer)
+    gk_handling = db.Column(db.Integer)
+    gk_kicking = db.Column(db.Integer)
+    gk_reflexes = db.Column(db.Integer)
 
-    # Gardien
-    gk_positioning = db.Column(db.Integer, nullable=True)
-    gk_diving = db.Column(db.Integer, nullable=True)
-    gk_handling = db.Column(db.Integer, nullable=True)
-    gk_kicking = db.Column(db.Integer, nullable=True)
-    gk_reflexes = db.Column(db.Integer, nullable=True)
-    user = db.relationship('User', backref=db.backref('player_profile', uselist=False))
-    club = db.relationship('Club_Profile', foreign_keys=[club_id], backref=db.backref('player_profile', uselist=False))  # Explicit foreign key
-    agency = db.relationship('Agency_Profile', foreign_keys=[agency_id], backref=db.backref('player_profile', uselist=False))
+    score = db.Column(db.Float)
+    photo = db.Column(db.String(255))
 
-class Coach_Profile(db.Model):
+    user = db.relationship('User', back_populates='player_profile')
+    agency = db.relationship('AgencyProfile', back_populates='player_profiles')
+    club_profile = db.relationship('ClubProfile', back_populates='player_profiles')
+
+
+class AgencyProfile(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), unique=True, nullable=False)
-    club_id = db.Column(db.Integer, db.ForeignKey('club__profile.id'), unique=False, nullable=True)  # Fixed table name
-    name = db.Column(db.String(80), nullable=True)
 
-    nationality = db.Column(db.String(80), nullable=True)
-    date_of_appointment = db.Column(db.Date, nullable=True)
-    date_of_end_contract = db.Column(db.Date, nullable=True)
-    years_of_experience = db.Column(db.Integer, nullable=True)
-    qualification = db.Column(db.String(120), nullable=True)
+    country = db.Column(db.String(80))
+
+    user = db.relationship('User', back_populates='agency_profile')
+    player_profiles = db.relationship('PlayerProfile', back_populates='agency')
+    agents = db.relationship('AgentProfile', back_populates='agency')
+    clubs = db.relationship('ClubProfile', secondary='agency_club_association', back_populates='agencies')
+
+
+class ClubProfile(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), unique=True, nullable=False)
+
+    country = db.Column(db.String(80))
+    competition = db.Column(db.String(100))
+    squad_size = db.Column(db.Integer)
+
+    user = db.relationship('User', back_populates='club_profile')
+    player_profiles = db.relationship('PlayerProfile', back_populates='club_profile')
+    agencies = db.relationship('AgencyProfile', secondary='agency_club_association', back_populates='clubs')
+    staff_members = db.relationship('StaffProfile', back_populates='club')
+    coaches = db.relationship('CoachProfile', back_populates='club')
+    scouts = db.relationship('ScoutProfile', back_populates='club')
+    managers = db.relationship('ManagerProfile', back_populates='club')
+
+
+class AgentProfile(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), unique=True, nullable=False)
+    agency_id = db.Column(db.Integer, db.ForeignKey('agency_profile.id'))
+
+    name = db.Column(db.String(80))
+    nationality = db.Column(db.String(80))
+    date_of_appointment = db.Column(db.Date)
+    date_of_end_contract = db.Column(db.Date)
+    years_of_experience = db.Column(db.Integer)
+    qualification = db.Column(db.String(120))
     availability = db.Column(db.Boolean, default=True)
 
-    user = db.relationship('User', backref=db.backref('coach_profile', uselist=False))
-    club = db.relationship('Club_Profile', backref=db.backref('coach_profile', uselist=False))  # Fixed relationship
+    user = db.relationship('User', back_populates='agent_profile')
+    agency = db.relationship('AgencyProfile', back_populates='agents')
 
-class Agent_Profile(db.Model):
+
+class CoachProfile(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), unique=True, nullable=False)
-    agency_id = db.Column(db.Integer, db.ForeignKey('agency__profile.id'), unique=False, nullable=True)
-    name = db.Column(db.String(80), nullable=True)
+    club_id = db.Column(db.Integer, db.ForeignKey('club_profile.id'))
 
-    nationality = db.Column(db.String(80), nullable=True)
-    date_of_appointment = db.Column(db.Date, nullable=True)
-    date_of_end_contract = db.Column(db.Date, nullable=True)
-    years_of_experience = db.Column(db.Integer, nullable=True)
-    qualification = db.Column(db.String(120), nullable=True)
+    name = db.Column(db.String(80), unique=True, nullable=False)
+    nationality = db.Column(db.String(80))
+    date_of_appointment = db.Column(db.Date)
+    date_of_end_contract = db.Column(db.Date)
+    years_of_experience = db.Column(db.Integer)
+    qualification = db.Column(db.String(120))
+    availability = db.Column(db.Boolean, default=True)
+    photo = db.Column(db.String(255))
+
+    user = db.relationship('User', back_populates='coach_profile')
+    club = db.relationship('ClubProfile', back_populates='coaches')
+
+
+class StaffProfile(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), unique=True, nullable=False)
+    club_id = db.Column(db.Integer, db.ForeignKey('club_profile.id'))
+
+    name = db.Column(db.String(80))
+    nationality = db.Column(db.String(80))
+    date_of_appointment = db.Column(db.Date)
+    date_of_end_contract = db.Column(db.Date)
+    years_of_experience = db.Column(db.Integer)
+    qualification = db.Column(db.String(120))
     availability = db.Column(db.Boolean, default=True)
 
-    user = db.relationship('User', backref=db.backref('agent_profile', uselist=False))
-    agency = db.relationship('Agency_Profile', foreign_keys=[agency_id], backref=db.backref('agent_profile', uselist=False))
+    user = db.relationship('User', back_populates='staff_profile')
+    club = db.relationship('ClubProfile', back_populates='staff_members')
 
-class Staff_Profile(db.Model):
+
+class ScoutProfile(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), unique=True, nullable=False)
-    club_id = db.Column(db.Integer, db.ForeignKey('club__profile.id'), unique=False, nullable=True)  # Fixed table name
-    name = db.Column(db.String(80), nullable=True)
+    club_id = db.Column(db.Integer, db.ForeignKey('club_profile.id'))
 
-    nationality = db.Column(db.String(80), nullable=True)
-    date_of_appointment = db.Column(db.Date, nullable=True)
-    date_of_end_contract = db.Column(db.Date, nullable=True)
-    years_of_experience = db.Column(db.Integer, nullable=True)
-    qualification = db.Column(db.String(120), nullable=True)
+    name = db.Column(db.String(80))
+    nationality = db.Column(db.String(80))
+    date_of_appointment = db.Column(db.Date)
+    date_of_end_contract = db.Column(db.Date)
+    years_of_experience = db.Column(db.Integer)
+    qualification = db.Column(db.String(120))
     availability = db.Column(db.Boolean, default=True)
 
-    user = db.relationship('User', backref=db.backref('staff_profile', uselist=False))
-    club = db.relationship('Club_Profile', foreign_keys=[club_id], backref=db.backref('staff_profile', uselist=False))  # Fixed relationship
+    user = db.relationship('User', back_populates='scout_profile')
+    club = db.relationship('ClubProfile', back_populates='scouts')
 
-class Scout_Profile(db.Model):
+
+class ManagerProfile(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), unique=True, nullable=False)
-    club_id = db.Column(db.Integer, db.ForeignKey('club__profile.id'), unique=False, nullable=True)  # Fixed table name
-    name = db.Column(db.String(80), nullable=True)
+    club_id = db.Column(db.Integer, db.ForeignKey('club_profile.id'))
 
-    nationality = db.Column(db.String(80), nullable=True)
-    date_of_appointment = db.Column(db.Date, nullable=True)
-    date_of_end_contract = db.Column(db.Date, nullable=True)
-    years_of_experience = db.Column(db.Integer, nullable=True)
-    qualification = db.Column(db.String(120), nullable=True)
+    name = db.Column(db.String(80))
+    nationality = db.Column(db.String(80))
+    date_of_appointment = db.Column(db.Date)
+    date_of_end_contract = db.Column(db.Date)
+    years_of_experience = db.Column(db.Integer)
+    qualification = db.Column(db.String(120))
     availability = db.Column(db.Boolean, default=True)
 
-    user = db.relationship('User', backref=db.backref('scout_profile', uselist=False))
-    club = db.relationship('Club_Profile', backref=db.backref('scout_profile', uselist=False))  # Fixed relationship
+    total_matches = db.Column(db.Integer)
+    wins = db.Column(db.Integer)
+    draws = db.Column(db.Integer)
+    losses = db.Column(db.Integer)
+    ppg = db.Column(db.Float)
 
-class Manager_Profile(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), unique=True, nullable=False)
-    club_id = db.Column(db.Integer, db.ForeignKey('club__profile.id'), unique=False, nullable=True)  # Fixed table name
-    name = db.Column(db.String(80), nullable=True)
+    user = db.relationship('User', back_populates='manager_profile')
+    club = db.relationship('ClubProfile', back_populates='managers')
 
-    nationality = db.Column(db.String(80), nullable=True)
-    date_of_appointment = db.Column(db.Date, nullable=True)
-    date_of_end_contract = db.Column(db.Date, nullable=True)
-    years_of_experience = db.Column(db.Integer, nullable=True)
-    qualification = db.Column(db.String(120), nullable=True)
-    availability = db.Column(db.Boolean, default=True)
 
-    total_matches = db.Column(db.Integer, nullable=True)
-    wins = db.Column(db.Integer, nullable=True)
-    draws = db.Column(db.Integer, nullable=True)
-    losses = db.Column(db.Integer, nullable=True)
-    ppg = db.Column(db.Float, nullable=True)  # Points per game
-
-    user = db.relationship('User', backref=db.backref('manager_profile', uselist=False))
-    club = db.relationship('Club_Profile', backref=db.backref('manager_profile', uselist=False))  # Fixed relationship
-
-class Agency_Profile(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), unique=True, nullable=False)
-    player_id = db.Column(db.Integer, db.ForeignKey('player_profile.id'), unique=False, nullable=True)
-    club_id = db.Column(db.Integer, db.ForeignKey('club__profile.id'), unique=False, nullable=True)  # Fixed table name
-    agent_id = db.Column(db.Integer, db.ForeignKey('agent__profile.id'), unique=False, nullable=True)  # Fixed table name
-
-    country = db.Column(db.String(80), nullable=True)
-
-    user = db.relationship('User', backref=db.backref('agency_profile', uselist=False))
-    player = db.relationship('PlayerProfile', foreign_keys=[player_id], backref=db.backref('agency_profile', uselist=False))
-    club = db.relationship('Club_Profile', foreign_keys=[club_id], backref=db.backref('agency_profile', uselist=False))  # Fixed relationship
-    agent = db.relationship('Agent_Profile', foreign_keys=[agent_id], backref=db.backref('agency_profile', uselist=False))  # Fixed relationship
-
-class Club_Profile(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), unique=True, nullable=False)
-    player_id = db.Column(db.Integer, db.ForeignKey('player_profile.id'), unique=False, nullable=True)
-    agency_id = db.Column(db.Integer, db.ForeignKey('agency__profile.id'), unique=False, nullable=True)
-    staff_id = db.Column(db.Integer, db.ForeignKey('staff__profile.id'), unique=False, nullable=True)
-
-    country = db.Column(db.String(80), nullable=True)
-    competition = db.Column(db.String(100), nullable=True)
-    squad_size = db.Column(db.Integer, nullable=True)
-
-    user = db.relationship('User', backref=db.backref('club_profile', uselist=False))
-    player = db.relationship('PlayerProfile', foreign_keys=[player_id], backref=db.backref('club_profile', uselist=False))
-    agency = db.relationship('Agency_Profile', foreign_keys=[agency_id], backref=db.backref('club_profile', uselist=False))
-    staff = db.relationship('Staff_Profile', foreign_keys=[staff_id], backref=db.backref('club_profile', uselist=False))
-    
-class Play(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(80), unique=True, nullable=False)
-    email = db.Column(db.String(120), unique=True, nullable=False)
-    password = db.Column(db.String(200), nullable=False)
-    name = db.Column(db.String(80), nullable=False)
-    profile_image = db.Column(db.String(255), nullable=True)
-    role = db.Column(db.String(50), nullable=False)  
 
 class Post(db.Model):
     post_id = db.Column(db.Integer, primary_key=True, autoincrement=True)
@@ -1764,7 +1635,7 @@ def get_user(user_id):
                 'skill': user_skills.skill
             }), 200
         elif user.role == 'Coach':
-            Coach = Coach_Profile.query.filter_by(user_id=user.id).first()
+            Coach = CoachProfile.query.filter_by(user_id=user.id).first()
             return jsonify({
                 'id': user.id,
                 'username': user.username,
@@ -1780,7 +1651,7 @@ def get_user(user_id):
                 'availability': Coach.availability
             }), 200
         elif user.role == 'Agent':
-            Agent = Agent_Profile.query.filter_by(user_id=user.id).first()
+            Agent = AgentProfile.query.filter_by(user_id=user.id).first()
             return jsonify({
                 'id': user.id,
                 'username': user.username,
@@ -1796,7 +1667,7 @@ def get_user(user_id):
                 'availability': Agent.availability
             }), 200
         elif user.role == 'Staff':
-            Staff = Staff_Profile.query.filter_by(user_id=user.id).first()
+            Staff = StaffProfile.query.filter_by(user_id=user.id).first()
             return jsonify({
                 'id': user.id,
                 'username': user.username,
@@ -1812,7 +1683,7 @@ def get_user(user_id):
                 'availability': Staff.availability
             }), 200
         elif user.role == 'Scout':
-            Scout = Scout_Profile.query.filter_by(user_id=user.id).first()
+            Scout = ScoutProfile.query.filter_by(user_id=user.id).first()
             return jsonify({
                 'id': user.id,
                 'username': user.username,
@@ -1828,7 +1699,7 @@ def get_user(user_id):
                 'availability': Scout.availability
             }), 200
         elif user.role == 'Manager':
-            Manager = Manager_Profile.query.filter_by(user_id=user.id).first()
+            Manager = ManagerProfile.query.filter_by(user_id=user.id).first()
             return jsonify({
                 'id': user.id,
                 'username': user.username,
@@ -1859,15 +1730,6 @@ def get_user(user_id):
                 'role': user.role
             }), 200
 
-
-        return jsonify({
-            'id': user.id,
-            'username': user.username,
-            'email': user.email,
-            'name': user.name,
-            'profile_image': profile_image,
-            'role': user.role
-        }), 200
     except Exception as e:
         print(f"Error fetching user data: {e}")
         return jsonify({'message': 'User not found'}), 404
@@ -1875,7 +1737,7 @@ def get_user(user_id):
 @app.route('/get_clubs', methods=['GET'])
 def get_clubs():
     try:
-        clubs = Club_Profile.query.all()
+        clubs = ClubProfile.query.all()
         club_list = [{'id': club.id, 'name': club.country} for club in clubs]  # Replace 'country' with the actual club name field
         return jsonify(club_list), 200
     except Exception as e:
@@ -1884,27 +1746,30 @@ def get_clubs():
 @app.route('/register', methods=['POST'])
 def register():
     try:
-        username = request.form['username']
-        email = request.form['email']
-        password = request.form['password']
-        name = request.form['name']
+        # Required fields from form
+        username = request.form.get('username', '').strip()
+        email = request.form.get('email', '').strip()
+        password = request.form.get('password', '')
+        name = request.form.get('name', '').strip()
+        role = request.form.get('role', '').strip()
 
-        # Generate a new Ethereum address
-        account = w3.eth.account.create()  # Creates a new Ethereum account
-        eth_address = account.address  # The generated Ethereum address
-        private_key = account._private_key  # Private key as bytes, no need for .hex()
+        allowed_roles = ['Player', 'Coach', 'Manager', 'Agent', 'Scout', 'Staff']
+        if role not in allowed_roles:
+            return jsonify({'message': 'Invalid role selected'}), 400
 
-        # Validate Ethereum address
+        # Ethereum address creation
+        account = w3.eth.account.create()
+        eth_address = account.address
+        private_key = account._private_key.hex()  # hex for DB/json compatibility
+
         if not Web3.is_address(eth_address):
             return jsonify({"message": "Invalid Ethereum address"}), 400
 
-        # Check if username or email already exists
-        role = request.form['role']
-        
-        if User.query.filter_by(username=username).first() or User.query.filter_by(email=email).first():
+        # Uniqueness checks
+        if User.query.filter((User.username == username) | (User.email == email)).first():
             return jsonify({'message': 'Username or email already exists'}), 409
 
-        # Handle profile image upload
+        # Profile image
         profile_image = request.files.get('profile_image')
         profile_image_path = None
         if profile_image and allowed_file(profile_image.filename):
@@ -1912,16 +1777,25 @@ def register():
             profile_image_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
             profile_image.save(profile_image_path)
 
-        # Hash password using scrypt method (more secure than sha256)
+        # Password hash
         hashed_password = generate_password_hash(password, method='scrypt')
 
-        # Create new user with encrypted private key
-        new_user = User(username=username, email=email, password=hashed_password, name=name, profile_image=profile_image_path, eth_address=eth_address, private_key=private_key,role=role)
+        # User creation
+        new_user = User(
+            username=username,
+            email=email,
+            password=hashed_password,
+            name=name,
+            profile_image=profile_image_path,
+            eth_address=eth_address,
+            private_key=private_key,
+            role=role
+        )
         db.session.add(new_user)
         db.session.commit()
 
+        # Role-based profile creation
         if role == 'Player':
-            print("Creating player profile for:", name)
             player_profile = PlayerProfile(
                 user_id=new_user.id,
                 name=new_user.name,
@@ -1938,61 +1812,106 @@ def register():
                 market_value=0.0,
                 total_yellow_cards=0,
                 total_red_cards=0,
-                score=0.0
+                score=0.0,
+                performance_metrics=0.0,
+                media_sentiment=0.0,
+                aggression=0,
+                reactions=0,
+                long_pass=0,
+                stamina=0,
+                strength=0,
+                sprint_speed=0,
+                agility=0,
+                jumping=0,
+                heading=0,
+                free_kick_accuracy=0,
+                volleys=0,
+                gk_positioning=0,
+                gk_diving=0,
+                gk_handling=0,
+                gk_kicking=0,
+                gk_reflexes=0
             )
             db.session.add(player_profile)
 
         elif role == 'Coach':
-            print("Creating coach profile for:", name)
-            coach_profile = Coach_Profile(
+            coach_profile = CoachProfile(
                 user_id=new_user.id,
                 name=new_user.name,
                 photo=new_user.profile_image,
-                nationality=''
+                nationality='',
+                date_of_appointment=None,
+                date_of_end_contract=None,
+                years_of_experience=0,
+                qualification='',
+                availability=True
             )
             db.session.add(coach_profile)
 
         elif role == 'Manager':
-            print("Creating manager profile for:", name)
-            manager_profile = Manager_Profile(
+            manager_profile = ManagerProfile(
                 user_id=new_user.id,
                 name=new_user.name,
-                nationality=''
+                nationality='',
+                date_of_appointment=None,
+                date_of_end_contract=None,
+                years_of_experience=0,
+                qualification='',
+                availability=True,
+                total_matches=0,
+                wins=0,
+                draws=0,
+                losses=0,
+                ppg=0.0
             )
             db.session.add(manager_profile)
 
         elif role == 'Agent':
-            print("Creating agent profile for:", name)
-            agent_profile = Agent_Profile(
+            agent_profile = AgentProfile(
                 user_id=new_user.id,
                 name=new_user.name,
-                nationality=''
+                nationality='',
+                date_of_appointment=None,
+                date_of_end_contract=None,
+                years_of_experience=0,
+                qualification='',
+                availability=True
             )
             db.session.add(agent_profile)
 
         elif role == 'Scout':
-            print("Creating scout profile for:", name)
-            scout_profile = Scout_Profile(
+            scout_profile = ScoutProfile(
                 user_id=new_user.id,
-                name=new_user.name
+                name=new_user.name,
+                nationality='',
+                date_of_appointment=None,
+                date_of_end_contract=None,
+                years_of_experience=0,
+                qualification='',
+                availability=True
             )
             db.session.add(scout_profile)
 
         elif role == 'Staff':
-            print("Creating staff profile for:", name)
-            staff_profile = Staff_Profile(
+            staff_profile = StaffProfile(
                 user_id=new_user.id,
-                name=new_user.name
+                name=new_user.name,
+                nationality='',
+                date_of_appointment=None,
+                date_of_end_contract=None,
+                years_of_experience=0,
+                qualification='',
+                availability=True
             )
             db.session.add(staff_profile)
 
-        # Final commit for any profile added
+        # Final commit for profile
         db.session.commit()
 
         # Send welcome email
         msg = MailMessage("Welcome to MetaScout!",
-                      sender=app.config['MAIL_USERNAME'],
-                      recipients=[email])
+                          sender=app.config['MAIL_USERNAME'],
+                          recipients=[email])
         msg.html = f"""
             <p>Hello {name},</p>
             <p>Thank you for signing up on MetaScout. We’re excited to have you with us!</p>
@@ -2001,10 +1920,12 @@ def register():
         mail.send(msg)
 
         return jsonify({'message': 'User registered successfully'}), 201
+
     except Exception as e:
         print("Registration failed:", str(e))
         traceback.print_exc()
-        return jsonify({'error': str(e)}), 500
+        return jsonify({'error': 'Internal Server Error', 'details': str(e)}), 500
+
     
 @app.route('/verify_document', methods=['POST'])
 def verify_document():
@@ -2074,19 +1995,15 @@ def login():
     username = data.get('username')
     password = data.get('password')
 
-    print(username)
-    print(password)
     user = User.query.filter_by(username=username).first()
 
     if user and check_password_hash(user.password, password):
         token = jwt.encode({
             'public_id': user.id,
-            'exp': datetime.utcnow() + timedelta(days=1)  # Changed from hours=1 to days=1
-        }, app.config['SECRET_KEY'])
-
+            'exp': datetime.utcnow() + timedelta(days=1)
+        }, app.config['SECRET_KEY'], algorithm='HS256')
         return jsonify({'token': token}), 200
-    else:
-        return jsonify({'message': 'Invalid username or password'}), 401
+    return jsonify({'message': 'Invalid username or password'}), 401
 
 
     
@@ -3329,7 +3246,7 @@ def update_profile(current_user):
             if 'volleys' in data:
                 user_profile.volleys = data['volleys']
         elif current_user.role == 'Coach':
-            user_profile = Coach_Profile.query.filter_by(user_id=current_user.id).first()
+            user_profile = CoachProfile.query.filter_by(user_id=current_user.id).first()
 
             if not user_profile:
                 return jsonify({'error': 'Coach profile not found'}), 404
@@ -3349,7 +3266,7 @@ def update_profile(current_user):
                 user_profile.availability = data['availability']
 
         elif current_user.role == 'Agent':
-            user_profile = Agent_Profile.query.filter_by(user_id=current_user.id).first()
+            user_profile = AgentProfile.query.filter_by(user_id=current_user.id).first()
 
             if not user_profile:
                 return jsonify({'error': 'Agent profile not found'}), 404
@@ -3369,7 +3286,7 @@ def update_profile(current_user):
                 user_profile.availability = data['availability']
 
         elif current_user.role == 'Staff':
-            user_profile = Staff_Profile.query.filter_by(user_id=current_user.id).first()
+            user_profile = StaffProfile.query.filter_by(user_id=current_user.id).first()
 
             if not user_profile:
                 return jsonify({'error': 'Staff profile not found'}), 404
@@ -3389,7 +3306,7 @@ def update_profile(current_user):
                 user_profile.availability = data['availability']
 
         elif current_user.role == 'Scout':
-            user_profile = Scout_Profile.query.filter_by(user_id=current_user.id).first()
+            user_profile = ScoutProfile.query.filter_by(user_id=current_user.id).first()
 
             if not user_profile:
                 return jsonify({'error': 'Scout profile not found'}), 404
@@ -3409,7 +3326,7 @@ def update_profile(current_user):
                 user_profile.availability = data['availability']
 
         elif current_user.role == 'Manager':
-            user_profile = Manager_Profile.query.filter_by(user_id=current_user.id).first()
+            user_profile = ManagerProfile.query.filter_by(user_id=current_user.id).first()
 
             if not user_profile:
                 return jsonify({'error': 'Manager profile not found'}), 404
@@ -5426,7 +5343,7 @@ def predict_new_player():
     })
 
 @app.route('/players', methods=['GET'])
-def get_players():
+def get_players2():
     df = pd.read_csv(DATA_PATH)
     df.columns = df.columns.str.strip()
     df['season_start'] = df['season'].astype(str).str.extract(r'(\d{4})')[0]

@@ -12,7 +12,6 @@ const Register = () => {
     const [error, setError] = useState(null);
     const [success, setSuccess] = useState(null);
     const [profileImage, setProfileImage] = useState(null);
-    const [role, setRole] = useState('');
     const [verificationFile, setVerificationFile] = useState(null);
 
     const navigate = useNavigate();
@@ -141,26 +140,7 @@ const Register = () => {
                                         required
                                     />
                                 </div>
-                            <div className="form-group m-b-20">
-                                
-                                <select
-                                    className="form-control form-control-lg"
-                                    value={role}
-                                    placeholder="Role"
-                                    required
-                                    onChange={(e) => setRole(e.target.value)}
-                                >
-                                    <option value="" disabled>Select Role</option>
-                                    <option value="Player">Player</option>
-                                    <option value="Club">Club</option>
-                                    <option value="Manager">Manager</option>
-                                    <option value="Scout">Scout</option>
-                                    <option value="Staff">Staff</option>
-                                    <option value="Agent">Agent</option>
-                                    <option value="Coach">Coach</option>
-                                    <option value="Agency">Agency</option>
-                                </select>
-                            </div>
+                        
                             <div className="form-group m-b-20">
                                 <input
                                     type="email"

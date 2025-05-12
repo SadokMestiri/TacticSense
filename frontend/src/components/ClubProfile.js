@@ -4,7 +4,7 @@ import './Profile.css';
 import axios from 'axios';
 import Cookies from 'js-cookie';
 
-const ClubProfile = () => {
+const ClubProfile = ({ header,footer }) => {
     const [message, setMessage] = useState('');
     const [clubName, setClubName] = useState('');
     const [country, setCountry] = useState('');

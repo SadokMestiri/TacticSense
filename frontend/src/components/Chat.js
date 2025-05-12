@@ -15,7 +15,7 @@ import Cookies from 'js-cookie';
 import jwt_decode from 'jwt-decode';
 import { useNavigate } from "react-router-dom";
 
-function Chat({ header }) {
+function Chat({ header,footer }) {
   const navigate = useNavigate();
   // Example in React using useState
   const reactions = [
