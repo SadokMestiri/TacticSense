@@ -130,8 +130,16 @@ const user = userCookie ? JSON.parse(userCookie) : null;
                     <p id="showMoreLink" >Show more <b>+</b></p>
                 </div>
                 <div className="main-content">
-                    <div className="create-post" style={{ height: '872px' }}>
-                        <form onSubmit={handleSubmit} className="w-full max-w-md" style={{ paddingTop: '50px'}}>
+                    <div style={{ textAlign: 'center', marginBottom: '20px', padding: '10px' }}>
+                        <h1 style={{ fontSize: '2.5em', color: '#333', marginBottom: '10px' }}>
+                            Ask MetaScout AI
+                        </h1>
+                        <p style={{ fontSize: '1.1em', color: '#555', maxWidth: '600px', margin: '0 auto' }}>
+                            Engage with our AI assistant specialized in the soccer industry. Ask questions about tactics, player analysis, market trends, or anything football-related!
+                        </p>
+                    </div>
+                    <div className="create-post" style={{ height: 'auto', minHeight: '500px', paddingBottom: '20px' }}>
+                        <form onSubmit={handleSubmit} className="w-full max-w-md" style={{ paddingTop: '30px'}}>
                             <div style={{ marginLeft: '50px'}}>
                                 <textarea
                                     value={question}
@@ -146,7 +154,7 @@ const user = userCookie ? JSON.parse(userCookie) : null;
                             <button
                                 type="submit"
                                 className="send-chat-btn"
-                                style={{marginLeft: '450px', width:'100px'}}
+                                style={{marginLeft: '450px', width:'100px' }}
                             >
                                 {loading ? 'Loading...' : 'Send'}
                             </button>
@@ -158,6 +166,11 @@ const user = userCookie ? JSON.parse(userCookie) : null;
                                 <div dangerouslySetInnerHTML={{ __html: formatResponse(response) }} />
                             </div>
                         )}
+                        <div style={{ textAlign: 'center', marginTop: '20px', padding: '10px', fontSize: '0.9em', color: '#777', maxWidth: '600px', margin: '0 auto' }}>
+                            <p>
+                                🤖 Please be aware that AI-generated responses can sometimes be inaccurate or incomplete. Always cross-reference critical information.
+                            </p>
+                        </div>
                     </div>
                 </div>
 

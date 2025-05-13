@@ -55,6 +55,7 @@ import pickle
 # import fitz
 import json as std_json
 import time
+import requests
 
 
 # Set up upload folder for processed videos
@@ -978,10 +979,13 @@ def get_player_features_from_dataset(player_name):
 
 ########################################################PARTIE AMINE############################################################
 # Global variables for models (add near top)
-recommendation_models = None
-model_loaded = False
+# recommendation_models = None
+# model_loaded = False
 
-#class
+RECOMMENDATION_SERVICE_URL = os.environ.get("RECOMMENDATION_SERVICE_URL", "http://localhost:5001/recommend")
+
+
+# class
 class Recommendation(db.Model):
     __tablename__ = 'recommendations'
     
@@ -999,6 +1003,12 @@ class Recommendation(db.Model):
     model_version = db.Column(db.String(50))
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     viewed = db.Column(db.Boolean, default=False)
+
+# def get_user_type(current_user, recommendation_models): # This function might need adjustment or can be simplified
+# Simplified version if only role is needed:
+def get_user_role_simple(current_user):
+    return current_user.role # Or map to 'agency', 'player', etc. if needed by other parts of app.py
+
 
 # I CHANGED THE TOKEN    
 # #############################################################################################################################   
@@ -3804,7 +3814,7 @@ def get_user_profile(username):
 
 
 ####################################recommendation##########################################################3
-def load_recommendation_models():
+""" def load_recommendation_models():
     global recommendation_models
     try:
         model_path = os.path.join(os.path.dirname(__file__), 'models', 'recommendation_models.pkl')
@@ -3832,13 +3842,13 @@ def load_recommendation_models():
             print("✅ Successfully loaded and validated models")
     except Exception as e:
         print(f"❌ Load error: {str(e)}")
-        recommendation_models = None
+        recommendation_models = None """
         
 
 
 
 # Call this when starting your app
-load_recommendation_models()
+# load_recommendation_models()
 
 # Add this helper function at the top of your file
 def get_user_type(current_user, recommendation_models):
@@ -3860,7 +3870,7 @@ def get_user_type(current_user, recommendation_models):
 
 ##########################################################################33    
 # CLUBS TO AGENCY
-@app.route('/api/recommend/clubs/toagency', methods=['POST'])
+""" @app.route('/api/recommend/clubs/toagency', methods=['POST'])
 @token_required
 def recommend_clubs(current_user):
     try:
@@ -3916,133 +3926,188 @@ def recommend_clubs(current_user):
         return jsonify(recommendations)
     
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
-    
+        return jsonify({'error': str(e)}), 500 """
+
+# --- CLUBS TO AGENCY ---
+@app.route('/api/recommend/clubs/toagency', methods=['POST'])
+@token_required
+def recommend_clubs(current_user):
+    try:
+        data = request.get_json() or {}
+        top_n = min(int(data.get('top_n', 5)), 20)
+
+        payload = {
+            'type': 'clubs_to_agency',
+            'user_info': {'id': current_user.id, 'role': current_user.role, 'name': current_user.name},
+            'top_n': top_n
+        }
+        
+        service_response = requests.post(RECOMMENDATION_SERVICE_URL, json=payload, timeout=15) # Increased timeout
+        service_response.raise_for_status() # Raise HTTPError for bad responses (4xx or 5xx)
+        
+        recommendations_from_service = service_response.json()
+
+        # Optional: Save to main DB if needed (ensure keys match)
+        if isinstance(recommendations_from_service, list):
+            for rec_data in recommendations_from_service:
+                if all(k in rec_data for k in ('club', 'club_id', 'score')):
+                    db.session.add(Recommendation(
+                        user_id=current_user.id,
+                        recommended_club=rec_data['club'],
+                        club_id=rec_data['club_id'],
+                        score=rec_data['score']
+                    ))
+            db.session.commit()
+        
+        return jsonify(recommendations_from_service), service_response.status_code
+
+    except requests.exceptions.Timeout:
+        app.logger.error(f"Timeout calling recommendation service for clubs_to_agency.")
+        return jsonify({'error': 'Recommendation service timed out.'}), 504
+    except requests.exceptions.RequestException as e:
+        app.logger.error(f"Error calling recommendation service for clubs_to_agency: {str(e)}")
+        return jsonify({'error': 'Recommendation service unavailable or failed.', 'details': str(e)}), 503
+    except Exception as e:
+        app.logger.error(f"Unexpected error in recommend_clubs: {str(e)}")
+        return jsonify({'error': 'An internal server error occurred.'}), 500
+
+
+
+# --- Example: PLAYERS TO CLUB ---
+@app.route('/api/recommend/players/toclub', methods=['POST'])
+@token_required
+def recommend_players_to_club(current_user):
+    try:
+        data = request.get_json() or {}
+        top_n = min(int(data.get('top_n', 5)), 20)
+
+        payload = {
+            'type': 'players_to_club',
+             # For players_to_club, current_user is the Club.
+             # The service expects user_info.id to be the club_id for its logic.
+            'user_info': {'id': current_user.id, 'role': current_user.role, 'name': current_user.name},
+            'top_n': top_n
+        }
+        
+        service_response = requests.post(RECOMMENDATION_SERVICE_URL, json=payload, timeout=15)
+        service_response.raise_for_status()
+        
+        # This route originally returned a dict: {'success': True, 'club_id': ..., 'recommendations': [...]}
+        # The service should ideally return this structure for this specific type.
+        response_data = service_response.json()
+        
+        # Optional: Save to main DB if needed
+        if isinstance(response_data, dict) and response_data.get('success') and 'recommendations' in response_data:
+            for rec_data in response_data['recommendations']:
+                if all(k in rec_data for k in ('player', 'player_id', 'score')):
+                     db.session.add(Recommendation(
+                        user_id=current_user.id, # The club making the request
+                        recommended_player=rec_data['player'],
+                        player_id=rec_data['player_id'],
+                        score=rec_data['score']
+                    ))
+            db.session.commit()
+
+        return jsonify(response_data), service_response.status_code
+
+    except requests.exceptions.Timeout:
+        app.logger.error(f"Timeout calling recommendation service for players_to_club.")
+        return jsonify({'error': 'Recommendation service timed out.'}), 504
+    except requests.exceptions.RequestException as e:
+        app.logger.error(f"Error calling recommendation service for players_to_club: {str(e)}")
+        return jsonify({'error': 'Recommendation service unavailable or failed.', 'details': str(e)}), 503
+    except Exception as e:
+        app.logger.error(f"Unexpected error in recommend_players_to_club: {str(e)}")
+        return jsonify({'error': 'An internal server error occurred.'}), 500
+
 
 # PLAYERS TO AGENCY
 @app.route('/api/recommend/players/toagency', methods=['POST'])
 @token_required
-def recommend_players(current_user):
+def recommend_players(current_user): # Renamed for clarity, maps to original recommend_players
     try:
-        user_type = get_user_type(current_user, recommendation_models)
-        print(user_type)
-        if user_type != 'agency':
-            return jsonify({'message': 'No player recommendations available (user is not an agency)'}), 200
-            
         data = request.get_json() or {}
         top_n = min(int(data.get('top_n', 5)), 20)
+
+        payload = {
+            'type': 'players_to_agency',
+            'user_info': {'id': current_user.id, 'role': current_user.role, 'name': current_user.name},
+            'top_n': top_n
+        }
         
-        if not recommendation_models:
-            return jsonify({'error': 'Recommendation system not ready'}), 503
+        service_response = requests.post(RECOMMENDATION_SERVICE_URL, json=payload, timeout=15)
+        service_response.raise_for_status()
+        
+        recommendations_from_service = service_response.json()
 
-        # Get models and mappings
-        model = recommendation_models['player_model']
-        agency_id_map = recommendation_models['agency_id_map_player']
-        player_id_map = recommendation_models['player_id_map']
-        id_to_player = recommendation_models['id_to_player']
-        player_id_to_name = recommendation_models['player_id_to_name']
-
-        # Get agency index
-        agency_idx = agency_id_map.get(str(current_user.id))
-        if agency_idx is None:
-            return jsonify([])
+        if isinstance(recommendations_from_service, list):
+            for rec_data in recommendations_from_service:
+                if all(k in rec_data for k in ('player', 'player_id', 'score')): # Adjusted keys
+                    db.session.add(Recommendation(
+                        user_id=current_user.id,
+                        recommended_player=rec_data['player'],
+                        player_id=rec_data['player_id'],
+                        score=rec_data['score']
+                    ))
+            db.session.commit()
             
-        # Get predictions
-        scores = model.predict(agency_idx, np.arange(len(player_id_map)))
-        top_indices = np.argsort(-scores)[:top_n]
+        return jsonify(recommendations_from_service), service_response.status_code
         
-        # Prepare recommendations
-        recommendations = []
-        for idx in top_indices:
-            player_id = id_to_player[idx]
-            recommendations.append({
-                'player': player_id_to_name.get(player_id, "Unknown Player"),
-                'score': float(scores[idx]),
-                'player_id': player_id,
-                'recommended_stars': score_to_stars(float(scores[idx]))
-
-            })
-
-        # Save to database
-        for rec in recommendations:
-            db.session.add(Recommendation(
-                user_id=current_user.id,
-                recommended_player=rec['player'],
-                player_id=rec['player_id'],
-                score=rec['score']
-            ))
-        db.session.commit()
-            
-        return jsonify(recommendations)
-        
+    except requests.exceptions.Timeout:
+        app.logger.error(f"Timeout calling recommendation service for players_to_agency.")
+        return jsonify({'error': 'Recommendation service timed out.'}), 504
+    except requests.exceptions.RequestException as e:
+        app.logger.error(f"Error calling recommendation service for players_to_agency: {str(e)}")
+        return jsonify({'error': 'Recommendation service unavailable or failed.', 'details': str(e)}), 503
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        app.logger.error(f"Unexpected error in recommend_players (to_agency): {str(e)}")
+        app.logger.error(traceback.format_exc())
+        return jsonify({'error': 'An internal server error occurred.'}), 500
 
 
 #Agencies to PLayers
 @app.route('/api/recommend/agencies/toplayer', methods=['POST'])
 @token_required
-def recommend_agencies(current_user):      
+def recommend_agencies(current_user): # Renamed for clarity, maps to original recommend_agencies      
     try:
-        user_type = get_user_type(current_user, recommendation_models)
-        print(user_type)
-        if user_type != 'player':
-            return jsonify({'message': 'No player recommendations available (user is not an agency)'}), 200
-            
         data = request.get_json() or {}
         top_n = min(int(data.get('top_n', 5)), 20)
         
-        if not recommendation_models:
-            return jsonify({'error': 'Recommendation system not ready'}), 503
+        payload = {
+            'type': 'agencies_to_player',
+            'user_info': {'id': current_user.id, 'role': current_user.role, 'name': current_user.name},
+            'top_n': top_n
+        }
         
-        # Get all required models and mappings
-        model = recommendation_models['player_model']
-        player_id_map = recommendation_models['player_id_map']
-        agency_id_map = recommendation_models['agency_id_map_player']
-        id_to_agency = recommendation_models['id_to_agency_player']
-        agency_id_to_name = recommendation_models['agency_id_to_name']
+        service_response = requests.post(RECOMMENDATION_SERVICE_URL, json=payload, timeout=15)
+        service_response.raise_for_status()
+        
+        recommendations_from_service = service_response.json()
 
-        # Verify player exists
-        player_idx = player_id_map.get(str(current_user.id))
-        if player_idx is None:
-            return jsonify([])
+        if isinstance(recommendations_from_service, list):
+            for rec_data in recommendations_from_service:
+                if all(k in rec_data for k in ('agency', 'agency_id', 'score')): # Adjusted keys
+                    db.session.add(Recommendation(
+                        user_id=current_user.id,
+                        recommended_agency=rec_data['agency'],
+                        agency_id=rec_data['agency_id'],
+                        score=rec_data['score']
+                    ))
+            db.session.commit()
 
-        # Get top_n parameter
-        data = request.get_json() or {}
-        top_n = min(int(data.get('top_n', 5)), 20)
+        return jsonify(recommendations_from_service), service_response.status_code
 
-        # Get predictions (EXACTLY like Jupyter)
-        scores = model.predict(
-            user_ids=np.arange(len(agency_id_map)),
-            item_ids=np.repeat(player_idx, len(agency_id_map))
-        )
-
-        # Build recommendations (EXACT Jupyter logic)
-        recommendations = []
-        for idx in np.argsort(-scores):
-            agency_id = id_to_agency[idx]
-            agency_name = agency_id_to_name.get(agency_id, agency_id)
-            
-            # Skip NaN like Jupyter
-            if pd.isna(agency_name):
-                continue
-                
-            recommendations.append({
-                'agency': str(agency_name),
-                'score': float(scores[idx]),
-                'recommended_stars': score_to_stars(float(scores[idx])),
-                'agency_id': agency_id
-
-            })
-            
-            # Stop when we have enough valid recommendations
-            if len(recommendations) >= top_n:
-                break
-
-        return jsonify(recommendations)
-
+    except requests.exceptions.Timeout:
+        app.logger.error(f"Timeout calling recommendation service for agencies_to_player.")
+        return jsonify({'error': 'Recommendation service timed out.'}), 504
+    except requests.exceptions.RequestException as e:
+        app.logger.error(f"Error calling recommendation service for agencies_to_player: {str(e)}")
+        return jsonify({'error': 'Recommendation service unavailable or failed.', 'details': str(e)}), 503
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        app.logger.error(f"Unexpected error in recommend_agencies (to_player): {str(e)}")
+        app.logger.error(traceback.format_exc())
+        return jsonify({'error': 'An internal server error occurred.'}), 500
+     
         
 
 # CLUBS TO PLAYER
@@ -4050,67 +4115,48 @@ def recommend_agencies(current_user):
 @token_required
 def recommend_clubs_to_player(current_user):
     try:
-        user_type = get_user_type(current_user, recommendation_models)
-        print(user_type)
-        if user_type != 'player':
-            return jsonify({'message': 'No player recommendations available (user is not an agency)'}), 200
-        # Convert to string for consistent comparison
-        player_id = str(current_user.id)
+        data = request.get_json() or {}
+        top_n = min(int(data.get('top_n', 5)), 20)
 
-        # Load required data
-        transfer_df = recommendation_models['transfer_df']
-        agency_id_map_club = recommendation_models['agency_id_map_club']
-        club_model = recommendation_models['club_model']
-        club_id_map = recommendation_models['club_id_map']
-        id_to_club = recommendation_models['id_to_club']
-        club_id_to_name = recommendation_models['club_id_to_name']
+        payload = {
+            'type': 'clubs_to_player',
+            'user_info': {'id': current_user.id, 'role': current_user.role, 'name': current_user.name},
+            'top_n': top_n
+        }
 
-        # Find representing agencies
-        player_agencies = set(
-            transfer_df[transfer_df['Player Id'].astype(str) == player_id]['Agency Id'].astype(str).unique()
-        )
-
-        if not player_agencies:
-            return jsonify([])
-
-        # Predict and aggregate scores
-        all_scores = np.zeros(len(club_id_map))
-        valid_agencies = 0
+        service_response = requests.post(RECOMMENDATION_SERVICE_URL, json=payload, timeout=15)
+        service_response.raise_for_status()
         
-        for agency_id in player_agencies:
-            if agency_id in agency_id_map_club:
-                agency_idx = agency_id_map_club[agency_id]
-                all_scores += club_model.predict(agency_idx, np.arange(len(club_id_map)))
-                valid_agencies += 1
+        recommendations_from_service = service_response.json()
 
-        if valid_agencies == 0:
-            return jsonify({'message': 'No valid agency mappings found'}), 200
+        if isinstance(recommendations_from_service, list):
+            for rec_data in recommendations_from_service:
+                if all(k in rec_data for k in ('club', 'club_id', 'score')): # Adjusted keys
+                    db.session.add(Recommendation(
+                        user_id=current_user.id,
+                        recommended_club=rec_data['club'],
+                        club_id=rec_data['club_id'],
+                        score=rec_data['score']
+                    ))
+            db.session.commit()
 
-        # Prepare results
-        recommendations = []
-        for idx in np.argsort(-all_scores)[:3]:  # Return top 3 as requested
-            club_id = id_to_club.get(idx, f"unknown_{idx}")
-            club_name = club_id_to_name.get(club_id, f"Club_{club_id}")
-            
-            if pd.isna(club_name):
-                continue
-                
-            recommendations.append({
-                'club': str(club_name),
-                'score': float(all_scores[idx]),
-                'club_id': str(club_id),
-                'recommended_stars': score_to_stars(float(all_scores[idx]))
+        return jsonify(recommendations_from_service), service_response.status_code
 
-            })
-
-        return jsonify(recommendations)
-
+    except requests.exceptions.Timeout:
+        app.logger.error(f"Timeout calling recommendation service for clubs_to_player.")
+        return jsonify({'error': 'Recommendation service timed out.'}), 504
+    except requests.exceptions.RequestException as e:
+        app.logger.error(f"Error calling recommendation service for clubs_to_player: {str(e)}")
+        return jsonify({'error': 'Recommendation service unavailable or failed.', 'details': str(e)}), 503
     except Exception as e:
-        return jsonify({'error': 'Internal server error'}), 500
+        app.logger.error(f"Unexpected error in recommend_clubs_to_player: {str(e)}")
+        app.logger.error(traceback.format_exc())
+        return jsonify({'error': 'An internal server error occurred.'}), 500
 
 
 
-@app.route('/api/recommend/players/toclub', methods=['POST'])
+
+""" @app.route('/api/recommend/players/toclub', methods=['POST'])
 @token_required
 def recommend_players_to_club(current_user):
     try:
@@ -4208,7 +4254,7 @@ def recommend_players_to_club(current_user):
         return jsonify({
             'success': False,
             'error': f'Internal server error: {str(e)}'
-        }), 500
+        }), 500 """
 
 
 
@@ -4218,61 +4264,44 @@ def recommend_players_to_club(current_user):
 @token_required
 def recommend_agencies_to_club(current_user):
     try:
-        # Verify club
-        user_type = get_user_type(current_user, recommendation_models)
-        if user_type != 'club':
-            return jsonify({'message': 'No agency recommendations available (user is not a club)'}), 200
-
-        # Get parameters
         data = request.get_json() or {}
         top_n = min(int(data.get('top_n', 5)), 20)
 
-        if not recommendation_models:
-            return jsonify({'error': 'Recommendation system not ready'}), 503
+        payload = {
+            'type': 'agencies_to_club',
+            'user_info': {'id': current_user.id, 'role': current_user.role, 'name': current_user.name},
+            'top_n': top_n
+        }
 
-        # Get models and mappings
-        model = recommendation_models['club_model']
-        club_id_map = recommendation_models['club_id_map']
-        agency_id_map = recommendation_models['agency_id_map_club']
-        id_to_agency = recommendation_models['id_to_agency_club']
-        agency_id_to_name = recommendation_models['agency_id_to_name']
+        service_response = requests.post(RECOMMENDATION_SERVICE_URL, json=payload, timeout=15)
+        service_response.raise_for_status()
+        
+        recommendations_from_service = service_response.json()
 
-        # Verify club exists
-        club_idx = club_id_map.get(str(current_user.id))
-        if club_idx is None:
-           return jsonify([])
+        if isinstance(recommendations_from_service, list):
+            for rec_data in recommendations_from_service:
+                if all(k in rec_data for k in ('agency', 'agency_id', 'score')): # Adjusted keys
+                    db.session.add(Recommendation(
+                        user_id=current_user.id,
+                        recommended_agency=rec_data['agency'],
+                        agency_id=rec_data['agency_id'],
+                        score=rec_data['score']
+                    ))
+            db.session.commit()
 
-        # Get predictions
-        scores = model.predict(
-            user_ids=np.arange(len(agency_id_map)),
-            item_ids=np.repeat(club_idx, len(agency_id_map))
-        )
-
-        # Build recommendations
-        recommendations = []
-        for idx in np.argsort(-scores):
-            agency_id = id_to_agency[idx]
-            agency_name = agency_id_to_name.get(agency_id, agency_id)
-            
-            # Skip NaN values
-            if pd.isna(agency_name):
-                continue
-                
-            recommendations.append({
-                'agency': str(agency_name),
-                'score': float(scores[idx]),
-                'agency_id': agency_id,
-                'recommended_stars': score_to_stars(float(scores[idx]))
-
-            })
-            
-            if len(recommendations) >= top_n:
-                break
-
-        return jsonify(recommendations)
-
+        return jsonify(recommendations_from_service), service_response.status_code
+    
+    except requests.exceptions.Timeout:
+        app.logger.error(f"Timeout calling recommendation service for agencies_to_club.")
+        return jsonify({'error': 'Recommendation service timed out.'}), 504
+    except requests.exceptions.RequestException as e:
+        app.logger.error(f"Error calling recommendation service for agencies_to_club: {str(e)}")
+        return jsonify({'error': 'Recommendation service unavailable or failed.', 'details': str(e)}), 503
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        app.logger.error(f"Unexpected error in recommend_agencies_to_club: {str(e)}")
+        app.logger.error(traceback.format_exc())
+        return jsonify({'error': 'An internal server error occurred.'}), 500
+  
     
 
 
@@ -4281,78 +4310,47 @@ def recommend_agencies_to_club(current_user):
 @token_required
 def recommend_agents_to_agency(current_user):
     try:
-        # Ensure user is an agent (since we're recommending agencies to agents)
-        user_type = get_user_type(current_user, recommendation_models)
-        if user_type != 'agency':
-            return jsonify({'message': 'No agency recommendations available (user is not an agent)'}), 200
-
         data = request.get_json() or {}
         top_n = min(int(data.get('top_n', 5)), 20)
 
-        if not recommendation_models:
-            return jsonify({'error': 'Recommendation system not ready'}), 503
-
-        # Load the correct models and mappings
-        model = recommendation_models['agents_model']
-        id_to_agency_agent = recommendation_models.get('id_to_agency_agent', {})
-        agency_id_to_name = recommendation_models.get('agency_id_to_name', {})
-        agents_to_name = recommendation_models.get('agents_to_name', {})
-        agent_id_map_agency = recommendation_models.get('agent_id_map_agency', {})
-
-        # Get and normalize agent name
-        agent_name = current_user.name.strip().lower()
-
-        # Find agent ID and index with safety checks
-        agent_id = None
-        for aid, name in agents_to_name.items():
-            if str(name).strip().lower() == agent_name:
-                agent_id = aid
-                break
-
-        if agent_id is None or agent_id not in agent_id_map_agency:
-            return jsonify([])
-
-        agent_idx = agent_id_map_agency.get(agent_id)
-        if agent_idx is None:
-            return jsonify([])
-
-        # Predict scores - agents recommending agencies
-        scores = model.predict(
-            user_ids=np.repeat(agent_idx, len(id_to_agency_agent)),
-            item_ids=np.arange(len(id_to_agency_agent))
-        )
-
-        # Build recommendations with all safety checks
-        recommendations = []
-        valid_count = 0
+        payload = {
+            'type': 'agents_to_agency',
+            'user_info': {'id': current_user.id, 'role': current_user.role, 'name': current_user.name},
+            'top_n': top_n
+        }
         
-        for idx in np.argsort(-scores):  # Sort by descending score
-            if valid_count >= top_n:
-                break
-                
-            agency_id = id_to_agency_agent.get(idx)
-            if agency_id is None:
-                continue
-                
-            agency_name = agency_id_to_name.get(agency_id)
-            if agency_name is None or pd.isna(agency_name):
-                continue
-                
-            try:
-                recommendations.append({
-                    'agency': str(agency_name),
-                    'score': float(scores[idx]),
-                    'agency_id': str(agency_id),
-                    'recommended_stars': score_to_stars(float(scores[idx]))
-                })
-                valid_count += 1
-            except (ValueError, TypeError):
-                continue
+        service_response = requests.post(RECOMMENDATION_SERVICE_URL, json=payload, timeout=15)
+        service_response.raise_for_status()
+        
+        recommendations_from_service = service_response.json()
 
-        return jsonify(recommendations)
+        # Assuming the service returns a list of dicts with 'agent', 'agent_id', 'score'
+        if isinstance(recommendations_from_service, list):
+            for rec_data in recommendations_from_service:
+                # For agents, we might not have a specific 'agent_id' in the Recommendation table
+                # We'll store the name in 'recommended_player' for now, or you can add a 'recommended_agent' field.
+                if all(k in rec_data for k in ('agent', 'score')): # 'agent_id' might be optional from service
+                    db.session.add(Recommendation(
+                        user_id=current_user.id,
+                        recommended_player=rec_data['agent'], # Using recommended_player to store agent name
+                        # player_id=rec_data.get('agent_id'), # If service provides agent_id
+                        score=rec_data['score']
+                    ))
+            db.session.commit()
 
+        return jsonify(recommendations_from_service), service_response.status_code
+
+    except requests.exceptions.Timeout:
+        app.logger.error(f"Timeout calling recommendation service for agents_to_agency.")
+        return jsonify({'error': 'Recommendation service timed out.'}), 504
+    except requests.exceptions.RequestException as e:
+        app.logger.error(f"Error calling recommendation service for agents_to_agency: {str(e)}")
+        return jsonify({'error': 'Recommendation service unavailable or failed.', 'details': str(e)}), 503
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        app.logger.error(f"Unexpected error in recommend_agents_to_agency: {str(e)}")
+        app.logger.error(traceback.format_exc())
+        return jsonify({'error': 'An internal server error occurred.'}), 500
+
 
 
 
@@ -4363,59 +4361,44 @@ def recommend_agents_to_agency(current_user):
 @token_required
 def recommend_agencies_to_agent(current_user):
     try:
-        # Ensure user is an agent
-        user_type = get_user_type(current_user, recommendation_models)
-        if user_type != 'agent':
-            return jsonify({'message': 'No agency recommendations available (user is not an agent)'}), 200
-
         data = request.get_json() or {}
         top_n = min(int(data.get('top_n', 5)), 20)
 
-        if not recommendation_models:
-            return jsonify({'error': 'Recommendation system not ready'}), 503
+        payload = {
+            'type': 'agencies_to_agent',
+            'user_info': {'id': current_user.id, 'role': current_user.role, 'name': current_user.name},
+            'top_n': top_n
+        }
 
-        model = recommendation_models['agents_model']
-        id_to_agency_agent = recommendation_models['id_to_agency_agent']
-        id_to_agent_agency = recommendation_models['id_to_agent_agency']
-        agency_id_to_name = recommendation_models['agency_id_to_name']
+        service_response = requests.post(RECOMMENDATION_SERVICE_URL, json=payload, timeout=15)
+        service_response.raise_for_status()
+        
+        recommendations_from_service = service_response.json()
 
-        agent_name = current_user.name.strip().lower()
+        if isinstance(recommendations_from_service, list):
+            for rec_data in recommendations_from_service:
+                if all(k in rec_data for k in ('agency', 'agency_id', 'score')): # Adjusted keys
+                    db.session.add(Recommendation(
+                        user_id=current_user.id,
+                        recommended_agency=rec_data['agency'],
+                        agency_id=rec_data['agency_id'],
+                        score=rec_data['score']
+                    ))
+            db.session.commit()
 
-        # Map agent name directly to index
-        agent_idx = None
-        for idx, agent_id in id_to_agent_agency.items():
-            if str(agent_id).strip().lower() == agent_name:
-                agent_idx = idx
-                break
-
-        if agent_idx is None:
-            return jsonify([])
-
-        # Predict scores
-        scores = model.predict(
-            user_ids=np.repeat(agent_idx, len(id_to_agency_agent)),
-            item_ids=np.arange(len(id_to_agency_agent))
-        )
-
-        recommendations = []
-        for idx in np.argsort(-scores):
-            agency_id = id_to_agency_agent.get(idx)
-            agency_name = agency_id_to_name.get(agency_id, agency_id)
-            if pd.isna(agency_name):
-                continue
-            recommendations.append({
-                'agency': str(agency_name),
-                'score': float(scores[idx]),
-                'agency_id': agency_id,
-                'recommended_stars': score_to_stars(float(scores[idx]))
-            })
-            if len(recommendations) >= top_n:
-                break
-
-        return jsonify(recommendations)
-
+        return jsonify(recommendations_from_service), service_response.status_code
+    
+    except requests.exceptions.Timeout:
+        app.logger.error(f"Timeout calling recommendation service for agencies_to_agent.")
+        return jsonify({'error': 'Recommendation service timed out.'}), 504
+    except requests.exceptions.RequestException as e:
+        app.logger.error(f"Error calling recommendation service for agencies_to_agent: {str(e)}")
+        return jsonify({'error': 'Recommendation service unavailable or failed.', 'details': str(e)}), 503
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        app.logger.error(f"Unexpected error in recommend_agencies_to_agent: {str(e)}")
+        app.logger.error(traceback.format_exc())
+        return jsonify({'error': 'An internal server error occurred.'}), 500
+
 
 
 
@@ -4427,62 +4410,44 @@ def recommend_agencies_to_agent(current_user):
 @token_required
 def recommend_clubs_to_staff(current_user):
     try:
-        # Ensure user is staff
-        user_type = get_user_type(current_user, recommendation_models)
-        if user_type != 'staff':
-            return jsonify({'message': 'No club recommendations available (user is not staff)'}), 200
-
         data = request.get_json() or {}
         top_n = min(int(data.get('top_n', 5)), 20)
 
-        if not recommendation_models:
-            return jsonify({'error': 'Recommendation system not ready'}), 503
+        payload = {
+            'type': 'clubs_to_staff',
+            'user_info': {'id': current_user.id, 'role': current_user.role, 'name': current_user.name},
+            'top_n': top_n
+        }
+        
+        service_response = requests.post(RECOMMENDATION_SERVICE_URL, json=payload, timeout=15)
+        service_response.raise_for_status()
+        
+        recommendations_from_service = service_response.json()
 
-        # Load model and mappings
-        model = recommendation_models['staff_model']
-        id_to_user_s = recommendation_models['id_to_user_s']  # index -> staff name
-        user_id_map_s = recommendation_models['user_id_map_s']  # staff name -> index
-        id_to_item_s = recommendation_models['id_to_item_s']  # index -> club id
-        club_id_to_name = recommendation_models['club_id_to_name']  # club id -> name
+        if isinstance(recommendations_from_service, list):
+            for rec_data in recommendations_from_service:
+                if all(k in rec_data for k in ('club', 'club_id', 'score')): # Adjusted keys
+                    db.session.add(Recommendation(
+                        user_id=current_user.id,
+                        recommended_club=rec_data['club'],
+                        club_id=rec_data['club_id'],
+                        score=rec_data['score']
+                    ))
+            db.session.commit()
 
-        # Normalize staff name
-        staff_name = current_user.name.strip().lower()
+        return jsonify(recommendations_from_service), service_response.status_code
 
-        # Find staff index by name
-        staff_idx = None
-        for name, idx in user_id_map_s.items():
-            if name.strip().lower() == staff_name:
-                staff_idx = idx
-                break
-
-        if staff_idx is None:
-            return jsonify([])
-
-        # Predict scores
-        scores = model.predict(
-            user_ids=np.repeat(staff_idx, len(id_to_item_s)),
-            item_ids=np.arange(len(id_to_item_s))
-        )
-
-        recommendations = []
-        for idx in np.argsort(-scores):
-            club_id = id_to_item_s.get(idx)
-            club_name = club_id_to_name.get(club_id, club_id)
-            if pd.isna(club_name):
-                continue
-            recommendations.append({
-                'club': str(club_name),
-                'score': float(scores[idx]),
-                'club_id': club_id,
-                'recommended_stars': score_to_stars(float(scores[idx]))
-            })
-            if len(recommendations) >= top_n:
-                break
-
-        return jsonify(recommendations)
-
+    except requests.exceptions.Timeout:
+        app.logger.error(f"Timeout calling recommendation service for clubs_to_staff.")
+        return jsonify({'error': 'Recommendation service timed out.'}), 504
+    except requests.exceptions.RequestException as e:
+        app.logger.error(f"Error calling recommendation service for clubs_to_staff: {str(e)}")
+        return jsonify({'error': 'Recommendation service unavailable or failed.', 'details': str(e)}), 503
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        app.logger.error(f"Unexpected error in recommend_clubs_to_staff: {str(e)}")
+        app.logger.error(traceback.format_exc())
+        return jsonify({'error': 'An internal server error occurred.'}), 500
+
 
 
 
@@ -4491,72 +4456,60 @@ def recommend_clubs_to_staff(current_user):
 @token_required
 def recommend_staff_to_club(current_user):
     try:
-        if not recommendation_models:
-            return jsonify({'error': 'Recommendation system not ready'}), 503
-
-        user_type = get_user_type(current_user, recommendation_models)
-        if user_type != 'club':
-            return jsonify({'message': 'No staff recommendations available (user is not a club)'}), 200
-
         data = request.get_json() or {}
         top_n = min(int(data.get('top_n', 5)), 20)
 
-        staff_model = recommendation_models['staff_model']
-        staff_name_map = recommendation_models['staff_name_map']
-        user_id_map_s = recommendation_models['user_id_map_s']
-        item_id_map_s = recommendation_models['item_id_map_s']
-        id_to_user_s = recommendation_models['id_to_user_s']
+        payload = {
+            'type': 'staff_to_club',
+            'user_info': {'id': current_user.id, 'role': current_user.role, 'name': current_user.name},
+            'top_n': top_n
+        }
 
-        # Normalize club name from current_user
-        club_name = current_user.name.strip().lower()
+        service_response = requests.post(RECOMMENDATION_SERVICE_URL, json=payload, timeout=15)
+        service_response.raise_for_status()
+        
+        recommendations_from_service = service_response.json()
 
-        if club_name not in item_id_map_s:
-            return jsonify({'message': 'Club not found in mapping'}), 404
+        # Assuming the service returns a list of dicts with 'staff_member', 'staff_id', 'score'
+        if isinstance(recommendations_from_service, list):
+            for rec_data in recommendations_from_service:
+                 # For staff, we might not have a specific 'staff_id' in the Recommendation table
+                # We'll store the name in 'recommended_player' for now, or you can add a 'recommended_staff' field.
+                if all(k in rec_data for k in ('staff', 'score')): # 'staff_id' might be optional
+                    db.session.add(Recommendation(
+                        user_id=current_user.id,
+                        recommended_player=rec_data['staff'], # Using recommended_player to store staff name
+                        # player_id=rec_data.get('staff_id'), # If service provides staff_id
+                        score=rec_data['score']
+                    ))
+            db.session.commit()
 
-        club_idx = item_id_map_s[club_name]
+        return jsonify(recommendations_from_service), service_response.status_code
 
-        # Predict scores for all staff
-        scores = staff_model.predict(
-            user_ids=np.arange(len(user_id_map_s)),
-            item_ids=np.repeat(club_idx, len(user_id_map_s))
-        )
-
-        # Format results
-        recommendations = []
-        for idx in np.argsort(-scores):
-            staff_id = id_to_user_s.get(idx)
-            staff_name = staff_name_map.get(staff_id, staff_id)
-
-            if pd.isna(staff_name):
-                continue
-
-            recommendations.append({
-                'staff': str(staff_name),
-                'score': float(scores[idx]),
-                'recommended_stars': score_to_stars(float(scores[idx]))
-            })
-
-            if len(recommendations) >= top_n:
-                break
-
-        return jsonify(recommendations)
-
+    except requests.exceptions.Timeout:
+        app.logger.error(f"Timeout calling recommendation service for staff_to_club.")
+        return jsonify({'error': 'Recommendation service timed out.'}), 504
+    except requests.exceptions.RequestException as e:
+        app.logger.error(f"Error calling recommendation service for staff_to_club: {str(e)}")
+        return jsonify({'error': 'Recommendation service unavailable or failed.', 'details': str(e)}), 503
     except Exception as e:
-        app.logger.error(f"Error in staff-to-club recommendation: {str(e)}")
-        return jsonify({'error': str(e)}), 500
+        app.logger.error(f"Unexpected error in recommend_staff_to_club: {str(e)}")
+        app.logger.error(traceback.format_exc())
+        return jsonify({'error': 'An internal server error occurred.'}), 500
+
 
 
 
 
 #########################################################################
-def score_to_stars(score, max_stars=5):
+""" def score_to_stars(score, max_stars=5):
     # Normalize score to be between 0 and 1 if necessary
     score = max(0, min(score, 1))  
     
     # Multiply by max stars and round
     stars = round(score * max_stars)
     
-    return '★' * stars + '☆' * (max_stars - stars)
+    return '★' * stars + '☆' * (max_stars - stars) """
 
 
 

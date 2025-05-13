@@ -207,15 +207,22 @@ const user = userCookie ? JSON.parse(userCookie) : null;
       const response = await axios.get(`${process.env.REACT_APP_BASE_URL}/get_posts`);
       let postsData = response.data;
       console.log(response)
-      for (let post of postsData) {
-        if (post.user_id) {
-          await fetchUsers(post.user_id);
+      if (Array.isArray(postsData) && postsData.length > 0) {
+        const userIdsFromPosts = new Set();
+        postsData.forEach(post => {
+          if (post.user_id) {
+            userIdsFromPosts.add(post.user_id);
+          }
+        });
+        
+        if (userIdsFromPosts.size > 0) {
+          // Fetch user data for all unique authors from posts
+          await fetchUsersData(Array.from(userIdsFromPosts)); // Using your more robust fetchUsersData
         }
       }
 
-      postsData = sortPosts(postsData, sortOption);
-      setAllPosts(postsData);
-      setPosts(postsData);
+      const sortedData = sortPosts(postsData, sortOption); // Sort the original posts data
+      setAllPosts(sortedData); 
     } catch (error) {
       console.error('Error fetching posts:', error);
     }

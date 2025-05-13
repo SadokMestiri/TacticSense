@@ -1,0 +1,19 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[requires]
+python_version = "3.11" 
+
+[packages]
+flask = "*" 
+numpy = ">=2.0"
+pandas = "*"
+lightfm = "*" 
+# If you need Flask-CORS for the service (optional but good practice)
+# flask-cors = "*"
+
+[dev-packages]
+# Keep this empty or add linters like pylint if you use them for this service
+# pylint = "*"
