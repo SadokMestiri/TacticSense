@@ -2,12 +2,13 @@ import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import Cookies from 'js-cookie';
 import jwt_decode from 'jwt-decode';
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, Link, useLocation } from "react-router-dom";
 import './Home.css';
 import MentionInput from './MentionInput'; 
 
 const Home = ({ header }) => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [isMenuOpen, setIsMenuOpen] = useState(false); // For potential mobile menu
   const [isActivityOpen, setIsActivityOpen] = useState(false); // For "RECENT", "GROUPS" sidebar
 
@@ -261,6 +262,50 @@ const Home = ({ header }) => {
       setComments([]);
     }
   }, [fetchUsersData]);
+  useEffect(() => {
+    const { hash, state } = location;
+    const scrollToCommentId = state?.scrollToCommentId;
+    const fromNotification = state?.fromNotification;
+
+    if (hash && fromNotification) { // Process only if from a notification click
+      const elementId = hash.substring(1); // Remove # (e.g., "post-123")
+      const postElement = document.getElementById(elementId);
+
+      if (postElement) {
+        postElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        postElement.classList.add('highlighted-by-notification');
+        setTimeout(() => {
+          postElement.classList.remove('highlighted-by-notification');
+        }, 3000); // Highlight duration
+
+        if (scrollToCommentId && elementId.startsWith('post-')) {
+          const postIdForComment = parseInt(elementId.replace('post-', ''), 10);
+          const postData = posts.find(p => (p.id || p.post_id) === postIdForComment);
+
+          if (postData) {
+            setSelectedPostForComments(postData);
+            setIsCommentsVisible(true);
+            fetchComments(postIdForComment).then(() => {
+              // Ensure comments are loaded before trying to scroll
+              setTimeout(() => { // Delay to allow modal and comments to render
+                const commentElement = document.getElementById(`comment-${scrollToCommentId}`);
+                if (commentElement) {
+                  commentElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                  commentElement.classList.add('highlighted-by-notification');
+                  setTimeout(() => {
+                    commentElement.classList.remove('highlighted-by-notification');
+                  }, 3000);
+                }
+              }, 500); // Adjust delay if needed
+            });
+          }
+        }
+        // Clear the state after processing to prevent re-triggering
+        navigate(location.pathname + location.search + hash, { replace: true, state: {} });
+      }
+    }
+  }, [location, posts, navigate, fetchComments, setSelectedPostForComments, setIsCommentsVisible]); // Add dependencies
+
 
   const handleCommentSubmit = async (postId) => {
     if (commentText.trim() === '' || !user) return;
@@ -390,7 +435,7 @@ const Home = ({ header }) => {
           )}
 
           {posts.map((post) => (
-            <div key={post.id || post.post_id} className="post">
+            <div key={post.id || post.post_id} id={`post-${post.id || post.post_id}`} className="post">
               <div className="post-author">
                 <img
                   src={users[post.user_id]?.profile_image ? constructMediaUrl(users[post.user_id].profile_image) : '/assets/images/default-avatar.png'}
@@ -525,7 +570,7 @@ const Home = ({ header }) => {
             </div>
             <div className="modal-body">
               {comments.length === 0 ? <p>No comments yet.</p> : comments.map(comment => (
-                <div key={comment.id || comment.comment_id} className="comment-item">
+                <div key={comment.id || comment.comment_id} id={`comment-${comment.id || comment.comment_id}`} className="comment-item">
                   <img
                     src={users[comment.user_id]?.profile_image ? constructMediaUrl(users[comment.user_id].profile_image) : '/assets/images/default-avatar.png'}
                     alt={comment.user_name || 'User'}

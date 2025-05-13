@@ -13,7 +13,7 @@ const Profile = ({ header }) => {
 
   const [profileUser, setProfileUser] = useState(null); // User whose profile is being viewed
   const [loggedInUser, setLoggedInUser] = useState(null); // Currently logged-in user
-  
+  const [isActivityOpen, setIsActivityOpen] = useState(false); // For "RECENT", "GROUPS" sidebar
   const [followersCount, setFollowersCount] = useState(0);
   const [followingCount, setFollowingCount] = useState(0);
   const [myPosts, setMyPosts] = useState([]);
@@ -446,7 +446,28 @@ const Profile = ({ header }) => {
                 <li>Posts <span>{myPosts.length}</span></li>
               </ul>
             </div>
+            <div className="sidebar-profile-link">
+              <a href="#"><img src="/assets/images/items.svg" alt="items" />My Items</a>
+              <a href="#"><img src="/assets/images/premium.png" alt="premium" />Try Premium</a>
+            </div>
           </div>
+          <div className={`sidebar-activity ${isActivityOpen ? 'open-activity' : ''}`} id="sidebarActivity">
+            <h3>RECENT</h3>
+            {/* Add actual recent activity links */}
+            <a href="#"><img src="/assets/images/recent.svg" alt="recent" />Sample Activity</a>
+            <h3>GROUPS</h3>
+            {/* Add actual group links */}
+            <a href="#"><img src="/assets/images/group.svg" alt="group" />Sample Group</a>
+            <h3>HASHTAG</h3>
+            {/* Add actual hashtag links */}
+            <a href="#"><img src="/assets/images/hashtag.svg" alt="hashtag" />#sampletag</a>
+            <div className="discover-more-link">
+              <a href="#">Discover More</a>
+            </div>
+          </div>
+          <p id="showMoreLink" onClick={() => setIsActivityOpen(!isActivityOpen)} style={{ cursor: 'pointer' }}>
+            {isActivityOpen ? 'Show less' : 'Show more'} <b>{isActivityOpen ? '-' : '+'}</b>
+          </p>
         </div>
 
         <div className="main-content">
@@ -493,6 +514,7 @@ const Profile = ({ header }) => {
             <hr />
             <p>Sort by : <span>top <img src="/assets/images/down-arrow.png" alt="down-arrow" /></span> </p>
           </div>
+          <h2 style={{ color: 'black' }}>My Posts</h2>
           {myPosts.length === 0 && <p style={{textAlign: 'center', marginTop: '20px'}}>No posts yet.</p>}
 
           {myPosts.map((post) => (

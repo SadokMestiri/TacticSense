@@ -3,11 +3,13 @@ import './Header.css';
 import axios from 'axios';
 import Cookies from 'js-cookie';
 import jwt_decode from 'jwt-decode';
-import { useNavigate,Link } from "react-router-dom";
+import { useNavigate,Link, useLocation } from "react-router-dom";
 import FollowButton from './FollowButton';
 
 const Header = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const [isNotificationDropdownOpen, setNotificationDropdownOpen] = useState(false);
   const [isDropdownOpen, setDropdownOpen] = useState(false);
   const user =  JSON.parse(Cookies.get('user'));
   const token = Cookies.get('token');
@@ -19,6 +21,12 @@ const Header = () => {
   const [isSearchLoading, setIsSearchLoading] = useState(false);
   const [isSearchResultsVisible, setIsSearchResultsVisible] = useState(false);
   const searchContainerRef = useRef(null); // For detecting clicks outside
+  const notificationDropdownRef = useRef(null); // Ref for notification dropdown
+
+  // Notification State
+  const [notifications, setNotifications] = useState([]);
+  const [isLoadingNotifications, setIsLoadingNotifications] = useState(false);
+  const [unreadNotificationCount, setUnreadNotificationCount] = useState(0);
 
 
   if (token) {
@@ -89,6 +97,10 @@ const Header = () => {
       if (searchContainerRef.current && !searchContainerRef.current.contains(event.target)) {
         setIsSearchResultsVisible(false);
       }
+      // Close notification dropdown if click is outside
+      if (notificationDropdownRef.current && !notificationDropdownRef.current.contains(event.target) && !event.target.closest('.navbar-center li a[href="#"] > img[alt="notification"]')) {
+        setNotificationDropdownOpen(false);
+      }
     };
     document.addEventListener("mousedown", handleClickOutside);
     return () => {
@@ -99,6 +111,7 @@ const Header = () => {
 
   const handleSearchChange = (e) => {
     setSearchQuery(e.target.value);
+    
   };
 
   const handleResultClick = () => {
@@ -109,6 +122,93 @@ const Header = () => {
   // Handle dropdown toggle for user profile
   const toggleDropdown = () => {
     setDropdownOpen(!isDropdownOpen);
+    setNotificationDropdownOpen(false);
+  };
+
+  // New handler for notification dropdown
+  const toggleNotificationDropdown = () => {
+    const willOpen = !isNotificationDropdownOpen;
+    setNotificationDropdownOpen(willOpen);
+    if (willOpen) {
+      fetchNotifications(); // Fetch notifications when dropdown is opened
+    }
+    setDropdownOpen(false);
+  };
+  // Fetch Notifications
+  const fetchNotifications = async () => {
+    if (!token) return;
+    setIsLoadingNotifications(true);
+    try {
+      const response = await axios.get(`${process.env.REACT_APP_BASE_URL}/api/notifications`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setNotifications(response.data.notifications || []);
+      setUnreadNotificationCount(response.data.unread_count || 0);
+    } catch (err) {
+      console.error("Error fetching notifications:", err);
+      // Handle error (e.g., show a message)
+    } finally {
+      setIsLoadingNotifications(false);
+    }
+  };
+  // Fetch initial unread count on load
+  useEffect(() => {
+    const fetchInitialUnreadCount = async () => {
+        if (!token) return;
+        try {
+            // Assuming your backend has an endpoint for just the count or it's part of a user profile fetch
+            // For now, we'll rely on the count from the full fetchNotifications or you can add a dedicated endpoint
+            // This is a placeholder, adjust if you have a specific endpoint for unread count
+            const response = await axios.get(`${process.env.REACT_APP_BASE_URL}/api/notifications/unread_count`, {
+                 headers: { Authorization: `Bearer ${token}` },
+            });
+            setUnreadNotificationCount(response.data.unread_count || 0);
+        } catch (err) {
+            console.error("Error fetching unread notification count:", err);
+        }
+    };
+    if (user) { // Only fetch if user is loaded
+        fetchInitialUnreadCount();
+        // Optional: Set up a poller or WebSocket for real-time updates
+        const intervalId = setInterval(fetchInitialUnreadCount, 60000); // Poll every 60 seconds
+        return () => clearInterval(intervalId);
+    }
+  }, [token, user]);
+  const handleNotificationClick = async (notification) => {
+    setNotificationDropdownOpen(false);
+
+    let targetPostId = notification.post_id;
+    let targetCommentId = notification.type === 'mention_comment' ? notification.comment_id : null;
+    let targetHash = '';
+
+    if (notification.type === 'new_follower' && notification.sender_username) {
+      navigate(`/profile/${notification.sender_username}`);
+    } else if (targetPostId) { // For mention_post or mention_comment
+      targetHash = `#post-${targetPostId}`;
+      navigate(
+        location.pathname + location.search + targetHash,
+        { 
+          state: { 
+            scrollToCommentId: targetCommentId, 
+            fromNotification: true 
+          } 
+        }
+      );
+    }
+    // else: Handle other notification types here if they don't involve navigation or have custom logic
+
+    // Mark as read on the backend
+    if (!notification.is_read) {
+      try {
+        await axios.post(`${process.env.REACT_APP_BASE_URL}/api/notifications/${notification.id}/read`, {}, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        setNotifications(prev => prev.map(n => n.id === notification.id ? { ...n, is_read: true } : n));
+        setUnreadNotificationCount(prev => Math.max(0, prev - 1));
+      } catch (err) {
+        console.error("Error marking notification as read:", err);
+      }
+    }
   };
 
   // Handle user logout
@@ -193,12 +293,54 @@ const Header = () => {
               </a>
             </li>
             <li>
-              <a href="#">
-                <img src="/assets/images/notification.png" alt="notification" /> <span>Notifications</span>
+              <a href="#" onClick={toggleNotificationDropdown} className={`notification-icon-anchor ${isNotificationDropdownOpen ? 'active-link' : ''}`}>
+                <img src="/assets/images/notification.png" alt="notification" />
+                {unreadNotificationCount > 0 && (
+                  <span className="notification-badge">{unreadNotificationCount}</span>
+                )}
+                <span>Notifications</span>
               </a>
+              {isNotificationDropdownOpen && (
+                <div className="drop-menu notification-dropdown" ref={notificationDropdownRef}>
+                  <div className="dropdown-header-simple">
+                    <h3>Notifications</h3>
+                  </div>
+                  {isLoadingNotifications ? (
+                    <div className="dropdown-item">Loading...</div>
+                  ) : notifications.length > 0 ? (
+                    notifications.map(notif => (
+                      <div
+                        key={notif.id}
+                        className={`dropdown-item notification-item ${!notif.is_read ? 'unread' : ''}`}
+                        onClick={() => handleNotificationClick(notif)}
+                      >
+                        <img
+                          src={notif.sender_profile_image ? `${process.env.REACT_APP_BASE_URL}/${notif.sender_profile_image}` : '/assets/images/default-avatar.png'}
+                          alt={notif.sender_name}
+                          className="notification-avatar"
+                          onError={(e) => e.target.src = '/assets/images/default-avatar.png'}
+                        />
+                        <div className="notification-content">
+                          <p>
+                            <strong>{notif.sender_name}</strong>
+                            {notif.type === 'mention_post' && ' mentioned you in a post.'}
+                            {notif.type === 'mention_comment' && ' mentioned you in a comment.'}
+                            {notif.type === 'new_follower' && ' started following you.'} {/* New notification type message */}
+                            {/* Add other notification types as needed */}
+                          </p>
+                          <small className="notification-time">{new Date(notif.created_at).toLocaleString()}</small>
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="dropdown-item">No new notifications.</div>
+                  )}
+                </div>
+              )}
             </li>
           </ul>
         </div>
+        
         <div className="navbar-right" id="nav-right">
           <div className="online">
             <img
@@ -209,7 +351,7 @@ const Header = () => {
               onError={(e) => e.target.src = '/assets/images/default-avatar.png'}
             />
           </div>
-
+          
           {isDropdownOpen && (
             <div className="drop-menu">
               <div className="dropdown-header">

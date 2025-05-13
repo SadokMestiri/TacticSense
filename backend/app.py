@@ -195,6 +195,37 @@ class CommentMention(db.Model):
     def __repr__(self):
         return f'<CommentMention comment_id={self.comment_id} user_id={self.user_id}>'
 
+class Notification(db.Model):
+    __tablename__ = 'notification'
+    id = db.Column(db.Integer, primary_key=True)
+    recipient_user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    sender_user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    type = db.Column(db.String(50), nullable=False)  # e.g., 'mention_post', 'mention_comment', 'like_post', 'new_follower'
+    post_id = db.Column(db.Integer, db.ForeignKey('post.post_id'), nullable=True)
+    comment_id = db.Column(db.Integer, db.ForeignKey('comment.comment_id'), nullable=True)
+    is_read = db.Column(db.Boolean, default=False, nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    recipient = db.relationship('User', foreign_keys=[recipient_user_id], backref=db.backref('notifications_received', lazy='dynamic'))
+    sender = db.relationship('User', foreign_keys=[sender_user_id], backref=db.backref('notifications_sent', lazy='dynamic'))
+    post = db.relationship('Post', foreign_keys=[post_id])
+    comment = db.relationship('Comment', foreign_keys=[comment_id])
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'recipient_user_id': self.recipient_user_id,
+            'sender_user_id': self.sender_user_id,
+            'sender_name': self.sender.name if self.sender else None,
+            'sender_username': self.sender.username if self.sender else None, # Ensure sender's username is included
+            'sender_profile_image': self.sender.profile_image if self.sender else None,
+            'type': self.type,
+            'post_id': self.post_id,
+            'comment_id': self.comment_id,
+            'is_read': self.is_read,
+            'created_at': self.created_at.isoformat() + 'Z', 
+        }
+
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in app.config['ALLOWED_EXTENSIONS']
 
@@ -361,53 +392,40 @@ def get_player_features_from_dataset(player_name):
 def token_required(f):
     @wraps(f)
     def decorated(*args, **kwargs):
-        token_header = request.headers.get('Authorization')
-        print(f"--- Token Debug: Authorization Header = {token_header} ---")
+        if request.method == 'OPTIONS':
+            # For OPTIONS requests, bypass token validation.
+            # Call the wrapped function, passing None for current_user,
+            # as the route's OPTIONS handler doesn't use it.
+            # The route itself (e.g., follow_user) will return the 200 OK.
+            return f(None, *args, **kwargs) # Pass None for current_user
 
-        if not token_header:
-            print("--- Token Debug: Token is missing from header! ---")
+        # For non-OPTIONS requests, proceed with token validation
+        token = None
+        if 'Authorization' in request.headers:
+            auth_header = request.headers['Authorization']
+            if auth_header.startswith('Bearer '):
+                token = auth_header.split(" ")[1]
+        
+        if not token:
+            token = request.cookies.get('token')
+
+        if not token:
             return jsonify({'message': 'Token is missing!'}), 401
 
         try:
-            parts = token_header.split(" ")
-            if len(parts) != 2 or parts[0].lower() != 'bearer':
-                print(f"--- Token Debug: Invalid token format. Header: {token_header} ---")
-                return jsonify({'message': 'Invalid token format. "Bearer " prefix missing or malformed.'}), 401
-            
-            token_value = parts[1]
-            print(f"--- Token Debug: Token value to decode = {token_value} ---")
-            
-            decoded_token = jwt.decode(token_value, app.config['SECRET_KEY'], algorithms=['HS256'])
-            print(f"--- Token Debug: Decoded payload = {decoded_token} ---")
-            
-            user_id_from_token = decoded_token.get('user_id') # Use .get() for safer access
-            if user_id_from_token is None:
-                print(f"--- Token Debug: 'user_id' key not found in decoded token payload: {decoded_token} ---")
-                return jsonify({'message': "Invalid token payload: 'user_id' missing."}), 401
-            
-            print(f"--- Token Debug: User ID from token = {user_id_from_token} ---")
-            current_user = User.query.get(user_id_from_token)
-            print(f"--- Token Debug: User from DB = {current_user} ---")
-
+            data = jwt.decode(token, app.config['SECRET_KEY'], algorithms=["HS256"])
+            current_user_obj = User.query.get(data['user_id']) # Changed variable name for clarity
+            if not current_user_obj:
+                return jsonify({'message': 'User not found after token decode'}), 404
         except jwt.ExpiredSignatureError:
-            print("--- Token Debug: Token has expired! ---")
             return jsonify({'message': 'Token has expired!'}), 401
-        except jwt.InvalidTokenError as e_invalid:
-            print(f"--- Token Debug: JWT InvalidTokenError: {e_invalid} ---") # Log specific JWT error
-            return jsonify({'message': 'Token is invalid!'}), 401 # This is what you're seeing
-        except KeyError as e_key:
-            print(f"--- Token Debug: KeyError accessing payload (e.g., 'user_id' missing): {e_key} ---")
-            return jsonify({'message': 'Invalid token payload structure.'}), 401
-        except Exception as e_generic: 
-            print(f"--- Token Debug: Generic token processing error: {e_generic} ---") 
-            return jsonify({'message': 'Token processing error!'}), 401
-
-        if not current_user: 
-            print(f"--- Token Debug: User not found in DB for user_id {user_id_from_token}! ---")
-            return jsonify({'message': 'User not found for token!'}), 401
-            
-        return f(current_user, *args, **kwargs)
-    
+        except jwt.InvalidTokenError:
+            return jsonify({'message': 'Token is invalid!'}), 401
+        except Exception as e:
+            return jsonify({'message': f'Token processing error: {str(e)}'}), 401
+        
+        # Pass the authenticated current_user object to the wrapped function
+        return f(current_user_obj, *args, **kwargs)
     return decorated
 
 
@@ -740,7 +758,7 @@ def create_post(current_user): # token_required provides current_user
         return jsonify({'error': 'No text content provided'}), 400
 
     post_content = request.form['text']
-    user_id = current_user.id # Use ID from token
+    user_id = current_user.id 
 
     mentioned_user_ids_str = request.form.get('mentioned_user_ids', '[]') # Expect JSON string array e.g., "[1,2,3]"
     mentioned_user_ids = []
@@ -755,6 +773,8 @@ def create_post(current_user): # token_required provides current_user
 
     uploaded_image = None
     uploaded_video = None
+    image_filename = None 
+    video_filename = None 
 
     if 'image' in request.files:
         image_file = request.files['image']
@@ -779,12 +799,21 @@ def create_post(current_user): # token_required provides current_user
     valid_mentions_added_count = 0
     if post.post_id:
         for mentioned_id in mentioned_user_ids:
-            if are_mutual_followers(current_user.id, mentioned_id):
+            if mentioned_id == current_user.id: # Don't create mention or notification for self-mention
+                continue
+            mentioned_user = User.query.get(mentioned_id)
+            if mentioned_user:
                 mention = PostMention(post_id=post.post_id, user_id=mentioned_id)
                 db.session.add(mention)
                 valid_mentions_added_count += 1
-            else:
-                print(f"User {current_user.id} cannot mention user {mentioned_id} (not mutual or self) in post {post.post_id}")
+                # Create Notification for post mention
+                notification = Notification(
+                    recipient_user_id=mentioned_id,
+                    sender_user_id=current_user.id,
+                    type='mention_post',
+                    post_id=post.post_id
+                )
+                db.session.add(notification)
 
     db.session.commit()
 
@@ -969,19 +998,27 @@ def react_to_post():
 
 
 @app.route('/add_comment', methods=['POST'])
-@token_required # Ensure user is logged in
-def add_comment(current_user): # token_required provides current_user
+@token_required 
+def add_comment(current_user): 
     data = request.json
     post_id = data.get('post_id')
     comment_text = data.get('comment_text')
-    user_id = current_user.id # Use ID from token
+    user_id = current_user.id 
     
-    mentioned_user_ids = data.get('mentioned_user_ids', []) # Expect a list of integers
+    mentioned_user_ids = data.get('mentioned_user_ids', []) 
     if not isinstance(mentioned_user_ids, list):
         return jsonify({'error': 'mentioned_user_ids must be a list'}), 400
+    
+    cleaned_mentioned_ids = []
+    for uid in mentioned_user_ids:
+        try:
+            cleaned_mentioned_ids.append(int(uid))
+        except ValueError:
+            return jsonify({'error': f'Invalid user ID in mentions: {uid}'}), 400
+
 
     if not post_id or not comment_text:
-        return jsonify({'error': 'Missing post_id or comment_text'}), 400
+        return jsonify({'error': 'Post ID and comment text are required'}), 400
 
     post_exists = Post.query.get(post_id)
     if not post_exists:
@@ -989,22 +1026,27 @@ def add_comment(current_user): # token_required provides current_user
 
     new_comment = Comment(post_id=post_id, user_id=user_id, comment_text=comment_text)
     db.session.add(new_comment)
-    db.session.flush() # To get new_comment.comment_id for mentions
+    db.session.flush() 
 
     valid_mentions_added_count = 0
     if new_comment.comment_id:
-        for mentioned_id in mentioned_user_ids:
-            try:
-                m_id = int(mentioned_id)
-                if are_mutual_followers(current_user.id, m_id):
-                    mention = CommentMention(comment_id=new_comment.comment_id, user_id=m_id)
-                    db.session.add(mention)
-                    valid_mentions_added_count += 1
-                else:
-                    print(f"User {current_user.id} cannot mention user {m_id} (not mutual or self) in comment {new_comment.comment_id}")
-            except ValueError:
-                print(f"Invalid mentioned user ID format: {mentioned_id}")
-
+        for mentioned_id in cleaned_mentioned_ids:
+            if mentioned_id == current_user.id: # Don't create mention or notification for self-mention
+                continue
+            mentioned_user = User.query.get(mentioned_id)
+            if mentioned_user:
+                mention = CommentMention(comment_id=new_comment.comment_id, user_id=mentioned_id)
+                db.session.add(mention)
+                valid_mentions_added_count += 1
+                # Create Notification for comment mention
+                notification = Notification(
+                    recipient_user_id=mentioned_id,
+                    sender_user_id=current_user.id,
+                    type='mention_comment',
+                    post_id=post_id, # Link to the post the comment belongs to
+                    comment_id=new_comment.comment_id
+                )
+                db.session.add(notification)
     db.session.commit()
     return jsonify({
         'message': f'Comment added successfully' + (f' with {valid_mentions_added_count} valid mentions.' if valid_mentions_added_count > 0 else '.'),
@@ -1014,6 +1056,42 @@ def add_comment(current_user): # token_required provides current_user
         'post_id': new_comment.post_id,
         'created_at': new_comment.created_at.strftime('%Y-%m-%d %H:%M:%S')
     }), 201
+
+@app.route('/api/notifications', methods=['GET'])
+@token_required
+def get_notifications_route(current_user):
+    # Fetch notifications for the current user, newest first
+    notifications_query = Notification.query.filter_by(recipient_user_id=current_user.id)\
+                                      .order_by(Notification.created_at.desc())\
+                                      .limit(20) # Optionally limit the number of notifications
+    
+    notifications_list = [n.to_dict() for n in notifications_query.all()]
+    unread_count = Notification.query.filter_by(recipient_user_id=current_user.id, is_read=False).count()
+    
+    return jsonify({
+        'notifications': notifications_list,
+        'unread_count': unread_count
+    }), 200
+
+@app.route('/api/notifications/unread_count', methods=['GET'])
+@token_required
+def get_unread_notification_count_route(current_user):
+    unread_count = Notification.query.filter_by(recipient_user_id=current_user.id, is_read=False).count()
+    return jsonify({'unread_count': unread_count}), 200
+
+@app.route('/api/notifications/<int:notification_id>/read', methods=['POST'])
+@token_required
+def mark_notification_as_read_route(current_user, notification_id):
+    notification = Notification.query.filter_by(id=notification_id, recipient_user_id=current_user.id).first()
+    if not notification:
+        return jsonify({'error': 'Notification not found or access denied'}), 404
+    
+    if not notification.is_read:
+        notification.is_read = True
+        db.session.commit()
+        return jsonify({'message': 'Notification marked as read'}), 200
+    return jsonify({'message': 'Notification was already read'}), 200
+
 
 @app.route('/posts/<int:post_id>/save', methods=['POST'])
 @token_required
@@ -1164,29 +1242,49 @@ def player_career(name):
     career = player_df[['season', 'goals', 'assists', 'minutes', 'mp']].to_dict(orient='records')
     return jsonify({'info': info, 'career': career})
 
-@app.route('/users/<int:user_id_to_follow>/follow', methods=['POST'])
+@app.route('/users/<int:target_user_id>/follow', methods=['POST', 'OPTIONS'])
 @token_required
-def follow_user_route(current_user, user_id_to_follow):
-    user_to_follow = User.query.get(user_id_to_follow)
+def follow_user(current_user, target_user_id): # current_user will be None for OPTIONS if passed from decorator
+    if request.method == 'OPTIONS':
+        # This block is hit first for OPTIONS requests.
+        # It does not need 'current_user'.
+        return make_response(), 200
 
-    if not user_to_follow:
-        return jsonify({'message': 'User not found'}), 404
+    # --- This block is for POST requests ---
+    # Here, 'current_user' will be populated by the token_required decorator.
+    if not current_user: # Should not happen if token_required works correctly for POST
+        return jsonify({'message': 'Authentication required'}), 401
+
+    if current_user.id == target_user_id:
+        return jsonify({'error': 'You cannot follow yourself'}), 400
+
+    target_user = User.query.get(target_user_id)
+    if not target_user:
+        return jsonify({'error': 'User not found'}), 404
+
+    existing_follow = Follow.query.filter_by(follower_id=current_user.id, followed_id=target_user_id).first()
+    if existing_follow:
+        return jsonify({'message': 'You are already following this user'}), 409
+
+    new_follow = Follow(follower_id=current_user.id, followed_id=target_user_id)
+    db.session.add(new_follow)
     
-    if current_user.id == user_to_follow.id:
-        return jsonify({'message': 'You cannot follow yourself'}), 400
+    notification = Notification(
+        recipient_user_id=target_user_id,
+        sender_user_id=current_user.id,
+        type='new_follower'
+    )
+    db.session.add(notification)
+    
+    db.session.commit()
+    return jsonify({'message': f'You are now following {target_user.username}'}), 201
 
-    if current_user.is_following(user_to_follow):
-        return jsonify({'message': 'You are already following this user'}), 409 
 
-    if current_user.follow(user_to_follow):
-        db.session.commit()
-        return jsonify({'message': f'Successfully followed {user_to_follow.username}'}), 200
-    else:
-        return jsonify({'message': 'Could not follow user'}), 500
-
-@app.route('/users/<int:user_id_to_unfollow>/unfollow', methods=['POST'])
+@app.route('/users/<int:user_id_to_unfollow>/unfollow', methods=['POST', 'OPTIONS'])
 @token_required
 def unfollow_user_route(current_user, user_id_to_unfollow):
+    if request.method == 'OPTIONS':
+        return make_response(), 200
     user_to_unfollow = User.query.get(user_id_to_unfollow)
 
     if not user_to_unfollow:
@@ -1197,7 +1295,10 @@ def unfollow_user_route(current_user, user_id_to_unfollow):
 
     if not current_user.is_following(user_to_unfollow):
         return jsonify({'message': 'You are not following this user'}), 400
-
+    
+    if not current_user:
+        return jsonify({'message': 'Authentication required'}), 401
+    
     if current_user.unfollow(user_to_unfollow):
         db.session.commit()
         return jsonify({'message': f'Successfully unfollowed {user_to_unfollow.username}'}), 200

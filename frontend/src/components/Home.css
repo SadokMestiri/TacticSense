@@ -162,3 +162,12 @@
   color: #555;
   margin-left: 4px;
 }
+.highlighted-by-notification {
+  transition: background-color 0.5s ease-in-out, box-shadow 0.5s ease-in-out;
+  background-color: #fff3cd !important; /* Light yellow, !important to override other backgrounds if needed */
+  border: 1px solid #ffeeba; /* Optional border */
+  border-radius: 4px; /* Match your post/comment styling */
+  box-shadow: 0 0 15px rgba(255, 223, 139, 0.8); /* Optional glow */
+  padding: 5px; /* Add some padding if the highlight makes it look cramped */
+  margin: -5px; /* Counteract padding to maintain layout if needed */
+}

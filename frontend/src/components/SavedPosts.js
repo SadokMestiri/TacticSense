@@ -12,7 +12,7 @@ const SavedPosts = ({ header }) => {
   const [error, setError] = useState(null);
   const [followersCount, setFollowersCount] = useState(0);
   const [followingCount, setFollowingCount] = useState(0);
-  
+  const [isActivityOpen, setIsActivityOpen] = useState(false);
   const userCookie = Cookies.get('user');
   const currentUser = useMemo(() => {
     return userCookie ? JSON.parse(userCookie) : null;
@@ -140,9 +140,30 @@ const SavedPosts = ({ header }) => {
                   <li>Saved Posts <span>{savedPosts.length}</span></li>
                 </ul>
               </div>
+              <div className="sidebar-profile-link">
+                <a href="#"><img src="/assets/images/items.svg" alt="items" />My Items</a>
+                <a href="#"><img src="/assets/images/premium.png" alt="premium" />Try Premium</a>
+              </div>
+              <div className={`sidebar-activity ${isActivityOpen ? 'open-activity' : ''}`} id="sidebarActivity">
+            <h3>RECENT</h3>
+            {/* Add actual recent activity links */}
+            <a href="#"><img src="/assets/images/recent.svg" alt="recent" />Sample Activity</a>
+            <h3>GROUPS</h3>
+            {/* Add actual group links */}
+            <a href="#"><img src="/assets/images/group.svg" alt="group" />Sample Group</a>
+            <h3>HASHTAG</h3>
+            {/* Add actual hashtag links */}
+            <a href="#"><img src="/assets/images/hashtag.svg" alt="hashtag" />#sampletag</a>
+            <div className="discover-more-link">
+              <a href="#">Discover More</a>
+            </div>
+          </div>
+          <p id="showMoreLink" onClick={() => setIsActivityOpen(!isActivityOpen)} style={{ cursor: 'pointer' }}>
+            {isActivityOpen ? 'Show less' : 'Show more'} <b>{isActivityOpen ? '-' : '+'}</b>
+          </p>
             </div>
           )}
-          {/* You can add other sections like 'sidebar-activity' from Home.js if needed */}
+          
         </div>
         <div className="main-content">
           <h2 style={{ color: 'black' }}>My Saved Posts</h2>

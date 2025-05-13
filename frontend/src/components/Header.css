@@ -202,3 +202,139 @@
 .login-prompt-button:hover {
   background-color: #0056b3;
 }
+.navbar-center ul li {
+  position: relative; 
+}
+.notification-dropdown {
+  position: absolute;
+  top: 100%; 
+  left: 0;  
+  
+  z-index: 1000;
+  
+}
+.notification-icon-anchor {
+  position: relative; /* For badge positioning */
+  display: flex;
+  align-items: center;
+}
+
+.notification-badge {
+  position: absolute;
+  top: -5px; /* Adjust as needed */
+  right: -5px; /* Adjust as needed */
+  background-color: red;
+  color: white;
+  border-radius: 50%;
+  padding: 2px 6px;
+  font-size: 0.7rem;
+  font-weight: bold;
+  line-height: 1;
+  min-width: 18px; /* Ensure it's somewhat circular even with single digit */
+  text-align: center;
+  z-index: 1;
+}
+
+.notification-dropdown {
+  min-width: 300px; /* Adjust as needed */
+  max-height: 400px; /* Allow scrolling for many notifications */
+  overflow-y: auto;
+}
+
+.dropdown-header-simple {
+  padding: 10px 15px;
+  border-bottom: 1px solid #eee;
+}
+
+.dropdown-header-simple h3 {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.notification-item {
+  display: flex;
+  align-items: center;
+  padding: 10px 15px;
+  border-bottom: 1px solid #f0f0f0;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.notification-item:hover {
+  background-color: #f9f9f9;
+}
+
+.notification-item.unread {
+  background-color: #eef5ff; /* A light blue for unread */
+  font-weight: bold;
+}
+
+.notification-item.unread:hover {
+  background-color: #e0eaf7;
+}
+
+
+.notification-item:last-child {
+  border-bottom: none;
+}
+
+.notification-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  margin-right: 10px;
+  object-fit: cover;
+}
+
+.notification-content p {
+  margin: 0 0 3px 0;
+  font-size: 0.9rem;
+  line-height: 1.3;
+  /* Add these properties for text truncation */
+  white-space: nowrap; /* Prevents the text from wrapping to the next line */
+  overflow: hidden; /* Hides the overflowing text */
+  text-overflow: ellipsis; /* Adds an ellipsis (...) to the end of the truncated text */
+  max-width: 250px;
+}
+.notification-content p strong {
+   color: #333;
+}
+
+.notification-content .notification-snippet {
+  font-size: 0.8rem;
+  color: #777;
+  display: block; /* Or inline-block */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 200px; /* Adjust as needed */
+}
+
+.notification-time {
+  font-size: 0.75rem;
+  color: #999;
+}
+
+.see-all-notifications {
+  text-align: center;
+  padding: 10px;
+  border-top: 1px solid #eee;
+}
+.see-all-notifications a {
+  color: #007bff;
+  text-decoration: none;
+  font-weight: 500;
+}
+.see-all-notifications a:hover {
+  text-decoration: underline;
+}
+.highlighted-by-notification {
+  transition: background-color 0.5s ease-in-out, box-shadow 0.5s ease-in-out;
+  background-color: #fff3cd !important; /* Light yellow, !important to override other backgrounds if needed */
+  border: 1px solid #ffeeba; /* Optional border */
+  border-radius: 4px; /* Match your post/comment styling */
+  box-shadow: 0 0 15px rgba(255, 223, 139, 0.8); /* Optional glow */
+  padding: 5px; /* Add some padding if the highlight makes it look cramped */
+  margin: -5px; /* Counteract padding to maintain layout if needed */
+}
