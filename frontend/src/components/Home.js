@@ -29,6 +29,11 @@ const Home = ({ header , footer}) => {
   const [checkingBalance, setCheckingBalance] = useState(false);
   const [selectedPost, setSelectedPost] = useState(null); // For managing the selected post
   const [showReactions, setShowReactions] = useState(null);
+
+  const [trendingNews, setTrendingNews] = useState([]);
+  const [newsLoading, setNewsLoading] = useState(true);
+  const [newsError, setNewsError] = useState(null);
+
   
 const reactions = [
   { name: "like", icon: "assets/images/post-like.png" },
@@ -280,8 +285,6 @@ const user = userCookie ? JSON.parse(userCookie) : null;
         // user_id: user.id, // Backend uses token
         post_id: postId,
         reaction_type: reactionType,
-      }, {
-        headers: { Authorization: `Bearer ${token}` },
       });
 
       console.log(`Reaction (${reactionType}) added:`, response.data);
@@ -447,6 +450,47 @@ const user = userCookie ? JSON.parse(userCookie) : null;
       alert('Error adding comment. ' + (error.response?.data?.error || ''));
     }
   };
+
+  useEffect(() => {
+    const fetchTrendingNews = async () => {
+      setNewsLoading(true);
+      setNewsError(null);
+      // IMPORTANT: Replace 'YOUR_SOCCER_CATEGORY_ID_HERE' with the actual category ID for soccer/football
+      // You might need to find this in the API documentation for livescore6.p.rapidapi.com
+      const SOCCER_CATEGORY_ID = '2021020913321150030'; // e.g., 'football_category_id' or similar
+      const RAPIDAPI_KEY = "7d2775d2bdmshb8ee0d858ecdfdcp163823jsn6438f8d333df"; // Your actual key
+
+      try {
+        const response = await axios.get("https://livescore6.p.rapidapi.com/news/v2/list-by-sport", {
+          headers: {
+            'x-rapidapi-key': RAPIDAPI_KEY,
+            'x-rapidapi-host': "livescore6.p.rapidapi.com"
+          },
+          params: {
+            category: SOCCER_CATEGORY_ID, 
+            page: '1' 
+          }
+        });
+
+        // Assuming the news articles are in response.data.data based on your JSON
+        if (response.data && Array.isArray(response.data.data)) { 
+          setTrendingNews(response.data.data.slice(0, 3)); // Displaying up to 3 news items
+        } else {
+          console.warn("Unexpected news API response structure:", response.data);
+          setTrendingNews([]);
+        }
+      } catch (error) {
+        console.error("Error fetching trending news:", error);
+        setNewsError("Failed to load trending news.");
+        setTrendingNews([]);
+      } finally {
+        setNewsLoading(false);
+      }
+    };
+
+    fetchTrendingNews();
+  }, []); // Empty dependency array ensures this runs once on mount
+
   
   const checkBalance = async () => {
     setCheckingBalance(true);
@@ -472,7 +516,8 @@ const user = userCookie ? JSON.parse(userCookie) : null;
     } finally {
         setCheckingBalance(false);
     }
-};
+
+  };
 
   return (
     <div>
@@ -759,10 +804,26 @@ const user = userCookie ? JSON.parse(userCookie) : null;
           <div className="sidebar-news">
             <img src="/assets/images/more.svg" className="info-icon" alt="more" />
             <h3>Trending News</h3>
-            {/* Placeholder news items */}
-            <a href="#">Sample News 1</a><span>1d ago</span>
-            <a href="#">Sample News 2</a><span>2d ago</span>
-            <a href="#" className="read-more-link">Read More</a>
+            {newsLoading && <p>Loading news...</p>}
+            {newsError && <p style={{ color: 'red' }}>{newsError || "Failed to load news."}</p>}
+            {!newsLoading && !newsError && trendingNews.length === 0 && <p>No news available at the moment.</p>}
+            {!newsLoading && !newsError && trendingNews.map((newsItem) => (
+              // Using newsItem.id for the key and newsItem.title for the text
+              // The API response example did not show a direct URL for each article,
+              // so href is '#' for now. If a URL field exists (e.g., newsItem.articleUrl), use that.
+              <div key={newsItem.id}> 
+                <a href={'#'} target="_blank" rel="noopener noreferrer">
+                  {newsItem.title || 'Untitled News'}
+                </a>
+                {/* The provided JSON for a news item did not include a publication date or timestamp.
+                    If it becomes available (e.g., newsItem.published_at or newsItem.date), 
+                    you can add a span here to display it, possibly using getTimeAgo(). 
+                    Example: newsItem.published_at && <span>{getTimeAgo(newsItem.published_at)}</span> 
+                */}
+              </div>
+              ))}
+            {/* You can add a "Read More" link if your API or another source provides a general news page */}
+            {/* <a href="#" className="read-more-link">Read More</a> */}
           </div>
           <div className="sidebar-ad">
             <small>Ad &middot; &middot; &middot;</small>

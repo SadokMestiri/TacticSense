@@ -3674,6 +3674,35 @@ def update_profile(current_user):
         print(f"Database commit failed: {e}")
         return jsonify({'error': 'An error occurred while updating the profile', 'details': str(e)}), 500
     
+
+def preprocess_input_data(input_data, scaler_all):
+    # Define column names
+    column_names = [
+        'Age', 'MarketValue', 'PerformanceMetrics', 'MediaSentiment', 'Club_Encoded', 'Position_Encoded',
+        'MediaSentimentCategory_Encoded', 'ball_control', 'dribbling',
+        'slide_tackle', 'stand_tackle', 'aggression', 'reactions', 'att_position', 'interceptions',
+        'vision', 'composure', 'crossing', 'short_pass', 'long_pass', 'acceleration', 'stamina',
+        'strength', 'balance', 'sprint_speed', 'agility', 'jumping', 'heading', 'shot_power',
+        'finishing', 'long_shots', 'curve', 'fk_acc', 'penalties', 'volleys', 'gk_positioning',
+        'gk_diving', 'gk_handling', 'gk_kicking', 'gk_reflexes'
+    ]
+
+    df = pd.DataFrame([input_data], columns=column_names)
+
+    # Separate 'MarketValue' to avoid scaling it
+    if 'MarketValue' in df.columns:
+        market_value = df[['MarketValue']]
+        features = df.drop(columns=['MarketValue'])
+    else:
+        raise ValueError("MarketValue column is missing")
+
+    # Apply scalerAll to features
+    scaled_features = scaler_all.transform(features)
+    scaled_df = pd.DataFrame(scaled_features, columns=features.columns)   
+    
+    return scaled_df
+    
+
 @app.route('/predict', methods=['POST'])
 def predict():
     # Load the PyTorch model
@@ -3691,17 +3720,18 @@ def predict():
                 nn.Dropout(dropout_rate),
                 nn.Linear(hidden_dim2, hidden_dim3),
                 nn.ReLU(),
-                nn.Linear(hidden_dim3, 1)
+                nn.Linear(hidden_dim3, 1),
+                nn.ReLU(),
             )
             
         def forward(self, x):
             return self.model(x)
 
     input_dim = 39   
-    hidden_dim1= 186
-    hidden_dim2= 85
-    hidden_dim3= 21
-    dropout_rate= 0.008811343391188392
+    hidden_dim1= 171
+    hidden_dim2= 128
+    hidden_dim3= 55
+    dropout_rate= 0.2669967243111904
 
     model = MarketValuePredictor(input_dim, hidden_dim1, hidden_dim2, hidden_dim3, dropout_rate)
 
@@ -3709,7 +3739,9 @@ def predict():
     model.load_state_dict(torch.load('marketValuemodel/market_value_predictor.pth'))
     scaler = joblib.load("marketValuemodel\scaler_market_value.pkl")
     print("scaler loaded")
-    #encoder = joblib.load("marketValuemodel\label_encoder.pkl")
+    encoder = joblib.load("marketValuemodel\label_encoder.pkl")
+    print("encoder loaded")
+    scalerAll = joblib.load("marketValuemodel\scalerAll.pkl")
     print("encoder loaded")
     # Set the model to evaluation mode
     model.eval()
@@ -3721,41 +3753,27 @@ def predict():
 
         # Get input data from the request
         input_data = request.json['input']
-        print("aasasdsdfsddddfgsf")
-        
-        #input_data[37] = int(encoder.transform([input_data[37]]))  # Encode the 38th element
-        #input_data[36] = int(encoder.transform([input_data[36]]))  # Encode the 39th element
-               
-        
-        if not isinstance(input_data, list) or not all(isinstance(i, (int, float)) for i in input_data):
-            return jsonify({'error': 'Invalid input format. Expected a list of numbers.'}), 400
+        print("Raw input data:", input_data)
 
-        # input_array = np.array(input_data).reshape(1, -1)  # Shape: [1, 39]
-        # input_scaled = scaler.transform(input_array)  # Scale the input data
-        
-        
-        input_data[1] = scaler.transform([[input_data[1]]])[0][0]  # Scale the second element
-        # input_data[37] = encoder.transform([[input_data[37]]])[0][0]  # Encode the 38th element
-        # input_data[36] = encoder.transform([[input_data[36]]])[0][0]  # Encode the 39th element
-        
-        
-        
-        input_tensor = torch.tensor([input_data], dtype=torch.float32) # Convert to tensor
-        input_tensor = torch.tensor([input_data], dtype=torch.float32)  # Shape: [1, 39]
+        # input_data = request.json['input']
+        scaled_df = preprocess_input_data(input_data, scalerAll)
+        input_tensor = torch.tensor(scaled_df.values, dtype=torch.float32)
+
         # Perform prediction
         with torch.no_grad():
             prediction = model(input_tensor)
-        
-        # Convert prediction to a list and return as JSON
-        prediction_list = prediction.numpy().tolist()
+
+        # Convert prediction to a NumPy array
         prediction_array = prediction.numpy()
 
         # Apply reverse scaling using the scaler
-        scaled_prediction = scaler.inverse_transform(prediction_array)
-
+        scaled_prediction = np.expm1(prediction_array)
+        
         # Convert the scaled prediction to a list and return as JSON
         scaled_prediction_list = scaled_prediction.tolist()
+
         return jsonify({'prediction': scaled_prediction_list})
+
     except Exception as e:
         return jsonify({'error': str(e)}), 400
 

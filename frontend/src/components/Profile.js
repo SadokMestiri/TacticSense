@@ -269,53 +269,116 @@ useEffect(() => {
   };
 
   const MarketValuePredictor = () => {
-    const [prediction, setPrediction] = useState(null);
-  
-    const predictMarketValue = async (inputData) => {
-      try {
-        const response = await axios.post('http://127.0.0.1:5000/predict', {
-          input: inputData,
-        });
-        setPrediction(response.data.prediction);
-        console.log('Prediction:', response.data.prediction);
-      } catch (error) {
-        console.error('Error making prediction:', error);
-      }
-    };
-  
-    return (
-      <div>
-        <h3>Market Value Predictor</h3>
-        <p>Current market value: {market_value || "N/A"}</p>
-        {setClub(clubs.find((club) => club.id === club_id)?.name)}
-        {console.log('Club:', club)}
-        {console.log('Position:', position)}
+  const [prediction, setPrediction] = useState(null);
 
-        <button onClick={() => predictMarketValue([2.481939,market_value,
-          -1.597527,-2.013867,-1.998466,-1.618861,-1.573948,-1.695989,-0.003764,
-          -2.063420,-1.307850,-1.468429,-1.00975,-2.044530,-2.123675,-1.865531,
-          -1.238116,-2.191793,0.438333,-1.591032,-1.444629,-0.909757,-0.489147,
-          -2.136695,-0.833992,-1.855516,-1.526697,-2.019015,-1.803907,-1.574778,
-          -1.657954,2.341630,2.356355,2.363265,2.358774,2.348967,92,2,1])}>
-          Predict Market Value
-        </button>
-        <br/>
-        {market_value === null ? (
-          <p>Prediction range: Insufficient data</p>
-        ) : (
-          prediction &&
-          prediction.length > 0 && (
-            <p>
-              Prediction range: <p>{(1.5 * prediction[0]).toFixed(2)} -{' '}
-              {(0.5 * prediction[0]).toFixed(2)}</p>
-            </p>
-          )
-        )}
-        {/* {prediction && <p>Prediction range: {1.5*prediction[0]}-{0.5*prediction[0]}</p>} */}
-      </div>
-
-    );
+  const predictMarketValue = async (inputData) => {
+    try {
+      const response = await axios.post('http://127.0.0.1:5000/predict', {
+        input: inputData,
+      });
+      setPrediction(response.data.prediction);
+      console.log('Prediction:', response.data.prediction);
+    } catch (error) {
+      console.error('Error making prediction:', error);
+    }
   };
+
+  const handlePredictClick = () => {
+    const requiredFields = [
+      { name: 'age', value: age },
+      { name: 'aggression', value: aggression },
+      { name: 'long_pass', value: long_pass },
+      { name: 'stamina', value: stamina },
+      { name: 'strength', value: strength },
+      { name: 'sprint_speed', value: sprint_speed },
+      { name: 'agility', value: agility },
+      { name: 'jumping', value: jumping },
+      { name: 'heading', value: heading },
+      { name: 'free_kick_accuracy', value: free_kick_accuracy },
+      { name: 'volleys', value: volleys },
+    ];
+
+    const missingInputFields = requiredFields
+      .filter((field) => field.value === null || field.value === undefined || field.value === '')
+      .map((field) => field.name);
+
+    if (missingInputFields.length === 0) {
+      // All required input features for the model are present.
+      // Prepare the market_value feature for the model:
+      // If market_value is not set (null, undefined, or empty string), pass null to the model.
+      // Otherwise, pass its current value. This depends on how your model expects this input.
+      const currentMarketValueForModel = (market_value === '' || market_value === undefined || market_value === null) ? null : market_value;
+
+      predictMarketValue([
+        age,
+        currentMarketValueForModel, // This is the value for the market_value slot in your model's input array
+        16.28000,
+        0.016667,
+        93,
+        2,
+        1,
+        0.451613,
+        0.352632,
+        0.162791,
+        0.186813,
+        aggression / 100,
+        65.0,
+        0.129032,
+        0.247191,
+        0.393617,
+        0.531250,
+        15.0,
+        0.434140,
+        long_pass / 100,
+        48.0,
+        stamina / 100,
+        strength / 100,
+        42.0,
+        sprint_speed / 100,
+        agility / 100,
+        jumping / 100,
+        heading / 100,
+        0.542553,
+        0.117021,
+        20.0,
+        14.0,
+        free_kick_accuracy,
+        25.0,
+        volleys,
+        0.264368,
+        0.255556,
+        0.273810,
+        0.267442,
+        0.258427,
+      ]);
+    } else {
+      // Display missing INPUT fields required for prediction
+      alert(`Insufficient data to make a prediction. Missing input fields: ${missingInputFields.join(', ')}`);
+    }
+    // The 'else' block that previously alerted "Market value already exists." has been removed.
+  };
+
+  return (
+    <div>
+      <h3>Market Value Predictor</h3>
+      <p>Current market value: {market_value || 'N/A'}</p>
+      {setClub(clubs.find((club) => club.id === club_id)?.name)}
+      {console.log('Club:', club)}
+      {console.log('Position:', position)}
+
+      <button onClick={handlePredictClick}>Predict Market Value</button>
+      <br/>
+      {
+        prediction &&
+        prediction.length > 0 &&
+          <p>
+            Prediction range:<p>{(1.5 * prediction[0]).toFixed(2)} -{' '}
+            {(0.5 * prediction[0]).toFixed(2)}</p>
+          </p>
+      }
+    </div>
+  );
+};
 
   //export default MarketValuePredictor;
 

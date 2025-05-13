@@ -308,7 +308,6 @@ const Header = () => {
                           }}
                         />
                         <div className="user-info">
-                          <span className="user-name">{user.name}</span>
                           <span className="username">{user.username}</span>
                         </div>
                       </li>
@@ -346,7 +345,6 @@ const Header = () => {
                             }}
                           />
                           <div className="user-info">
-                            <span className="user-name">{user.name}</span>
                             <span className="username">{user.username}</span>
                           </div>
                         </li>
