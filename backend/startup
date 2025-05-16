@@ -1,0 +1,15 @@
+LLama LLm:
+ cd backend/model
+ uvicorn main:app --reload
+
+Recommendation engine:
+ cd backend/recommendation_engine
+ pipenv run python service.py
+
+Backend:
+ cd backend
+ flask run
+
+frontend:
+ cd frontend
+ npm start

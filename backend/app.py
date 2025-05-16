@@ -4551,15 +4551,19 @@ app.app_context().push()
 if __name__ == '__main__':
     app.run(debug=True)
 
+
 @app.route('/get_players', methods=['GET'])
 def get_players():
     try:
-        players = PlayerProfile.query.all()
+        page = request.args.get('page', 1, type=int)
+        per_page = request.args.get('per_page', 10, type=int) # Default to 10 players per page
+
+        pagination = PlayerProfile.query.paginate(page=page, per_page=per_page, error_out=False)
+        players_on_page = pagination.items
+        
         players_data = []
-
-        for player in players:
+        for player in players_on_page:
             profile_image = player.photo.replace("\\", "/") if player.photo else ""
-
             players_data.append({
                 'id': player.id,
                 'name': player.name,
@@ -4570,11 +4574,20 @@ def get_players():
                 'score': player.score,
             })
 
-        return jsonify(players_data), 200
+        return jsonify({
+            'players': players_data,
+            'page': pagination.page,
+            'per_page': pagination.per_page,
+            'total_pages': pagination.pages,
+            'total_items': pagination.total,
+            'has_next': pagination.has_next,
+            'has_prev': pagination.has_prev
+        }), 200
 
     except Exception as e:
-        print(f"Error fetching players: {e}")
-        return jsonify({'message': 'Error fetching players'}), 500
+        print(f"Error fetching players: {e}") # It's good practice to log the actual error
+        return jsonify({'message': 'Error fetching players', 'error_details': str(e)}), 500
+
     
 
 @app.route('/rate_player', methods=['POST'])

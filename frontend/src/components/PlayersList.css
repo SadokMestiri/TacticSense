@@ -53,3 +53,46 @@
 .star-ratings {
   pointer-events: auto !important;
 }
+
+/* ... existing styles ... */
+
+.pagination-controls {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-top: 20px;
+    gap: 5px; /* Spacing between buttons/items */
+}
+
+.pagination-controls button {
+    padding: 8px 12px;
+    border: 1px solid #136d15; /* Green border */
+    background-color: #f0fff0; /* Light green background, or white if preferred */
+    color: #136d15; /* Green text */
+    cursor: pointer;
+    border-radius: 4px;
+    transition: background-color 0.2s, color 0.2s;
+}
+
+.pagination-controls button:hover:not(:disabled) {
+    background-color: #136d15; /* Green background on hover */
+    color: white; /* White text on hover */
+}
+
+.pagination-controls button:disabled {
+    cursor: not-allowed;
+    opacity: 0.6;
+    border-color: #90ee90; /* Lighter green border for disabled */
+    color: #90ee90; /* Lighter green text for disabled */
+}
+
+.pagination-controls button.active {
+    background-color: #136d15; /* Green background for active button */
+    color: white; /* White text for active button */
+    border-color: #136d15; /* Ensure border matches */
+}
+
+.pagination-ellipsis {
+    padding: 8px 0; /* Align with button padding */
+    color: #555;
+}

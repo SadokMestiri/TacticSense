@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import StarRatings from 'react-star-ratings';
 import { toast } from "react-toastify";
@@ -6,50 +6,79 @@ import './PlayersList.css';
 import Cookies from 'js-cookie';
 
 const PlayersList = () => {
-const userCookie = Cookies.get('user');
-const user = userCookie ? JSON.parse(userCookie) : null;
-const user_id = user ? user.id : null;
+    const userCookie = Cookies.get('user');
+    const user = userCookie ? JSON.parse(userCookie) : null;
+    const user_id = user ? user.id : null;
     const [userImages, setUserImages] = useState({});
     const [users, setUsers] = useState([]);
     const [error, setError] = useState(null);
-    const [isActivityOpen, setIsActivityOpen] = useState(false);
     const [players, setPlayers] = useState([]);
-      const [metaBalance, setMetaBalance] = useState(null);
-      const [metaCoinMessage, setMetaCoinMessage] = useState(false);
-      const [checkingBalance, setCheckingBalance] = useState(false);
+    const [currentPage, setCurrentPage] = useState(1);
+    const [totalPages, setTotalPages] = useState(1);
+    const [loading, setLoading] = useState(false);
+    const [initialLoading, setInitialLoading] = useState(true);
+    const [isActivityOpen, setIsActivityOpen] = useState(false);
+    const [metaBalance, setMetaBalance] = useState(null);
+    const [metaCoinMessage, setMetaCoinMessage] = useState(false);
+    const [checkingBalance, setCheckingBalance] = useState(false);
 
-    const fetchPlayers = async () => {
+    const ITEMS_PER_PAGE = 10; // Should match backend per_page default or be passed
+
+    const fetchPlayersData = useCallback(async (pageToFetch) => {
+        setLoading(true);
+        setError(null);
         try {
-            const response = await axios.get(`${process.env.REACT_APP_BASE_URL}/get_players`);
-            setPlayers(response.data);
-        } catch (error) {
-            setError(error.response?.data?.message || 'Error fetching players');
+            const response = await axios.get(`${process.env.REACT_APP_BASE_URL}/get_players`, {
+                params: {
+                    page: pageToFetch,
+                    per_page: ITEMS_PER_PAGE
+                }
+            });
+            const data = response.data;
+            setPlayers(data.players || []); // Ensure players is an array
+            setCurrentPage(data.page);
+            setTotalPages(data.total_pages);
+        } catch (err) {
+            const errorMessage = err.response?.data?.message || 'Error fetching players';
+            setError(errorMessage);
+            setPlayers([]); // Clear players on error
+            setTotalPages(0);
+            toast.error(`❌ ${errorMessage}`, { position: "top-center" });
+        } finally {
+            setLoading(false);
+        }
+    }, [ITEMS_PER_PAGE]); // Dependencies for useCallback
+
+    useEffect(() => {
+        fetchPlayersData(currentPage);
+    }, [currentPage, fetchPlayersData]);
+
+    const handlePageChange = (newPage) => {
+        if (newPage >= 1 && newPage <= totalPages && newPage !== currentPage) {
+            setCurrentPage(newPage);
         }
     };
-    useEffect(() => {
-        fetchPlayers();
-    }, [user_id]);
 
- const checkBalance = async () => {
-    setCheckingBalance(true);
+    const checkBalance = async () => {
+        setCheckingBalance(true);
 
-    try {
-        const response = await axios.get(
-            `${process.env.REACT_APP_BASE_URL}/check_balance/${user.id}`,
-        );
+        try {
+            const response = await axios.get(
+                `${process.env.REACT_APP_BASE_URL}/check_balance/${user.id}`,
+            );
 
-        if (response.status === 200 && response.data?.balance !== undefined) {
-            setMetaBalance(response.data.balance);
-        } else {
-            setMetaCoinMessage("Failed to retrieve MetaCoin balance.");
+            if (response.status === 200 && response.data?.balance !== undefined) {
+                setMetaBalance(response.data.balance);
+            } else {
+                setMetaCoinMessage("Failed to retrieve MetaCoin balance.");
+            }
+        } catch (error) {
+            const errMsg = error.response?.data?.error || "Error checking balance.";
+            setMetaCoinMessage(errMsg);
+        } finally {
+            setCheckingBalance(false);
         }
-    } catch (error) {
-        const errMsg = error.response?.data?.error || "Error checking balance.";
-        setMetaCoinMessage(errMsg);
-    } finally {
-        setCheckingBalance(false);
-    }
-};
+    };
 
     const fetchUsers = async (user_id) => {
         try {
@@ -103,6 +132,45 @@ const user_id = user ? user.id : null;
         }
     };
 
+    const getPageNumbers = () => {
+        const pageNumbers = [];
+        const maxPagesToShow = 5; // Max page numbers to show directly
+        const halfPagesToShow = Math.floor(maxPagesToShow / 2);
+
+        if (totalPages <= maxPagesToShow) {
+            for (let i = 1; i <= totalPages; i++) {
+                pageNumbers.push(i);
+            }
+        } else {
+            // Always show first page
+            pageNumbers.push(1);
+            if (currentPage > halfPagesToShow + 2) {
+                pageNumbers.push('...');
+            }
+
+            let startPage = Math.max(2, currentPage - halfPagesToShow);
+            let endPage = Math.min(totalPages - 1, currentPage + halfPagesToShow);
+
+            if (currentPage <= halfPagesToShow + 1) {
+                endPage = Math.min(totalPages - 1, maxPagesToShow - 1);
+            }
+            if (currentPage >= totalPages - halfPagesToShow) {
+                startPage = Math.max(2, totalPages - maxPagesToShow + 2);
+            }
+
+
+            for (let i = startPage; i <= endPage; i++) {
+                pageNumbers.push(i);
+            }
+
+            if (currentPage < totalPages - halfPagesToShow - 1) {
+                pageNumbers.push('...');
+            }
+            // Always show last page
+            pageNumbers.push(totalPages);
+        }
+        return pageNumbers.filter((item, index, self) => self.indexOf(item) === index); // Remove duplicates from '...' logic
+    };
 
     return (
         <div>
@@ -122,11 +190,11 @@ const user_id = user ? user.id : null;
                             </ul>
                         </div>
                         <div className="sidebar-profile-link">
-              <a href="#"><img src="assets/images/items.svg" alt="items" />My Items</a>
-<a href="#" onClick={checkBalance} style={{ width: "60px", cursor: "pointer" }}>
-    <img src="assets/images/metacoin.png" alt="metacoin" style={{ width: "50px"}} />
-    {checkingBalance ? "Checking..." : metaBalance !== null ? `Balance: ${metaBalance} MC` : "Check MetaCoin Balance"}
-</a>
+                            <a href="#"><img src="assets/images/items.svg" alt="items" />My Items</a>
+                            <a href="#" onClick={checkBalance} style={{ width: "60px", cursor: "pointer" }}>
+                                <img src="assets/images/metacoin.png" alt="metacoin" style={{ width: "50px" }} />
+                                {checkingBalance ? "Checking..." : metaBalance !== null ? `Balance: ${metaBalance} MC` : "Check MetaCoin Balance"}
+                            </a>
                         </div>
                     </div>
 
@@ -161,44 +229,83 @@ const user_id = user ? user.id : null;
                 </div>
                 <div className="main-content">
                     <h2>Registered Players</h2>
-                    <div className="players-list">
-                        {players.length > 0 ? (
-                            players.map(player => (
-                                <div key={player.id} className="player-card">
-                                    <img src={`${process.env.REACT_APP_BASE_URL}/${player.photo}`} alt={player.name} />
-                                    <div className="player-info">
-                                        <h3>{player.name}</h3>
-                                        <div style={{ display: "flex", gap: "20px" }}>
-                                            <div style={{ marginRight: "150px" }}>
-                                                <p>Age: {player.age}</p>
-                                                <p>Position: {player.position}</p>
-                                            </div>
-                                            <div>
-                                                <p>Club: {player.club}</p>
-                                                <p>Score: {player.score !== null ? player.score.toFixed(2) : "N/A"}</p>
+                    {loading && <p>Loading players...</p>}
+                    {error && !loading && <p style={{ color: 'red' }}>{error}</p>}
+                    {!loading && !error && (
+                        <>
+                            <div className="players-list">
+                                {players.length > 0 ? (
+                                    players.map(player => (
+                                        <div key={player.id} className="player-card">
+                                            <img src={`${process.env.REACT_APP_BASE_URL}/${player.photo}`} alt={player.name} />
+                                            <div className="player-info">
+                                                <h3>{player.name}</h3>
+                                                <div style={{ display: "flex", gap: "20px" }}>
+                                                    <div style={{ marginRight: "150px" }}>
+                                                        <p>Age: {player.age}</p>
+                                                        <p>Position: {player.position}</p>
+                                                    </div>
+                                                    <div>
+                                                        <p>Club: {player.club}</p>
+                                                        <p>Score: {player.score !== null ? player.score.toFixed(2) : "N/A"}</p>
+                                                    </div>
+                                                </div>
+
+                                                <div className="rating">
+                                                    <StarRatings
+                                                        rating={player.score || 0}
+                                                        starRatedColor="gold"
+                                                        starHoverColor="orange"
+                                                        changeRating={(newRating) => handleRatingChange(player.id, newRating)}
+                                                        numberOfStars={5}
+                                                        name={`rating-${player.id}`}
+                                                        starDimension="24px"
+                                                        starSpacing="2px"
+                                                    />
+
+                                                </div>
                                             </div>
                                         </div>
+                                    ))
+                                ) : (
+                                    <p>No players found.</p>
+                                )}
+                            </div>
+                            {/* Pagination Controls */}
+                            {totalPages > 0 && (
+                                <div className="pagination-controls">
+                                    <button
+                                        onClick={() => handlePageChange(currentPage - 1)}
+                                        disabled={currentPage === 1 || loading}
+                                    >
+                                        Previous
+                                    </button>
 
-                                        <div className="rating">
-                                            <StarRatings
-                                                rating={player.score || 0}
-                                                starRatedColor="gold"
-                                                starHoverColor="orange"
-                                                changeRating={(newRating) => handleRatingChange(player.id, newRating)}
-                                                numberOfStars={5}
-                                                name={`rating-${player.id}`}
-                                                starDimension="24px"
-                                                starSpacing="2px"
-                                            />
+                                    {getPageNumbers().map((page, index) =>
+                                        page === '...' ? (
+                                            <span key={`ellipsis-${index}`} className="pagination-ellipsis">...</span>
+                                        ) : (
+                                            <button
+                                                key={page}
+                                                onClick={() => handlePageChange(page)}
+                                                disabled={currentPage === page || loading}
+                                                className={currentPage === page ? 'active' : ''}
+                                            >
+                                                {page}
+                                            </button>
+                                        )
+                                    )}
 
-                                        </div>
-                                    </div>
+                                    <button
+                                        onClick={() => handlePageChange(currentPage + 1)}
+                                        disabled={currentPage === totalPages || loading}
+                                    >
+                                        Next
+                                    </button>
                                 </div>
-                            ))
-                        ) : (
-                            <p>No players found.</p>
-                        )}
-                    </div>
+                            )}
+                        </>
+                    )}
                 </div>
 
 
